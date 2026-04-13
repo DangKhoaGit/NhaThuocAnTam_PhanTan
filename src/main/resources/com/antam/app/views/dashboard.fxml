@@ -1,0 +1,570 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcon?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.effect.DropShadow?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
+<?import javafx.scene.text.Text?>
+
+<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="800.0" prefWidth="1200.0" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.antam.app.controller.menu.MenuController">
+   <children>
+      <BorderPane AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+         <top>
+            <HBox alignment="CENTER" prefHeight="70.0" spacing="5.0" styleClass="top-page" stylesheets="@../styles/dashboard_style.css" BorderPane.alignment="CENTER">
+               <children>
+                  <ImageView fitWidth="55.0" pickOnBounds="true" preserveRatio="true">
+                     <image>
+                        <Image url="@../images/logo.png" />
+                     </image>
+                  </ImageView>
+                  <VBox alignment="TOP_CENTER" prefWidth="200.0">
+                     <children>
+                        <Text fill="#1e3a8a" strokeType="OUTSIDE" strokeWidth="0.0" text="NHÀ THUỐC AN TÂM">
+                           <font>
+                              <Font name="System Bold" size="20.0" />
+                           </font>
+                        </Text>
+                        <Text fill="#1e3a8a" strokeType="OUTSIDE" strokeWidth="0.0" text="Hệ Thống Quản Lý">
+                           <font>
+                              <Font size="15.0" />
+                           </font>
+                        </Text>
+                     </children>
+                  </VBox>
+                  <Region prefHeight="200.0" prefWidth="200.0" HBox.hgrow="ALWAYS" />
+                  <HBox alignment="CENTER_LEFT" spacing="5.0" styleClass="user-info" stylesheets="@../styles/dashboard_style.css">
+                     <children>
+                        <FontAwesomeIcon fill="#374151" glyphName="USER" size="1.5em" />
+                        <Text fill="#374151" strokeType="OUTSIDE" strokeWidth="0.0" text="Admin">
+                           <font>
+                              <Font size="15.0" />
+                           </font>
+                        </Text>
+                     </children>
+                     <padding>
+                        <Insets left="10.0" right="10.0" />
+                     </padding>
+                  </HBox>
+                  <Button mnemonicParsing="false" styleClass="btn-logout" stylesheets="@../styles/dashboard_style.css" text="Đăng xuất" />
+               </children>
+               <padding>
+                  <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+               </padding>
+               <effect>
+                  <DropShadow blurType="TWO_PASS_BOX" height="32.72" radius="12.93" />
+               </effect>
+            </HBox>
+         </top>
+         <center>
+            <AnchorPane fx:id="paneContent" BorderPane.alignment="CENTER" />
+         </center>
+         <left>
+            <AnchorPane prefWidth="250.0" BorderPane.alignment="CENTER">
+               <children>
+                  <ScrollPane fitToWidth="true" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                     <content>
+                        <VBox maxWidth="-Infinity" prefWidth="250.0" spacing="5.0">
+                           <children>
+                              <Button fx:id="btnTrangChinh" graphicTextGap="5.0" maxWidth="1.7976931348623157E308" mnemonicParsing="false" prefHeight="54.0" styleClass="sidebar-item" stylesheets="@../styles/dashboard_style.css" text="Trang chính">
+                                 <graphic>
+                                    <FontAwesomeIcon fill="#333333" glyphName="HOME" />
+                                 </graphic>
+                                 <font>
+                                    <Font name="System Bold" size="15.0" />
+                                 </font>
+                                 <padding>
+                                    <Insets left="30.0" />
+                                 </padding>
+                              </Button>
+                              <Button fx:id="btnHoaDon" maxWidth="1.7976931348623157E308" mnemonicParsing="false" prefHeight="54.0" styleClass="sidebar-item" stylesheets="@../styles/dashboard_style.css" text="Hoá đơn">
+                                 <font>
+                                    <Font name="System Bold" size="15.0" />
+                                 </font>
+                                 <padding>
+                                    <Insets left="30.0" />
+                                 </padding>
+                                 <graphic>
+                                    <FontAwesomeIcon glyphName="FILE" />
+                                 </graphic>
+                              </Button>
+                              <VBox fx:id="subMenuHoaDon">
+                                 <children>
+                                    <Button fx:id="btnXemHoaDon" graphicTextGap="5.0" maxWidth="1.7976931348623157E308" mnemonicParsing="false" prefHeight="54.0" styleClass="sidebar-sub-item" stylesheets="@../styles/dashboard_style.css" text="Tìm hoá đơn">
+                                       <graphic>
+                                          <FontAwesomeIcon fill="#333333" glyphName="SEARCH" />
+                                       </graphic>
+                                       <font>
+                                          <Font size="15.0" />
+                                       </font>
+                                       <padding>
+                                          <Insets left="50.0" />
+                                       </padding>
+                                    </Button>
+                                    <Button fx:id="btnThemHoaDon" graphicTextGap="5.0" maxWidth="1.7976931348623157E308" mnemonicParsing="false" prefHeight="54.0" styleClass="sidebar-sub-item" stylesheets="@../styles/dashboard_style.css" text="Thêm hoá đơn">
+                                       <graphic>
+                                          <FontAwesomeIcon fill="#333333" glyphName="PLUS" />
+                                       </graphic>
+                                       <font>
+                                          <Font size="15.0" />
+                                       </font>
+                                       <padding>
+                                          <Insets left="50.0" />
+                                       </padding>
+                                    </Button>
+                                    <Button fx:id="btnCapNhatHoaDon" graphicTextGap="5.0" maxWidth="1.7976931348623157E308" mnemonicParsing="false" prefHeight="54.0" styleClass="sidebar-sub-item" stylesheets="@../styles/dashboard_style.css" text="Cập nhật hoá đơn">
+                                       <font>
+                                          <Font size="15.0" />
+                                       </font>
+                                       <padding>
+                                          <Insets left="50.0" />
+                                       </padding>
+                                       <graphic>
+                                          <FontAwesomeIcon glyphName="REFRESH" />
+                                       </graphic>
+                                    </Button>
+                                    <Button fx:id="btnThongKeDoanhThu" graphicTextGap="5.0" maxWidth="1.7976931348623157E308" mnemonicParsing="false" prefHeight="54.0" styleClass="sidebar-sub-item" stylesheets="@../styles/dashboard_style.css" text="Thống kê doanh thu">
+                                       <font>
+                                          <Font size="15.0" />
+                                       </font>
+                                       <padding>
+                                          <Insets left="50.0" />
+                                       </padding>
+                                       <graphic>
+                                          <FontAwesomeIcon glyphName="BAR_CHART" />
+                                       </graphic>
+                                    </Button>
+                                 </children>
+                              </VBox>
+                              <Button fx:id="btnPhieuDat" layoutX="10.0" layoutY="69.0" maxWidth="1.7976931348623157E308" mnemonicParsing="false" prefHeight="54.0" styleClass="sidebar-item" stylesheets="@../styles/dashboard_style.css" text="Phiếu đặt">
+                                 <font>
+                                    <Font name="System Bold" size="15.0" />
+                                 </font>
+                                 <padding>
+                                    <Insets left="30.0" />
+                                 </padding>
+                                 <graphic>
+                                    <FontAwesomeIcon glyphName="FILE" />
+                                 </graphic>
+                              </Button>
+                              <VBox fx:id="subMenuPhieuDat" layoutX="10.0" layoutY="128.0">
+                                 <children>
+                                    <Button fx:id="btnTimPhieuDat" graphicTextGap="5.0" maxWidth="1.7976931348623157E308" mnemonicParsing="false" prefHeight="54.0" styleClass="sidebar-sub-item" stylesheets="@../styles/dashboard_style.css" text="Tìm phiếu đặt">
+                                       <graphic>
+                                          <FontAwesomeIcon fill="#333333" glyphName="SEARCH" />
+                                       </graphic>
+                                       <font>
+                                          <Font size="15.0" />
+                                       </font>
+                                       <padding>
+                                          <Insets left="50.0" />
+                                       </padding>
+                                    </Button>
+                                    <Button fx:id="btnThemPhieuDat" graphicTextGap="5.0" maxWidth="1.7976931348623157E308" mnemonicParsing="false" prefHeight="54.0" styleClass="sidebar-sub-item" stylesheets="@../styles/dashboard_style.css" text="Thêm phiếu đặt">
+                                       <graphic>
+                                          <FontAwesomeIcon fill="#333333" glyphName="PLUS" />
+                                       </graphic>
+                                       <font>
+                                          <Font size="15.0" />
+                                       </font>
+                                       <padding>
+                                          <Insets left="50.0" />
+                                       </padding>
+                                    </Button>
+                                    <Button fx:id="btnCapNhatPhieuDat" graphicTextGap="5.0" maxWidth="1.7976931348623157E308" mnemonicParsing="false" prefHeight="54.0" styleClass="sidebar-sub-item" stylesheets="@../styles/dashboard_style.css" text="Cập nhật phiếu đặt">
+                                       <font>
+                                          <Font size="15.0" />
+                                       </font>
+                                       <padding>
+                                          <Insets left="50.0" />
+                                       </padding>
+                                       <graphic>
+                                          <FontAwesomeIcon glyphName="REFRESH" />
+                                       </graphic>
+                                    </Button>
+                                 </children>
+                              </VBox>
+                              <Button fx:id="btnThuoc" maxWidth="1.7976931348623157E308" mnemonicParsing="false" prefHeight="54.0" styleClass="sidebar-item" stylesheets="@../styles/dashboard_style.css" text="Thuốc">
+                                 <font>
+                                    <Font name="System Bold" size="15.0" />
+                                 </font>
+                                 <padding>
+                                    <Insets left="30.0" />
+                                 </padding>
+                                 <graphic>
+                                    <FontAwesomeIcon glyphName="MEDKIT" />
+                                 </graphic>
+                              </Button>
+                              <VBox fx:id="subMenuThuoc">
+                                 <children>
+                                    <Button fx:id="btnXemThuoc" graphicTextGap="5.0" maxWidth="1.7976931348623157E308" mnemonicParsing="false" prefHeight="54.0" styleClass="sidebar-sub-item" stylesheets="@../styles/dashboard_style.css" text="Tìm thuốc">
+                                       <graphic>
+                                          <FontAwesomeIcon fill="#333333" glyphName="SEARCH" />
+                                       </graphic>
+                                       <font>
+                                          <Font size="15.0" />
+                                       </font>
+                                       <padding>
+                                          <Insets left="50.0" />
+                                       </padding>
+                                    </Button>
+                                    <Button fx:id="btnThemThuoc" graphicTextGap="5.0" maxWidth="1.7976931348623157E308" mnemonicParsing="false" prefHeight="54.0" styleClass="sidebar-sub-item" stylesheets="@../styles/dashboard_style.css" text="Thêm thuốc">
+                                       <graphic>
+                                          <FontAwesomeIcon fill="#333333" glyphName="PLUS" />
+                                       </graphic>
+                                       <font>
+                                          <Font size="15.0" />
+                                       </font>
+                                       <padding>
+                                          <Insets left="50.0" />
+                                       </padding>
+                                    </Button>
+                                    <Button fx:id="btnCapNhatThuoc" graphicTextGap="5.0" maxWidth="1.7976931348623157E308" mnemonicParsing="false" prefHeight="54.0" styleClass="sidebar-sub-item" stylesheets="@../styles/dashboard_style.css" text="Cập nhật thuốc">
+                                       <font>
+                                          <Font size="15.0" />
+                                       </font>
+                                       <padding>
+                                          <Insets left="50.0" />
+                                       </padding>
+                                       <graphic>
+                                          <FontAwesomeIcon glyphName="REFRESH" />
+                                       </graphic>
+                                    </Button>
+                                 </children>
+                              </VBox>
+                              <Button fx:id="btnKeThuoc" layoutX="10.0" layoutY="300.0" maxWidth="1.7976931348623157E308" mnemonicParsing="false" prefHeight="54.0" styleClass="sidebar-item" stylesheets="@../styles/dashboard_style.css" text="Kệ thuốc">
+                                 <font>
+                                    <Font name="System Bold" size="15.0" />
+                                 </font>
+                                 <padding>
+                                    <Insets left="30.0" />
+                                 </padding>
+                                 <graphic>
+                                    <FontAwesomeIcon glyphName="ARCHIVE" />
+                                 </graphic>
+                              </Button>
+                              <VBox fx:id="subMenuKeThuoc" layoutX="10.0" layoutY="359.0">
+                                 <children>
+                                    <Button fx:id="btnXemKeThuoc" graphicTextGap="5.0" maxWidth="1.7976931348623157E308" mnemonicParsing="false" prefHeight="54.0" styleClass="sidebar-sub-item" stylesheets="@../styles/dashboard_style.css" text="Tìm kệ thuốc">
+                                       <graphic>
+                                          <FontAwesomeIcon fill="#333333" glyphName="SEARCH" />
+                                       </graphic>
+                                       <font>
+                                          <Font size="15.0" />
+                                       </font>
+                                       <padding>
+                                          <Insets left="50.0" />
+                                       </padding>
+                                    </Button>
+                                    <Button fx:id="btnThemKeThuoc" graphicTextGap="5.0" maxWidth="1.7976931348623157E308" mnemonicParsing="false" prefHeight="54.0" styleClass="sidebar-sub-item" stylesheets="@../styles/dashboard_style.css" text="Thêm kệ thuốc">
+                                       <graphic>
+                                          <FontAwesomeIcon fill="#333333" glyphName="PLUS" />
+                                       </graphic>
+                                       <font>
+                                          <Font size="15.0" />
+                                       </font>
+                                       <padding>
+                                          <Insets left="50.0" />
+                                       </padding>
+                                    </Button>
+                                    <Button fx:id="btnCapNhatKeThuoc" graphicTextGap="5.0" maxWidth="1.7976931348623157E308" mnemonicParsing="false" prefHeight="54.0" styleClass="sidebar-sub-item" stylesheets="@../styles/dashboard_style.css" text="Cập nhật kệ thuốc">
+                                       <font>
+                                          <Font size="15.0" />
+                                       </font>
+                                       <padding>
+                                          <Insets left="50.0" />
+                                       </padding>
+                                       <graphic>
+                                          <FontAwesomeIcon glyphName="REFRESH" />
+                                       </graphic>
+                                    </Button>
+                                 </children>
+                              </VBox>
+                              <Button fx:id="btnDangDieuChe" layoutX="10.0" layoutY="806.0" maxWidth="1.7976931348623157E308" mnemonicParsing="false" prefHeight="54.0" styleClass="sidebar-item" stylesheets="@../styles/dashboard_style.css" text="Dạng điều chế">
+                                 <font>
+                                    <Font name="System Bold" size="15.0" />
+                                 </font>
+                                 <padding>
+                                    <Insets left="30.0" />
+                                 </padding>
+                                 <graphic>
+                                    <FontAwesomeIcon glyphName="TINT" />
+                                 </graphic>
+                              </Button>
+                              <VBox fx:id="subMenuDangDieuChe" layoutX="10.0" layoutY="865.0">
+                                 <children>
+                                    <Button fx:id="btnThemDangDieuChe" graphicTextGap="5.0" maxWidth="1.7976931348623157E308" mnemonicParsing="false" prefHeight="54.0" styleClass="sidebar-sub-item" stylesheets="@../styles/dashboard_style.css" text="Thêm dạng điều chế">
+                                       <graphic>
+                                          <FontAwesomeIcon fill="#333333" glyphName="PLUS" />
+                                       </graphic>
+                                       <font>
+                                          <Font size="15.0" />
+                                       </font>
+                                       <padding>
+                                          <Insets left="50.0" />
+                                       </padding>
+                                    </Button>
+                                    <Button fx:id="btnCapNhatDangDieuChe" graphicTextGap="5.0" maxWidth="1.7976931348623157E308" mnemonicParsing="false" prefHeight="54.0" styleClass="sidebar-sub-item" stylesheets="@../styles/dashboard_style.css" text="Cập nhật dạng điều chế">
+                                       <font>
+                                          <Font size="15.0" />
+                                       </font>
+                                       <padding>
+                                          <Insets left="50.0" />
+                                       </padding>
+                                       <graphic>
+                                          <FontAwesomeIcon glyphName="REFRESH" />
+                                       </graphic>
+                                    </Button>
+                                 </children>
+                              </VBox>
+                              <Button fx:id="btnDonViTinh" layoutX="10.0" layoutY="806.0" maxWidth="1.7976931348623157E308" mnemonicParsing="false" prefHeight="54.0" styleClass="sidebar-item" stylesheets="@../styles/dashboard_style.css" text="Đơn vị tính">
+                                 <font>
+                                    <Font name="System Bold" size="15.0" />
+                                 </font>
+                                 <padding>
+                                    <Insets left="30.0" />
+                                 </padding>
+                                 <graphic>
+                                    <FontAwesomeIcon glyphName="ASTERISK" />
+                                 </graphic>
+                              </Button>
+                              <VBox fx:id="subMenuDonViTinh" layoutX="10.0" layoutY="865.0">
+                                 <children>
+                                    <Button fx:id="btnThemDonViTinh" graphicTextGap="5.0" maxWidth="1.7976931348623157E308" mnemonicParsing="false" prefHeight="54.0" styleClass="sidebar-sub-item" stylesheets="@../styles/dashboard_style.css" text="Thêm đơn vị tính">
+                                       <graphic>
+                                          <FontAwesomeIcon fill="#333333" glyphName="PLUS" />
+                                       </graphic>
+                                       <font>
+                                          <Font size="15.0" />
+                                       </font>
+                                       <padding>
+                                          <Insets left="50.0" />
+                                       </padding>
+                                    </Button>
+                                    <Button fx:id="btnCapNhatDonViTinh" graphicTextGap="5.0" maxWidth="1.7976931348623157E308" mnemonicParsing="false" prefHeight="54.0" styleClass="sidebar-sub-item" stylesheets="@../styles/dashboard_style.css" text="Cập nhật đơn vị tính">
+                                       <font>
+                                          <Font size="15.0" />
+                                       </font>
+                                       <padding>
+                                          <Insets left="50.0" />
+                                       </padding>
+                                       <graphic>
+                                          <FontAwesomeIcon glyphName="REFRESH" />
+                                       </graphic>
+                                    </Button>
+                                 </children>
+                              </VBox>
+                              <Button fx:id="btnKhuyenMai" layoutX="10.0" layoutY="1032.0" maxWidth="1.7976931348623157E308" mnemonicParsing="false" prefHeight="54.0" styleClass="sidebar-item" stylesheets="@../styles/dashboard_style.css" text="Khuyến mãi">
+                                 <font>
+                                    <Font name="System Bold" size="15.0" />
+                                 </font>
+                                 <padding>
+                                    <Insets left="30.0" />
+                                 </padding>
+                                 <graphic>
+                                    <FontAwesomeIcon glyphName="GIFT" />
+                                 </graphic>
+                              </Button>
+                              <VBox fx:id="subMenuKhuyenMai" layoutX="10.0" layoutY="1091.0">
+                                 <children>
+                                    <Button fx:id="btnXemKhuyenMai" graphicTextGap="5.0" maxWidth="1.7976931348623157E308" mnemonicParsing="false" prefHeight="54.0" styleClass="sidebar-sub-item" stylesheets="@../styles/dashboard_style.css" text="Tìm khuyến mãi">
+                                       <graphic>
+                                          <FontAwesomeIcon fill="#333333" glyphName="SEARCH" />
+                                       </graphic>
+                                       <font>
+                                          <Font size="15.0" />
+                                       </font>
+                                       <padding>
+                                          <Insets left="50.0" />
+                                       </padding>
+                                    </Button>
+                                    <Button fx:id="btnThemKhuyenMai" graphicTextGap="5.0" maxWidth="1.7976931348623157E308" mnemonicParsing="false" prefHeight="54.0" styleClass="sidebar-sub-item" stylesheets="@../styles/dashboard_style.css" text="Thêm khuyến mãi">
+                                       <graphic>
+                                          <FontAwesomeIcon fill="#333333" glyphName="PLUS" />
+                                       </graphic>
+                                       <font>
+                                          <Font size="15.0" />
+                                       </font>
+                                       <padding>
+                                          <Insets left="50.0" />
+                                       </padding>
+                                    </Button>
+                                    <Button fx:id="btnCapNhatKhuyenMai" graphicTextGap="5.0" maxWidth="1.7976931348623157E308" mnemonicParsing="false" prefHeight="54.0" styleClass="sidebar-sub-item" stylesheets="@../styles/dashboard_style.css" text="Cập nhật khuyến mãi">
+                                       <font>
+                                          <Font size="15.0" />
+                                       </font>
+                                       <padding>
+                                          <Insets left="50.0" />
+                                       </padding>
+                                       <graphic>
+                                          <FontAwesomeIcon glyphName="REFRESH" />
+                                       </graphic>
+                                    </Button>
+                                 </children>
+                              </VBox>
+                              <Button fx:id="btnPhieuNhap" layoutX="10.0" layoutY="978.0" maxWidth="1.7976931348623157E308" mnemonicParsing="false" prefHeight="54.0" styleClass="sidebar-item" stylesheets="@../styles/dashboard_style.css" text="Phiếu nhập">
+                                 <font>
+                                    <Font name="System Bold" size="15.0" />
+                                 </font>
+                                 <padding>
+                                    <Insets left="30.0" />
+                                 </padding>
+                                 <graphic>
+                                    <FontAwesomeIcon glyphName="CLIPBOARD" />
+                                 </graphic>
+                              </Button>
+                              <VBox fx:id="subMenuPhieuNhap" layoutX="10.0" layoutY="1037.0">
+                                 <children>
+                                    <Button fx:id="btnXemPhieuNhap" graphicTextGap="5.0" maxWidth="1.7976931348623157E308" mnemonicParsing="false" prefHeight="54.0" styleClass="sidebar-sub-item" stylesheets="@../styles/dashboard_style.css" text="Tìm phiếu nhập">
+                                       <graphic>
+                                          <FontAwesomeIcon fill="#333333" glyphName="SEARCH" />
+                                       </graphic>
+                                       <font>
+                                          <Font size="15.0" />
+                                       </font>
+                                       <padding>
+                                          <Insets left="50.0" />
+                                       </padding>
+                                    </Button>
+                                    <Button fx:id="btnThemPhieuNhap" graphicTextGap="5.0" maxWidth="1.7976931348623157E308" mnemonicParsing="false" prefHeight="54.0" styleClass="sidebar-sub-item" stylesheets="@../styles/dashboard_style.css" text="Thêm phiếu nhập">
+                                       <graphic>
+                                          <FontAwesomeIcon fill="#333333" glyphName="PLUS" />
+                                       </graphic>
+                                       <font>
+                                          <Font size="15.0" />
+                                       </font>
+                                       <padding>
+                                          <Insets left="50.0" />
+                                       </padding>
+                                    </Button>
+                                 </children>
+                              </VBox>
+                              <Button fx:id="btnKhachHang" layoutX="10.0" layoutY="1376.0" maxWidth="1.7976931348623157E308" mnemonicParsing="false" prefHeight="54.0" styleClass="sidebar-item" stylesheets="@../styles/dashboard_style.css" text="Khách hàng">
+                                 <font>
+                                    <Font name="System Bold" size="15.0" />
+                                 </font>
+                                 <padding>
+                                    <Insets left="30.0" />
+                                 </padding>
+                                 <graphic>
+                                    <FontAwesomeIcon glyphName="USERS" />
+                                 </graphic>
+                              </Button>
+                              <VBox fx:id="subMenuKhachHang" layoutX="10.0" layoutY="1435.0">
+                                 <children>
+                                    <Button fx:id="btnXemKhachHang" graphicTextGap="5.0" maxWidth="1.7976931348623157E308" mnemonicParsing="false" prefHeight="54.0" styleClass="sidebar-sub-item" stylesheets="@../styles/dashboard_style.css" text="Tìm khách hàng">
+                                       <graphic>
+                                          <FontAwesomeIcon fill="#333333" glyphName="SEARCH" />
+                                       </graphic>
+                                       <font>
+                                          <Font size="15.0" />
+                                       </font>
+                                       <padding>
+                                          <Insets left="50.0" />
+                                       </padding>
+                                    </Button>
+                                    <Button fx:id="btnCapNhatKhachHang" graphicTextGap="5.0" layoutX="10.0" layoutY="64.0" maxWidth="1.7976931348623157E308" mnemonicParsing="false" prefHeight="54.0" styleClass="sidebar-sub-item" stylesheets="@../styles/dashboard_style.css" text="Cập nhật khách hàng">
+                                       <graphic>
+                                          <FontAwesomeIcon fill="#333333" glyphName="REFRESH" />
+                                       </graphic>
+                                       <font>
+                                          <Font size="15.0" />
+                                       </font>
+                                       <padding>
+                                          <Insets left="50.0" />
+                                       </padding>
+                                    </Button>
+                                 </children>
+                              </VBox>
+                              <Button fx:id="btnNhanVien" layoutX="10.0" layoutY="1548.0" maxWidth="1.7976931348623157E308" mnemonicParsing="false" prefHeight="54.0" styleClass="sidebar-item" stylesheets="@../styles/dashboard_style.css" text="Nhân viên">
+                                 <font>
+                                    <Font name="System Bold" size="15.0" />
+                                 </font>
+                                 <padding>
+                                    <Insets left="30.0" />
+                                 </padding>
+                                 <graphic>
+                                    <FontAwesomeIcon glyphName="USER" />
+                                 </graphic>
+                              </Button>
+                              <VBox fx:id="subMenuNhanVien" layoutX="10.0" layoutY="1607.0">
+                                 <children>
+                                    <Button fx:id="btnXemNhanVien" graphicTextGap="5.0" maxWidth="1.7976931348623157E308" mnemonicParsing="false" prefHeight="54.0" styleClass="sidebar-sub-item" stylesheets="@../styles/dashboard_style.css" text="Tìm nhân viên">
+                                       <graphic>
+                                          <FontAwesomeIcon fill="#333333" glyphName="SEARCH" />
+                                       </graphic>
+                                       <font>
+                                          <Font size="15.0" />
+                                       </font>
+                                       <padding>
+                                          <Insets left="50.0" />
+                                       </padding>
+                                    </Button>
+                                    <Button fx:id="btnThemNhanVien" graphicTextGap="5.0" maxWidth="1.7976931348623157E308" mnemonicParsing="false" prefHeight="54.0" styleClass="sidebar-sub-item" stylesheets="@../styles/dashboard_style.css" text="Thêm nhân viên">
+                                       <graphic>
+                                          <FontAwesomeIcon fill="#333333" glyphName="PLUS" />
+                                       </graphic>
+                                       <font>
+                                          <Font size="15.0" />
+                                       </font>
+                                       <padding>
+                                          <Insets left="50.0" />
+                                       </padding>
+                                    </Button>
+                                    <Button fx:id="btnCapNhatNhanVien" graphicTextGap="5.0" layoutX="10.0" layoutY="64.0" maxWidth="1.7976931348623157E308" mnemonicParsing="false" prefHeight="54.0" styleClass="sidebar-sub-item" stylesheets="@../styles/dashboard_style.css" text="Cập nhật nhân viên">
+                                       <graphic>
+                                          <FontAwesomeIcon fill="#333333" glyphName="REFRESH" />
+                                       </graphic>
+                                       <font>
+                                          <Font size="15.0" />
+                                       </font>
+                                       <padding>
+                                          <Insets left="50.0" />
+                                       </padding>
+                                    </Button>
+                                 </children>
+                              </VBox>
+                              <Button fx:id="btnCaiDat" layoutX="10.0" layoutY="1774.0" maxWidth="1.7976931348623157E308" mnemonicParsing="false" prefHeight="54.0" styleClass="sidebar-item" stylesheets="@../styles/dashboard_style.css" text="Cài đặt">
+                                 <font>
+                                    <Font name="System Bold" size="15.0" />
+                                 </font>
+                                 <padding>
+                                    <Insets left="30.0" />
+                                 </padding>
+                                 <graphic>
+                                    <FontAwesomeIcon glyphName="COG" />
+                                 </graphic>
+                              </Button>
+                              <VBox fx:id="subMenuCaiDat" layoutX="10.0" layoutY="1833.0">
+                                 <children>
+                                    <Button fx:id="btnCaiDatTaiKhoan" graphicTextGap="5.0" maxWidth="1.7976931348623157E308" mnemonicParsing="false" prefHeight="54.0" styleClass="sidebar-sub-item" stylesheets="@../styles/dashboard_style.css" text="Cài đặt tài khoản">
+                                       <graphic>
+                                          <FontAwesomeIcon fill="#333333" glyphName="LOCK" />
+                                       </graphic>
+                                       <font>
+                                          <Font size="15.0" />
+                                       </font>
+                                       <padding>
+                                          <Insets left="50.0" />
+                                       </padding>
+                                    </Button>
+                                 </children>
+                              </VBox>
+                           </children>
+                        </VBox>
+                     </content>
+                  </ScrollPane>
+               </children>
+            </AnchorPane>
+         </left>
+      </BorderPane>
+   </children>
+</AnchorPane>

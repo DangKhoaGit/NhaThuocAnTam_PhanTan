@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcon?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.Cursor?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.effect.DropShadow?>
+<?import javafx.scene.layout.FlowPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Pane?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.paint.Color?>
+<?import javafx.scene.text.Font?>
+<?import javafx.scene.text.Text?>
+
+<ScrollPane fitToHeight="true" fitToWidth="true" prefHeight="730.0" prefWidth="900.0" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.antam.app.controller.khachhang.CapNhatKhachHangController">
+   <content>
+      <VBox spacing="30.0" style="-fx-background-color: #f8fafc;">
+         <children>
+            <HBox alignment="CENTER_LEFT">
+               <children>
+                  <Text fill="#1e3a8a" strokeType="OUTSIDE" strokeWidth="0.0" text="Tìm khách hàng">
+                     <font>
+                        <Font name="System Bold" size="30.0" />
+                     </font>
+                  </Text>
+                  <Pane HBox.hgrow="ALWAYS">
+                     <cursor>
+                        <Cursor fx:constant="DEFAULT" />
+                     </cursor></Pane>
+                  <Button fx:id="btnEditEmployee" mnemonicParsing="false" prefHeight="36.0" prefWidth="167.0" style="-fx-background-color: #2563eb; -fx-background-radius: 5px;" text="Sửa thông tin khách hàng" textFill="WHITE" />
+               </children>
+            </HBox>
+            <FlowPane hgap="5.0" styleClass="box-pane" stylesheets="@../../styles/dashboard_style.css" vgap="5.0">
+               <children>
+                  <VBox spacing="5.0">
+                     <children>
+                        <Text fill="#374151" strokeType="OUTSIDE" strokeWidth="0.0" text="Số đơn hàng">
+                           <font>
+                              <Font size="13.0" />
+                           </font>
+                        </Text>
+                        <ComboBox fx:id="cbSoDonHang" prefHeight="40.0" prefWidth="200.0" promptText="Chọn số đơn hàng" styleClass="combo-box" stylesheets="@../../styles/dashboard_style.css" />
+                     </children>
+                  </VBox>
+                  <VBox spacing="5.0">
+                     <children>
+                        <Text fill="#374151" strokeType="OUTSIDE" strokeWidth="0.0" text="Loại khách hàng">
+                           <font>
+                              <Font size="13.0" />
+                           </font>
+                        </Text>
+                        <ComboBox fx:id="cbTrangThai" prefHeight="40.0" prefWidth="200.0" promptText="Chọn trạng thái" styleClass="combo-box" stylesheets="@../../styles/dashboard_style.css" />
+                     </children>
+                  </VBox>
+                  <VBox spacing="5.0">
+                     <children>
+                        <Text fill="#374151" strokeType="OUTSIDE" strokeWidth="0.0" text="Tổng chi tiêu">
+                           <font>
+                              <Font size="13.0" />
+                           </font>
+                        </Text>
+                        <ComboBox fx:id="cbTongChiTieu" prefHeight="40.0" prefWidth="200.0" promptText="Chọn tổng chi tiêu" styleClass="combo-box" stylesheets="@../../styles/dashboard_style.css" />
+                     </children>
+                  </VBox>
+               </children>
+               <padding>
+                  <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+               </padding>
+               <effect>
+                  <DropShadow blurType="GAUSSIAN" height="44.45" offsetX="3.0" offsetY="2.0" radius="19.5275" width="35.66">
+                     <color>
+                        <Color red="0.8274509906768799" green="0.8274509906768799" blue="0.8274509906768799" />
+                     </color>
+                  </DropShadow>
+               </effect>
+            </FlowPane>
+            <HBox alignment="CENTER_LEFT" spacing="10.0">
+               <children>
+                  <TextField fx:id="txtSearchEmployee" prefHeight="40.0" prefWidth="300.0" promptText="Tìm kiếm khách hàng..." style="-fx-background-color: white; -fx-border-color: #e5e7eb; -fx-border-radius: 8px;" />
+                  <Button fx:id="btnSearchEmployee" mnemonicParsing="false" prefHeight="40.0" prefWidth="50.0" style="-fx-background-color: #2563eb; -fx-background-radius: 5px;" textFill="WHITE">
+                     <graphic>
+                        <FontAwesomeIcon fill="WHITE" glyphName="SEARCH" />
+                     </graphic>
+                  </Button>
+               </children>
+            </HBox>
+            <VBox>
+               <children>
+                  <TableView fx:id="tableViewKhachHang" prefHeight="400.0" prefWidth="867.0" stylesheets="@../../styles/dashboard_style.css">
+                     <columns>
+                        <TableColumn fx:id="colMaKH" prefWidth="100.0" text="Mã khách hàng" />
+                        <TableColumn fx:id="colTenKH" prefWidth="150.0" text="Tên khách hàng" />
+                        <TableColumn fx:id="colSoDienThoai" prefWidth="120.0" text="Số điện thoại" />
+                        <TableColumn fx:id="colSoDonHang" prefWidth="100.0" text="Số đơn hàng" />
+                        <TableColumn fx:id="colTongChiTieu" prefWidth="120.0" text="Tổng chi tiêu" />
+                        <TableColumn fx:id="colDonHangGanNhat" prefWidth="130.0" text="Đơn hàng gần nhất" />
+                        <TableColumn fx:id="colLoaiKhachHang" prefWidth="120.0" text="Loại khách hàng" />
+                     </columns>
+                     <columnResizePolicy>
+                        <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
+                     </columnResizePolicy>
+                     <VBox.margin>
+                        <Insets bottom="10.0" />
+                     </VBox.margin>
+                  </TableView>
+                  <Button maxWidth="1.7976931348623157E308" mnemonicParsing="false" styleClass="pane-huongdan" stylesheets="@../../styles/dashboard_style.css" text="Nhấn 2 lần chuột trái vào bảng để xem chi tiết" textFill="#2563eb">
+                     <padding>
+                        <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                     </padding>
+                     <graphic>
+                        <FontAwesomeIcon fill="#2563eb" glyphName="INFO" />
+                     </graphic>
+                  </Button>
+               </children>
+            </VBox>
+         </children>
+         <padding>
+            <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
+         </padding>
+      </VBox>
+   </content>
+</ScrollPane>

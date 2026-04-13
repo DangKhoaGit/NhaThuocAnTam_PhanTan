@@ -1,0 +1,347 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcon?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.chart.BarChart?>
+<?import javafx.scene.chart.CategoryAxis?>
+<?import javafx.scene.chart.LineChart?>
+<?import javafx.scene.chart.NumberAxis?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.effect.DropShadow?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.FlowPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Pane?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.paint.Color?>
+<?import javafx.scene.text.Font?>
+<?import javafx.scene.text.Text?>
+
+<ScrollPane fitToHeight="true" fitToWidth="true" prefHeight="2000.0" prefWidth="900.0" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.antam.app.controller.hoadon.ThongKeDoanhThuController">
+   <content>
+      <VBox prefHeight="2000.0" prefWidth="889.0" spacing="30.0" style="-fx-background-color: #f8fafc;">
+         <children>
+            <HBox alignment="CENTER_LEFT">
+               <children>
+                  <Text fill="#1e3a8a" strokeType="OUTSIDE" strokeWidth="0.0" text="Thống kê doanh thu">
+                     <font>
+                        <Font name="System Bold" size="30.0" />
+                     </font>
+                  </Text>
+                  <Pane HBox.hgrow="ALWAYS" />
+                  <Button fx:id="btnXuatBaoCao" mnemonicParsing="false" onAction="#xuatBaoCao" prefHeight="50.0" prefWidth="120.0" styleClass="btn-gray" stylesheets="@../../styles/dashboard_style.css" text="Xuất báo cáo" textFill="WHITE">
+                     <graphic>
+                        <FontAwesomeIcon fill="WHITE" glyphName="CLOUD_DOWNLOAD" />
+                     </graphic>
+                  </Button>
+               </children>
+            </HBox>
+            <FlowPane hgap="5.0" prefHeight="200.0" prefWidth="200.0" styleClass="box-pane" stylesheets="@../../styles/dashboard_style.css" vgap="5.0">
+               <children>
+                  <VBox spacing="5.0">
+                     <children>
+                        <Text fill="#374151" strokeType="OUTSIDE" strokeWidth="0.0" text="Thời gian:">
+                           <font>
+                              <Font size="13.0" />
+                           </font>
+                        </Text>
+                        <ComboBox fx:id="cmbThoiGian" onAction="#locTheoThoiGian" prefHeight="40.0" prefWidth="200.0" promptText="Chọn thời gian" styleClass="combo-box" stylesheets="@../../styles/dashboard_style.css" />
+                     </children>
+                  </VBox>
+                  <VBox spacing="5.0">
+                     <children>
+                        <Text fill="#374151" strokeType="OUTSIDE" strokeWidth="0.0" text="Nhân viên:">
+                           <font>
+                              <Font size="13.0" />
+                           </font>
+                        </Text>
+                        <ComboBox fx:id="cmbNhanVien" onAction="#locTheoNhanVien" prefHeight="40.0" prefWidth="200.0" promptText="Chọn nhân viên" styleClass="combo-box" stylesheets="@../../styles/dashboard_style.css" />
+                     </children>
+                  </VBox>
+               </children>
+               <VBox.margin>
+                  <Insets />
+               </VBox.margin>
+               <padding>
+                  <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+               </padding>
+               <effect>
+                  <DropShadow blurType="GAUSSIAN" height="44.45" offsetX="3.0" offsetY="2.0" radius="19.5275" width="35.66">
+                     <color>
+                        <Color red="0.8274509906768799" green="0.8274509906768799" blue="0.8274509906768799" />
+                     </color>
+                  </DropShadow>
+               </effect>
+            </FlowPane>
+            <FlowPane alignment="CENTER" hgap="30.0" vgap="20.0">
+               <children>
+                  <StackPane prefHeight="121.0" prefWidth="250.0" style="-fx-background-color: white; -fx-background-radius: 20px;">
+                     <children>
+                        <HBox alignment="CENTER_LEFT" spacing="10.0">
+                           <children>
+                              <Button mnemonicParsing="false" prefHeight="60.0" prefWidth="60.0" style="-fx-background-color: #059669; -fx-background-radius: 15px;">
+                                 <graphic>
+                                    <FontAwesomeIcon fill="WHITE" glyphName="MONEY" size="2em" />
+                                 </graphic>
+                              </Button>
+                              <VBox maxHeight="-Infinity" prefHeight="60.0">
+                                 <children>
+                                    <Text fx:id="txtDoanhThuKy" fill="#1e3a8a" strokeType="OUTSIDE" strokeWidth="0.0" text="0">
+                                       <font>
+                                          <Font name="System Bold" size="32.0" />
+                                       </font>
+                                    </Text>
+                                    <Text fill="#64748b" strokeType="OUTSIDE" strokeWidth="0.0" text="Doanh thu kỳ" />
+                                    <Button fx:id="btnDoanhThuChange" mnemonicParsing="false" style="-fx-background-color: #fee2e2; -fx-text-fill: red; -fx-background-radius: 50px;" text="0%" />
+                                 </children>
+                              </VBox>
+                           </children>
+                           <StackPane.margin>
+                              <Insets />
+                           </StackPane.margin>
+                           <padding>
+                              <Insets left="20.0" right="20.0" />
+                           </padding>
+                        </HBox>
+                     </children>
+                     <effect>
+                        <DropShadow blurType="GAUSSIAN" height="11.97" offsetX="2.0" offsetY="3.0" radius="8.477500000000001" width="23.94">
+                           <color>
+                              <Color red="0.8289473652839661" green="0.8289473652839661" blue="0.8289473652839661" />
+                           </color>
+                        </DropShadow>
+                     </effect>
+                  </StackPane>
+                  <StackPane prefHeight="121.0" prefWidth="250.0" style="-fx-background-color: white; -fx-background-radius: 20px;">
+                     <children>
+                        <HBox alignment="CENTER_LEFT" spacing="10.0">
+                           <children>
+                              <Button mnemonicParsing="false" prefHeight="60.0" prefWidth="60.0" style="-fx-background-color: #2563eb; -fx-background-radius: 15px;">
+                                 <graphic>
+                                    <FontAwesomeIcon fill="WHITE" glyphName="FILE" size="2em" />
+                                 </graphic>
+                              </Button>
+                              <VBox maxHeight="-Infinity" prefHeight="60.0">
+                                 <children>
+                                    <Text fx:id="txtSoDonHang" fill="#1e3a8a" strokeType="OUTSIDE" strokeWidth="0.0" text="0">
+                                       <font>
+                                          <Font name="System Bold" size="32.0" />
+                                       </font>
+                                    </Text>
+                                    <Text fill="#64748b" strokeType="OUTSIDE" strokeWidth="0.0" text="Đơn hàng" />
+                                    <Button fx:id="btnDonHangChange" mnemonicParsing="false" style="-fx-background-color: #86db8c; -fx-text-fill: green; -fx-background-radius: 50px;" text="0%" />
+                                 </children>
+                              </VBox>
+                           </children>
+                           <StackPane.margin>
+                              <Insets />
+                           </StackPane.margin>
+                           <padding>
+                              <Insets left="20.0" right="20.0" />
+                           </padding>
+                        </HBox>
+                     </children>
+                     <effect>
+                        <DropShadow blurType="GAUSSIAN" height="17.96" offsetX="2.0" offsetY="3.0" radius="9.975000000000001" width="23.94">
+                           <color>
+                              <Color red="0.8274509906768799" green="0.8274509906768799" blue="0.8274509906768799" />
+                           </color>
+                        </DropShadow>
+                     </effect>
+                  </StackPane>
+                  <StackPane prefHeight="121.0" prefWidth="250.0" style="-fx-background-color: white; -fx-background-radius: 20px;">
+                     <children>
+                        <HBox alignment="CENTER_LEFT" spacing="10.0">
+                           <children>
+                              <Button mnemonicParsing="false" prefHeight="60.0" prefWidth="60.0" style="-fx-background-color: #8b5cf6; -fx-background-radius: 15px;">
+                                 <graphic>
+                                    <FontAwesomeIcon fill="WHITE" glyphName="CALCULATOR" size="2em" />
+                                 </graphic>
+                              </Button>
+                              <VBox maxHeight="-Infinity" prefHeight="60.0">
+                                 <children>
+                                    <Text fx:id="txtDonHangTB" fill="#1e3a8a" strokeType="OUTSIDE" strokeWidth="0.0" text="0">
+                                       <font>
+                                          <Font name="System Bold" size="32.0" />
+                                       </font>
+                                    </Text>
+                                    <Text fill="#64748b" strokeType="OUTSIDE" strokeWidth="0.0" text="Đơn hàng TB" />
+                                    <Button fx:id="btnDonHangTBChange" mnemonicParsing="false" style="-fx-background-color: #86db8c; -fx-text-fill: green; -fx-background-radius: 50px;" text="0%" />
+                                 </children>
+                              </VBox>
+                           </children>
+                           <StackPane.margin>
+                              <Insets />
+                           </StackPane.margin>
+                           <padding>
+                              <Insets left="20.0" right="20.0" />
+                           </padding>
+                        </HBox>
+                     </children>
+                     <effect>
+                        <DropShadow blurType="GAUSSIAN" height="11.97" offsetX="2.0" offsetY="3.0" radius="8.477500000000001" width="23.94">
+                           <color>
+                              <Color red="0.8289473652839661" green="0.8289473652839661" blue="0.8289473652839661" />
+                           </color>
+                        </DropShadow>
+                     </effect>
+                  </StackPane>
+                  <StackPane prefHeight="121.0" prefWidth="250.0" style="-fx-background-color: white; -fx-background-radius: 20px;">
+                     <children>
+                        <HBox alignment="CENTER_LEFT" spacing="10.0">
+                           <children>
+                              <Button mnemonicParsing="false" prefHeight="60.0" prefWidth="60.0" style="-fx-background-color: #f59e0b; -fx-background-radius: 15px;">
+                                 <graphic>
+                                    <FontAwesomeIcon fill="WHITE" glyphName="USERS" size="2em" />
+                                 </graphic>
+                              </Button>
+                              <VBox maxHeight="-Infinity" prefHeight="60.0">
+                                 <children>
+                                    <Text fx:id="txtSoKhachHang" fill="#1e3a8a" strokeType="OUTSIDE" strokeWidth="0.0" text="0">
+                                       <font>
+                                          <Font name="System Bold" size="32.0" />
+                                       </font>
+                                    </Text>
+                                    <Text fill="#64748b" strokeType="OUTSIDE" strokeWidth="0.0" text="Khách hàng" />
+                                    <Button fx:id="btnKhachHangChange" mnemonicParsing="false" style="-fx-background-color: #fee2e2; -fx-text-fill: red; -fx-background-radius: 50px;" text="0%" />
+                                 </children>
+                              </VBox>
+                           </children>
+                           <StackPane.margin>
+                              <Insets />
+                           </StackPane.margin>
+                           <padding>
+                              <Insets left="20.0" right="20.0" />
+                           </padding>
+                        </HBox>
+                     </children>
+                     <effect>
+                        <DropShadow blurType="GAUSSIAN" height="11.97" offsetX="2.0" offsetY="3.0" radius="8.477500000000001" width="23.94">
+                           <color>
+                              <Color red="0.8289473652839661" green="0.8289473652839661" blue="0.8289473652839661" />
+                           </color>
+                        </DropShadow>
+                     </effect>
+                  </StackPane>
+               </children>
+            </FlowPane>
+            <FlowPane alignment="TOP_CENTER" hgap="20.0" rowValignment="TOP" vgap="20.0">
+               <children>
+                  <VBox maxHeight="-Infinity" prefWidth="500.0" spacing="10.0" styleClass="box-pane" stylesheets="@../../styles/dashboard_style.css">
+                     <effect>
+                        <DropShadow height="23.93" offsetX="3.0" offsetY="2.0" radius="12.93" width="29.79">
+                           <color>
+                              <Color red="0.8552631735801697" green="0.8552631735801697" blue="0.8552631735801697" />
+                           </color>
+                        </DropShadow>
+                     </effect>
+                     <padding>
+                        <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                     </padding>
+                     <children>
+                        <Text fill="#1e3a8a" strokeType="OUTSIDE" strokeWidth="0.0" text="Doanh thu theo thời gian">
+                           <font>
+                              <Font name="System Bold" size="20.0" />
+                           </font>
+                        </Text>
+                        <LineChart fx:id="chartDoanhThu">
+                           <xAxis>
+                              <CategoryAxis side="BOTTOM" />
+                           </xAxis>
+                           <yAxis>
+                              <NumberAxis side="LEFT" />
+                           </yAxis>
+                        </LineChart>
+                     </children>
+                  </VBox>
+                  <VBox maxHeight="-Infinity" prefWidth="500.0" spacing="10.0" styleClass="box-pane" stylesheets="@../../styles/dashboard_style.css">
+                     <effect>
+                        <DropShadow height="23.93" offsetX="3.0" offsetY="2.0" radius="12.93" width="29.79">
+                           <color>
+                              <Color red="0.8552631735801697" green="0.8552631735801697" blue="0.8552631735801697" />
+                           </color>
+                        </DropShadow>
+                     </effect>
+                     <padding>
+                        <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                     </padding>
+                     <children>
+                        <Text fill="#1e3a8a" strokeType="OUTSIDE" strokeWidth="0.0" text="Top sản phẩm bán chạy">
+                           <font>
+                              <Font name="System Bold" size="20.0" />
+                           </font>
+                        </Text>
+                        <BarChart fx:id="chartTopSanPham">
+                           <xAxis>
+                              <CategoryAxis side="BOTTOM" />
+                           </xAxis>
+                           <yAxis>
+                              <NumberAxis side="LEFT" />
+                           </yAxis>
+                        </BarChart>
+                     </children>
+                  </VBox>
+               </children>
+            </FlowPane>
+            <AnchorPane styleClass="box-pane" stylesheets="@../../styles/dashboard_style.css">
+               <children>
+                  <VBox prefHeight="500.0" prefWidth="100.0" spacing="5.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0">
+                     <children>
+                        <HBox>
+                           <children>
+                              <Text fill="#1e3a8a" strokeType="OUTSIDE" strokeWidth="0.0" text="Chi tiết doanh thu">
+                                 <font>
+                                    <Font name="System Bold" size="20.0" />
+                                 </font>
+                              </Text>
+                              <Region prefHeight="60.0" prefWidth="200.0" HBox.hgrow="ALWAYS" />
+                              <Button fx:id="btnRefresh" mnemonicParsing="false" onAction="#refreshData" prefHeight="40.0" prefWidth="50.0" style="-fx-background-color: #6b7280; -fx-border-radius: 8px;">
+                                 <graphic>
+                                    <FontAwesomeIcon fill="WHITE" glyphName="REFRESH" />
+                                 </graphic>
+                              </Button>
+                           </children>
+                        </HBox>
+                        <TableView fx:id="tableChiTiet" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="500.0" stylesheets="@../../styles/dashboard_style.css">
+                           <columns>
+                              <TableColumn fx:id="colNgay" prefWidth="75.0" text="Ngày" />
+                              <TableColumn fx:id="colSoDonHang" prefWidth="75.0" text="Số đơn hàng" />
+                              <TableColumn fx:id="colDoanhThu" prefWidth="75.0" text="Doanh thu" />
+                              <TableColumn fx:id="colDonHangTB" prefWidth="75.0" text="Đơn hàng TB" />
+                              <TableColumn fx:id="colKhachHangMoi" prefWidth="75.0" text="Khách hàng mới" />
+                              <TableColumn fx:id="colNhanVienBan" prefWidth="75.0" text="Nhân viên bán" />
+                           </columns>
+                           <columnResizePolicy>
+                              <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
+                           </columnResizePolicy>
+                        </TableView>
+                     </children>
+                     <padding>
+                        <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                     </padding>
+                  </VBox>
+               </children>
+               <padding>
+                  <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+               </padding>
+               <effect>
+                  <DropShadow blurType="GAUSSIAN" offsetX="3.0" offsetY="2.0">
+                     <color>
+                        <Color red="0.9210526347160339" green="0.9210526347160339" blue="0.9210526347160339" />
+                     </color>
+                  </DropShadow>
+               </effect>
+            </AnchorPane>
+         </children>
+         <padding>
+            <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
+         </padding>
+      </VBox>
+   </content>
+</ScrollPane>

@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.DialogPane?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.FlowPane?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.RowConstraints?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
+<?import javafx.scene.text.Text?>
+
+<DialogPane fx:id="dialogPane" prefWidth="800.0" style="-fx-background-color: white;" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.antam.app.controller.hoadon.DoiThuocFormController">
+    <header>
+        <FlowPane alignment="CENTER" style="-fx-background-color: #1e3a8a;">
+            <children>
+                <Text fill="WHITE" strokeType="OUTSIDE" strokeWidth="0.0" text="Đổi thuốc">
+                    <font>
+                        <Font name="System Bold" size="15.0" />
+                    </font>
+                    <FlowPane.margin>
+                        <Insets bottom="10.0" top="10.0" />
+                    </FlowPane.margin>
+                </Text>
+            </children>
+        </FlowPane>
+    </header>
+   <content>
+      <AnchorPane prefHeight="600.0" prefWidth="800.0">
+         <children>
+            <VBox spacing="10.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0">
+               <children>
+                  <ScrollPane fitToWidth="true">
+                     <content>
+                        <VBox prefHeight="354.0" prefWidth="778.0" spacing="10.0">
+                           <children>
+                              <GridPane hgap="5.0">
+                                <columnConstraints>
+                                  <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+                                  <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+                                </columnConstraints>
+                                <rowConstraints>
+                                  <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                                  <RowConstraints minHeight="10.0" prefHeight="40.0" vgrow="SOMETIMES" />
+                                  <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                                    <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                                </rowConstraints>
+                                 <children>
+                                    <Text fill="#374151" strokeType="OUTSIDE" strokeWidth="0.0" text="Mã hóa đơn gốc:" />
+                                    <TextField fx:id="txtMaHoaDonDoi" maxHeight="-Infinity" prefHeight="40.0" prefWidth="50.0" styleClass="text-field" stylesheets="@../../../styles/dashboard_style.css" GridPane.rowIndex="1" />
+                                    <TextField fx:id="txtKhachHangDoi" maxHeight="-Infinity" prefHeight="40.0" styleClass="text-field" stylesheets="@../../../styles/dashboard_style.css" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+                                    <Text fill="#374151" strokeType="OUTSIDE" strokeWidth="0.0" text="Khách hàng:" GridPane.columnIndex="1" />
+                                    <Text fill="#374151" strokeType="OUTSIDE" strokeWidth="0.0" text="Lý do đổi:" GridPane.rowIndex="2" />
+                                    <ComboBox fx:id="cbLyDoDoi" prefWidth="150.0" stylesheets="@../../../styles/dashboard_style.css" GridPane.rowIndex="3" />
+                                 </children>
+                              </GridPane>
+                              <VBox fx:id="vhDSCTHD" maxWidth="1.7976931348623157E308" spacing="5.0" style="-fx-border-color: #e5e7eb; -fx-border-radius: 6px; -fx-border-width: 2px;">
+                                 <padding>
+                                    <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                                 </padding>
+                              </VBox>
+                              <GridPane hgap="5.0" style="-fx-background-color: #f8fafc; -fx-background-radius: 8px;">
+                                 <columnConstraints>
+                                    <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+                                    <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+                                 </columnConstraints>
+                                 <rowConstraints>
+                                    <RowConstraints minHeight="10.0" prefHeight="40.0" vgrow="SOMETIMES" />
+                                 </rowConstraints>
+                                 <children>
+                                    <Text fill="#374151" strokeType="OUTSIDE" strokeWidth="0.0" text="Tổng tiền trả:">
+                                       <font>
+                                          <Font name="System Bold" size="13.0" />
+                                       </font>
+                                    </Text>
+                                    <Text fx:id="txtTongTienTra" fill="#374151" strokeType="OUTSIDE" strokeWidth="0.0" text="500.000đ" GridPane.columnIndex="1">
+                                       <font>
+                                          <Font name="System Bold" size="13.0" />
+                                       </font>
+                                    </Text>
+                                 </children>
+                                 <VBox.margin>
+                                    <Insets />
+                                 </VBox.margin>
+                                 <padding>
+                                    <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                                 </padding>
+                              </GridPane>
+                              <Text strokeType="OUTSIDE" strokeWidth="0.0" text="Thuốc mới:" />
+                              <VBox fx:id="vhDSCTHDM" maxWidth="1.7976931348623157E308" spacing="5.0" style="-fx-border-color: #e5e7eb; -fx-border-radius: 6px; -fx-border-width: 2px;">
+                                 <padding>
+                                    <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                                 </padding>
+                              </VBox>
+                            <Button fx:id="btnThemMoiThuoc" mnemonicParsing="false" style="-fx-background-color: #6b7280; -fx-font-size: 14px;  -fx-font-weight: BOLD;" text="Thêm thuốc mới" textFill="WHITE">
+                                 <padding>
+                                    <Insets bottom="5.0" left="10.0" right="10.0" top="5.0" />
+                                 </padding>
+                                 <VBox.margin>
+                                    <Insets left="20.0" />
+                                 </VBox.margin>
+                              </Button>
+                           </children>
+                        </VBox>
+                     </content>
+                  </ScrollPane>
+                  <GridPane hgap="5.0" style="-fx-background-color: #f8fafc; -fx-background-radius: 8px;">
+                     <columnConstraints>
+                        <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+                        <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+                     </columnConstraints>
+                     <rowConstraints>
+                        <RowConstraints minHeight="10.0" prefHeight="40.0" vgrow="SOMETIMES" />
+                     </rowConstraints>
+                     <children>
+                        <Text fill="#374151" strokeType="OUTSIDE" strokeWidth="0.0" text="Tổng tiền mua:">
+                           <font>
+                              <Font name="System Bold" size="13.0" />
+                           </font>
+                        </Text>
+                        <Text fx:id="txtTongTienMua" fill="#374151" strokeType="OUTSIDE" strokeWidth="0.0" text="1.000.000đ" GridPane.columnIndex="1">
+                           <font>
+                              <Font name="System Bold" size="13.0" />
+                           </font>
+                        </Text>
+                     </children>
+                     <padding>
+                        <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                     </padding>
+                  </GridPane>
+                  <VBox alignment="CENTER" prefWidth="100.0" style="-fx-background-color: #f8fafc; -fx-border-color: #2563eb; -fx-border-radius: 6px; -fx-border-width: 2px;">
+                     <padding>
+                        <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                     </padding>
+                     <children>
+                        <Text fx:id="txtTongTienDoi" fill="#1e3a8a" strokeType="OUTSIDE" strokeWidth="0.0" text="Tổng kết: 0 ₫">
+                           <font>
+                              <Font name="System Bold" size="22.0" />
+                           </font>
+                        </Text>
+                        <Text fx:id="txtThongBaoDoi" fill="#6b6b6b" strokeType="OUTSIDE" strokeWidth="0.0" text="Không phát sinh thêm tiền">
+                           <font>
+                              <Font name="System Italic" size="13.0" />
+                           </font>
+                        </Text>
+                     </children>
+                  </VBox>
+               </children>
+            </VBox>
+         </children>
+      </AnchorPane>
+   </content>
+
+</DialogPane>

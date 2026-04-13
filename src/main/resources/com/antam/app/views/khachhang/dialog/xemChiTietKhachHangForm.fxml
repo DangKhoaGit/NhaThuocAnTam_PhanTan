@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.DialogPane?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.FlowPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
+<?import javafx.scene.text.Text?>
+
+<DialogPane fx:id="dialogPane" prefWidth="800.0" style="-fx-background-color: white;" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.antam.app.controller.khachhang.XemChiTietKhachHangController">
+    <header>
+        <FlowPane alignment="CENTER" style="-fx-background-color: #1e3a8a;">
+            <children>
+                <Text fill="WHITE" strokeType="OUTSIDE" strokeWidth="0.0" text="Chi tiết khách hàng">
+                    <font>
+                        <Font name="System Bold" size="15.0" />
+                    </font>
+                    <FlowPane.margin>
+                        <Insets bottom="10.0" top="10.0" />
+                    </FlowPane.margin>
+                </Text>
+            </children>
+        </FlowPane>
+    </header>
+   <content>
+      <AnchorPane>
+         <children>
+            <VBox spacing="10.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0">
+               <children>
+                  <HBox style="-fx-background-color: #059669; -fx-background-radius: 5px;">
+                     <children>
+                        <VBox prefWidth="100.0" HBox.hgrow="ALWAYS">
+                           <children>
+                              <Text fx:id="txtMaKhachHang" fill="WHITE" strokeType="OUTSIDE" strokeWidth="0.0" text="Mã KH: KH001">
+                                 <font>
+                                    <Font name="System Bold" size="20.0" />
+                                 </font>
+                              </Text>
+                              <Text fx:id="txtTenKhachHang" fill="WHITE" strokeType="OUTSIDE" strokeWidth="0.0" text="Nguyễn Văn A">
+                                 <font>
+                                    <Font size="16.0" />
+                                 </font>
+                              </Text>
+                              <Text fx:id="txtSoDienThoai" fill="WHITE" strokeType="OUTSIDE" strokeWidth="0.0" text="SĐT: 0123456789">
+                                 <font>
+                                    <Font size="13.0" />
+                                 </font>
+                              </Text>
+                           </children>
+                        </VBox>
+                        <VBox prefWidth="100.0">
+                           <children>
+                              <Text fx:id="txtTongDonHang" fill="WHITE" strokeType="OUTSIDE" strokeWidth="0.0" text="Tổng đơn hàng: 1">
+                                 <font>
+                                    <Font name="System Bold" size="20.0" />
+                                 </font>
+                              </Text>
+                              <Text fx:id="txtTongChiTieu" fill="WHITE" strokeType="OUTSIDE" strokeWidth="0.0" text="Tổng chi tiêu: 125.000 ₫">
+                                 <font>
+                                    <Font size="13.0" />
+                                 </font>
+                              </Text>
+                              <Text fx:id="txtDonHangGanNhat" fill="WHITE" strokeType="OUTSIDE" strokeWidth="0.0" text="Đơn hàng gần nhất: 9/12/2024">
+                                 <font>
+                                    <Font size="13.0" />
+                                 </font>
+                              </Text>
+                           </children>
+                        </VBox>
+                     </children>
+                     <padding>
+                        <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                     </padding>
+                  </HBox>
+                  <Text strokeType="OUTSIDE" strokeWidth="0.0" text="Lịch sử mua hàng:">
+                     <font>
+                        <Font name="System Bold" size="14.0" />
+                     </font>
+                  </Text>
+                  <TableView fx:id="tableLichSuMuaHang" prefWidth="200.0" stylesheets="@../../../styles/dashboard_style.css">
+                    <columns>
+                      <TableColumn fx:id="colMaHoaDon" prefWidth="75.0" text="Mã hoá đơn" />
+                      <TableColumn fx:id="colNgayMua" prefWidth="75.0" text="Ngày mua" />
+                        <TableColumn fx:id="colSoThuoc" prefWidth="75.0" text="Số thuốc" />
+                        <TableColumn fx:id="colTongTien" prefWidth="75.0" text="Tổng tiền" />
+                        <TableColumn fx:id="colNhanVien" prefWidth="75.0" text="Nhân viên" />
+                    </columns>
+                     <columnResizePolicy>
+                        <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
+                     </columnResizePolicy>
+                  </TableView>
+                  <Text strokeType="OUTSIDE" strokeWidth="0.0" text="Thuốc đã mua:">
+                     <font>
+                        <Font name="System Bold" size="14.0" />
+                     </font>
+                  </Text>
+                  <FlowPane fx:id="flowPaneThuocDaMua" alignment="CENTER" hgap="10.0" prefWidth="200.0" style="-fx-background-color: #f8fafc;" vgap="10.0">
+                     <padding>
+                        <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                     </padding>
+                  </FlowPane>
+                  <HBox alignment="TOP_RIGHT" spacing="10.0">
+                     <children>
+                        <Button fx:id="btnDong" alignment="TOP_RIGHT" mnemonicParsing="false" onAction="#onBtnDongClick" style="-fx-padding: 8px 20px; -fx-font-size: 14; -fx-background-color: #1e3a8a; -fx-text-fill: white; -fx-cursor: hand;" text="Đóng" textAlignment="JUSTIFY" />
+                     </children>
+                     <padding>
+                        <Insets top="10.0" />
+                     </padding>
+                  </HBox>
+               </children>
+               <padding>
+                  <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+               </padding>
+            </VBox>
+         </children>
+      </AnchorPane>
+   </content>
+</DialogPane>

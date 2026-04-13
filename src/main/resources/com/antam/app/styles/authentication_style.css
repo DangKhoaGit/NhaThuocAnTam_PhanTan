@@ -1,0 +1,37 @@
+/**
+ CSS Cho trang đăng nhập
+**/
+
+.page{
+    -fx-background-color: linear-gradient(from 0% 100% to 100% 0%, #667eea 0%, #764ba2 100%);
+    -fx-text-alignment: center;
+}
+
+.form-box{
+    -fx-background-color: white;
+    -fx-background-radius: 20px;
+}
+
+.input{
+    -fx-background-color: white;
+    -fx-border-radius: 8px;
+    -fx-border-color:  #e5e7eb;
+    -fx-pref-height: 40px;
+}
+
+.btn-login{
+    -fx-background-color: #1d4ed8;
+    -fx-text-fill: white;
+    -fx-text-alignment: center;
+    -fx-pref-width: 360px;
+    -fx-pref-height: 40px;
+    -fx-border-radius: 8px;
+    -fx-background-radius: 8px;
+}
+
+.btn-login:hover{
+    -fx-background-color: white;
+    -fx-text-fill: #1d4ed8;
+    -fx-border-color: #1d4ed8;
+    -fx-cursor: hand;
+}

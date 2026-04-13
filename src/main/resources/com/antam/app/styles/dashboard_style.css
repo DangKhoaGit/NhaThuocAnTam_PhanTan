@@ -1,0 +1,492 @@
+/* ==================== TRANG DASHBOARD ==================== */
+.top-page{
+    -fx-background-color: white;
+}
+
+.user-info{
+    -fx-background-color: #f1f5f9;
+    -fx-background-radius: 20px;
+}
+
+.btn-logout{
+    -fx-background-color: #dc2626;
+    -fx-text-fill: white;
+    -fx-background-radius: 6px;
+    -fx-pref-width: 100px;
+    -fx-pref-height: 30px;
+}
+
+.btn-logout:hover{
+    -fx-background-color: white;
+    -fx-text-fill: #dc2626;
+    -fx-border-color: #dc2626;
+    -fx-border-radius: 6px;
+    -fx-cursor: hand;
+}
+
+/* ==================== SIDEBAR ==================== */
+.sidebar{
+    -fx-background-color: white;
+
+}
+
+.sidebar-item{
+    -fx-background-color: #f8fafc;
+    -fx-text-fill: #333;
+    -fx-alignment: center-left;
+    -fx-background-radius: 8px;
+    -fx-border-color: #e5e7eb;
+    -fx-border-width: 0px 0px 1px 0px;
+    -fx-border-radius: 8px;
+    -fx-pref-height: 54px;
+    -fx-font-weight: BOLD;
+    -fx-font-size: 15px;
+    -fx-padding: 0 0 0 30px;
+}
+
+.sidebar-item:hover{
+    -fx-background-color: #f1f5f9;
+    -fx-cursor: hand;
+}
+
+.sidebar-sub-item{
+    -fx-background-color: none;
+    -fx-pref-height: 54px;
+    -fx-text-fill: #333;
+    -fx-alignment: center-left;
+    -fx-padding: 0 0 0 50px;
+    -fx-font-size: 15px;
+}
+
+.sidebar-sub-item{
+    -fx-background-color: none;
+    -fx-text-fill: #333;
+    -fx-alignment: center-left;
+}
+
+.sidebar-sub-item:hover{
+    -fx-background-color: #f1f5f9;
+    -fx-border-color: #2563eb;
+    -fx-border-width: 0px 0px 0px 3px;
+    -fx-background-radius: 6px;
+    -fx-border-radius: 6px;
+    -fx-cursor: hand;
+}
+
+.btn-active {
+    -fx-background-color: #e0e7ff;
+    -fx-border-color: #2563eb;
+    -fx-border-width: 0px 0px 0px 3px;
+    -fx-text-fill: #2563eb;
+    -fx-background-radius: 6px;
+    -fx-border-radius: 6px;
+}
+
+/* ==================== BIỂU ĐỒ - CHARTS ==================== */
+/*
+ * HƯỚNG DẪN THAY ĐỔI MÀU BIỂU ĐỒ:
+ *
+ * 1. MÀU NỀN BIỂU ĐỒ: Thay đổi .chart-content
+ * 2. MÀU ĐƯỜNG/CỘT DỮ LIỆU: Thay đổi .chart-series-line và .default-color0.chart-bar
+ * 3. MÀU ĐIỂM DỮ LIỆU: Thay đổi .chart-line-symbol
+ * 4. MÀU LƯỚI: Thay đổi .chart-vertical-grid-lines và .chart-horizontal-grid-lines
+ * 5. MÀU CHỮ TRỤC: Thay đổi .axis-label
+ * 6. MÀU TIÊU ĐỀ: Thay đổi .chart-title
+ */
+
+/* --- NỀN VÀ VIỀN BIỂU ĐỒ --- */
+.chart {
+    -fx-background-color: white;              /* Màu nền tổng thể của biểu đồ */
+    -fx-padding: 15px;
+    -fx-border-radius: 10px;
+    -fx-background-radius: 10px;
+}
+
+.chart-content {
+    -fx-background-color: #ffffff;            /* *** ĐỔI MÀU NỀN VÙNG VẼ BIỂU ĐỒ *** */
+    -fx-padding: 10px;
+}
+
+.chart-plot-background {
+    -fx-background-color: white;              /* Màu nền vùng plot (vùng chứa dữ liệu) */
+}
+
+/* --- TIÊU ĐỀ BIỂU ĐỒ --- */
+.chart-title {
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #1e293b;                   /* *** ĐỔI MÀU TIÊU ĐỀ BIỂU ĐỒ *** */
+}
+
+/* --- ĐƯỜNG LƯỚI BIỂU ĐỒ --- */
+.chart-vertical-grid-lines {
+    -fx-stroke: #e2e8f0;                      /* *** ĐỔI MÀU ĐƯỜNG LƯỚI DỌC *** */
+    -fx-stroke-width: 1px;
+    -fx-stroke-dash-array: 5 5;               /* Nét đứt: 5px vẽ, 5px trống */
+}
+
+.chart-horizontal-grid-lines {
+    -fx-stroke: #e2e8f0;                      /* *** ĐỔI MÀU ĐƯỜNG LƯỚI NGANG *** */
+    -fx-stroke-width: 1px;
+    -fx-stroke-dash-array: 5 5;
+}
+
+.chart-alternative-row-fill {
+    -fx-fill: transparent;                    /* Màu nền xen kẽ các hàng (để transparent nếu không muốn) */
+}
+
+/* --- TRỤC TỌA ĐỘ --- */
+.axis {
+    -fx-tick-label-fill: #64748b;             /* *** ĐỔI MÀU CHỮ TRÊN TRỤC (số, ngày tháng) *** */
+    -fx-font-size: 11px;
+}
+
+.axis-label {
+    -fx-text-fill: #475569;                   /* *** ĐỔI MÀU NHÃN TRỤC (tên trục X, Y) *** */
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+}
+
+.axis-tick-mark {
+    -fx-stroke: #cbd5e1;                      /* Màu vạch chia độ trên trục */
+    -fx-stroke-width: 1px;
+}
+
+.axis:bottom, .axis:top {
+    -fx-border-color: #cbd5e1 transparent transparent transparent;
+}
+
+.axis:left, .axis:right {
+    -fx-border-color: transparent #cbd5e1 transparent transparent;
+}
+
+/* ==================== BIỂU ĐỒ ĐƯỜNG - LINE CHART ==================== */
+/*
+ * LineChart được dùng cho biểu đồ doanh thu 7 ngày
+ *
+ * HƯỚNG DẪN:
+ * - Màu đường: Thay đổi -fx-stroke trong .chart-series-line
+ * - Độ dày đường: Thay đổi -fx-stroke-width
+ * - Màu điểm dữ liệu: Thay đổi -fx-background-color trong .chart-line-symbol
+ * - Kích thước điểm: Thay đổi -fx-background-radius
+ */
+
+/* --- ĐƯỜNG DỮ LIỆU (series thứ nhất - default-color0) --- */
+.chart-series-line {
+    -fx-stroke: #2563eb;                      /* *** ĐỔI MÀU ĐƯỜNG BIỂU ĐỒ (xanh dương) *** */
+    -fx-stroke-width: 3px;                    /* *** ĐỔI ĐỘ DÀY ĐƯỜNG (3px) *** */
+    -fx-effect: dropshadow(gaussian, rgba(37, 99, 235, 0.3), 4, 0, 0, 2);  /* Bóng đổ cho đường */
+}
+
+/* --- ĐIỂM DỮ LIỆU TRÊN ĐƯỜNG --- */
+.chart-line-symbol {
+    -fx-background-color: #2563eb;            /* *** ĐỔI MÀU ĐIỂM DỮ LIỆU *** */
+    -fx-background-radius: 5px;               /* *** ĐỔI KÍCH THƯỚC ĐIỂM (5px = tròn 10px) *** */
+    -fx-padding: 5px;
+    -fx-border-color: white;                  /* Viền trắng xung quanh điểm */
+    -fx-border-width: 2px;
+}
+
+/* Điểm khi hover */
+.chart-line-symbol:hover {
+    -fx-background-color: #1e40af;            /* *** MÀU ĐIỂM KHI RÊ CHUỘT (xanh đậm hơn) *** */
+    -fx-scale-x: 1.3;
+    -fx-scale-y: 1.3;
+}
+
+/* --- VỚI NHIỀU SERIES (nếu có nhiều đường) --- */
+/* Series thứ 2 */
+.default-color1.chart-series-line {
+    -fx-stroke: #10b981;                      /* Màu xanh lá */
+    -fx-stroke-width: 3px;
+}
+
+.default-color1.chart-line-symbol {
+    -fx-background-color: #10b981;
+}
+
+/* Series thứ 3 */
+.default-color2.chart-series-line {
+    -fx-stroke: #f59e0b;                      /* Màu cam */
+    -fx-stroke-width: 3px;
+}
+
+.default-color2.chart-line-symbol {
+    -fx-background-color: #f59e0b;
+}
+
+/* ==================== BIỂU ĐỒ CỘT - BAR CHART ==================== */
+/*
+ * BarChart được dùng cho biểu đồ Top sản phẩm bán chạy
+ *
+ * HƯỚNG DẪN:
+ * - Màu cột: Thay đổi -fx-bar-fill trong .default-color0.chart-bar
+ * - Khoảng cách giữa các cột: Thay đổi -fx-category-gap và -fx-bar-gap
+ */
+
+/* --- CỘT DỮ LIỆU (series thứ nhất - default-color0) --- */
+.default-color0.chart-bar {
+    -fx-bar-fill: #16a34a;                    /* *** ĐỔI MÀU CỘT (xanh lá) *** */
+    -fx-background-radius: 6px 6px 0 0;       /* Bo tròn đỉnh cột */
+    -fx-border-radius: 6px 6px 0 0;
+}
+
+/* Cột khi hover */
+.default-color0.chart-bar:hover {
+    -fx-bar-fill: #15803d;                    /* *** MÀU CỘT KHI RÊ CHUỘT (xanh đậm hơn) *** */
+    -fx-opacity: 0.9;
+}
+
+/* --- VỚI NHIỀU SERIES (nếu có nhiều nhóm cột) --- */
+/* Series thứ 2 */
+.default-color1.chart-bar {
+    -fx-bar-fill: #2563eb;                    /* Màu xanh dương */
+    -fx-background-radius: 6px 6px 0 0;
+}
+
+.default-color1.chart-bar:hover {
+    -fx-bar-fill: #1e40af;
+}
+
+/* Series thứ 3 */
+.default-color2.chart-bar {
+    -fx-bar-fill: #dc2626;                    /* Màu đỏ */
+    -fx-background-radius: 6px 6px 0 0;
+}
+
+.default-color2.chart-bar:hover {
+    -fx-bar-fill: #b91c1c;
+}
+
+/* --- KHOẢNG CÁCH GIỮA CÁC CỘT --- */
+.chart-bar {
+    -fx-category-gap: 20px;                   /* *** KHOẢNG CÁCH GIỮA CÁC NHÓM (20px) *** */
+    -fx-bar-gap: 4px;                         /* *** KHOẢNG CÁCH TRONG CÙNG NHÓM (4px) *** */
+}
+
+/* --- CHƯƠNG TRÌNH GIẢI THÍCH (Legend) --- */
+.chart-legend {
+    -fx-background-color: #f8fafc;
+    -fx-background-radius: 6px;
+    -fx-padding: 8px;
+    -fx-border-color: #e2e8f0;
+    -fx-border-radius: 6px;
+    -fx-border-width: 1px;
+}
+
+.chart-legend-item {
+    -fx-text-fill: #334155;                   /* *** MÀU CHỮ TRONG LEGEND *** */
+    -fx-font-size: 11px;
+}
+
+.chart-legend-item-symbol {
+    -fx-padding: 6px;                         /* Kích thước ô vuông màu trong legend */
+    -fx-background-radius: 3px;
+}
+
+/* ==================== BẢNG - TABLE ==================== */
+.table-view {
+    -fx-background-color: white;
+    -fx-border-color: #e0e0e0;
+    -fx-border-radius: 10px;
+    -fx-background-radius: 10px;
+    -fx-padding: 10;
+    -fx-table-cell-border-color: transparent; /* bỏ viền ô */
+}
+
+.table-view .column-header-background {
+    -fx-background-color: #f8f9fa;
+    -fx-border-color: #e0e0e0;
+    -fx-border-width: 0 0 1 0;
+}
+
+.table-view .column-header, .table-view .filler {
+    -fx-background-color: transparent;
+}
+
+.table-view .column-header .label {
+    -fx-alignment: CENTER_LEFT;
+    -fx-padding: 0 0 0 10px; /* hoặc 0 nếu muốn sát hẳn */
+}
+
+.table-row-cell {
+    -fx-border-color: transparent;
+    -fx-padding: 6px 10px;
+}
+
+.table-row-cell:filled:selected {
+    -fx-background-color: #eaf2ff; /* màu khi chọn */
+}
+
+.table-row-cell:selected {
+    -fx-text-fill: black;
+}
+
+.table-row-cell:selected .text {
+    -fx-fill: black;
+}
+
+/* ==================== HỘP - BOX ==================== */
+.box-pane{
+    -fx-background-color: white;
+    -fx-background-radius: 10px;
+}
+
+/* ==================== COMBO BOX ==================== */
+.combo-box{
+    -fx-background-color: white;
+    -fx-border-color: #e5e7eb;
+    -fx-border-width: 2px;
+    -fx-border-radius: 5px;
+}
+
+/* ==================== TEXT FIELD + TEXT AREA ==================== */
+.text-field{
+    -fx-background-color: white;
+    -fx-border-color: #e5e7eb;
+    -fx-border-width: 2px;
+    -fx-border-radius: 5px;
+}
+
+.text-area{
+    -fx-background-color: white;
+    -fx-border-color: #e5e7eb;
+    -fx-border-width: 2px;
+    -fx-border-radius: 5px;
+}
+
+/* ==================== BUTTON ==================== */
+.btn-primary{
+    -fx-background-color: #2563eb;
+    -fx-background-radius: 5px;
+    -fx-text-fill: white;
+}
+
+.btn-gray{
+    -fx-background-color: #6b7280;
+    -fx-background-radius: 5px;
+    -fx-text-fill: white;
+}
+
+/* ==================== TAB PANE ==================== */
+.tab-pane {
+    -fx-background-color: #ffffff;
+    -fx-border-color: #e5e7eb;
+    -fx-border-radius: 8px;
+    -fx-background-radius: 8px;
+}
+
+.tab-pane .tab-header-area {
+    -fx-background-color: #f9fafb;
+    -fx-border-color: #e5e7eb;
+    -fx-border-width: 0 0 1 0;
+    -fx-padding: 5px 10px;
+}
+
+.tab-pane .tab-header-background {
+    -fx-background-color: transparent;
+}
+
+/* Tab mặc định */
+.tab {
+    -fx-background-color: transparent;
+    -fx-padding: 6px 14px;
+    -fx-background-radius: 6px 6px 0 0;
+}
+
+.tab-label {
+    -fx-text-fill: #374151;
+    -fx-font-weight: bold;
+}
+
+/* Tab được chọn */
+.tab:selected {
+    -fx-background-color:  #2563eb;
+    -fx-border-color: #e5e7eb #e5e7eb transparent #e5e7eb;
+    -fx-border-width: 1px;
+    -fx-background-radius: 6px 6px 0 0;
+}
+
+.tab:selected .tab-label {
+    -fx-text-fill: white;
+}
+
+/* Tab hover */
+.tab:hover {
+
+}
+
+/* Nội dung */
+.tab-content-area {
+    -fx-background-color: #ffffff;
+    -fx-padding: 15px;
+    -fx-background-radius: 0 0 8px 8px;
+}
+
+/* Button xoá rỗng của bộ lọc */
+.btn-xoarong{
+    -fx-background-color:  #2563eb;
+    -fx-background-radius: 5px;
+    -fx-pref-height: 40px;
+    -fx-pref-width: 95px;
+    -fx-text-fill: white;
+}
+
+/* Pane hướng dẫn */
+.pane-huongdan{
+    -fx-background-color: #fff;
+    -fx-border-color: #2563eb;
+    -fx-border-radius: 6px;
+    -fx-text-fill: #2563eb;
+}
+
+/* Button xoá */
+.btn-xoa{
+    -fx-background-color: #dc0000;
+    -fx-background-radius: 5px;
+    -fx-pref-height: 40px;
+    -fx-pref-width: 95px;
+}
+
+/* Button sửa */
+.btn-sua{
+    -fx-background-color: #2563eb;
+    -fx-background-radius: 5px;
+    -fx-pref-height: 40px;
+    -fx-pref-width: 95px;
+}
+
+/* Button thêm */
+.btn-them{
+    -fx-background-color: #2563eb;
+    -fx-background-radius: 5px;
+    -fx-pref-height: 50px;
+    -fx-pref-width: 125px;
+    -fx-text-fill: WHITE;
+}
+/* Button khôi phục */
+.btn-khoiphuc{
+    -fx-background-color: #ffc027;
+    -fx-background-radius: 5px;
+    -fx-pref-height: 50px;
+    -fx-pref-width: 118px;
+    -fx-text-fill: WHITE;
+}
+
+.btn-khoiphuc-mini{
+    -fx-background-color: #ffc027;
+    -fx-background-radius: 5px;
+    -fx-pref-height: 40px;
+    -fx-pref-width: 95px;
+    -fx-text-fill: WHITE;
+}
+
+
+/* Button cập nhật*/
+.btn-capnhat{
+    -fx-background-color: #535353;
+    -fx-background-radius: 5px;
+    -fx-pref-height: 50px;
+    -fx-pref-width: 118px;
+    -fx-text-fill: WHITE;
+}

@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.DialogPane?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.FlowPane?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.RowConstraints?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
+<?import javafx.scene.text.Text?>
+
+<DialogPane fx:id="dialogPane" prefWidth="800.0" style="-fx-background-color: white;" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.antam.app.controller.phieudat.XemChiTietPhieuDatFormController">
+    <header>
+        <FlowPane alignment="CENTER" style="-fx-background-color: #1e3a8a;">
+            <children>
+                <Text fill="WHITE" strokeType="OUTSIDE" strokeWidth="0.0" text="Chi tiết phiếu đặt">
+                    <font>
+                        <Font name="System Bold" size="15.0" />
+                    </font>
+                    <FlowPane.margin>
+                        <Insets bottom="10.0" top="10.0" />
+                    </FlowPane.margin>
+                </Text>
+            </children>
+        </FlowPane>
+    </header>
+   <content>
+      <AnchorPane>
+         <children>
+            <VBox spacing="10.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0">
+               <children>
+                  <VBox prefWidth="100.0" style="-fx-background-color: #2563eb; -fx-background-radius: 5px;">
+                     <padding>
+                        <Insets bottom="10.0" left="10.0" right="100.0" top="10.0" />
+                     </padding>
+                     <children>
+                        <Text fill="WHITE" strokeType="OUTSIDE" strokeWidth="0.0" text="Mã phiếu đặt: PD001">
+                           <font>
+                              <Font name="System Bold" size="20.0" />
+                           </font>
+                        </Text>
+                        <Text fill="WHITE" strokeType="OUTSIDE" strokeWidth="0.0" text="Ngày đặt: 15/9/2025">
+                           <font>
+                              <Font size="13.0" />
+                           </font>
+                        </Text>
+                        <Text fill="WHITE" strokeType="OUTSIDE" strokeWidth="0.0" text="Số điện thoại: 0123456789">
+                           <font>
+                              <Font size="13.0" />
+                           </font>
+                        </Text>
+                        <Text fill="WHITE" strokeType="OUTSIDE" strokeWidth="0.0" text="Trạng thái: Chờ xử lý">
+                           <font>
+                              <Font size="13.0" />
+                           </font>
+                        </Text>
+                     </children>
+                  </VBox>
+                  <Text strokeType="OUTSIDE" strokeWidth="0.0" text="Danh sách thuốc đặt:" />
+                  <TableView prefWidth="200.0" stylesheets="@../../../styles/dashboard_style.css">
+                    <columns>
+                      <TableColumn prefWidth="75.0" text="STT" />
+                      <TableColumn prefWidth="75.0" text="Tên thuốc" />
+                        <TableColumn prefWidth="75.0" text="Số lượng" />
+                        <TableColumn prefWidth="75.0" text="Đơn giá" />
+                        <TableColumn prefWidth="75.0" text="Thành tiền" />
+                    </columns>
+                     <columnResizePolicy>
+                        <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
+                     </columnResizePolicy>
+                  </TableView>
+                  <GridPane hgap="5.0" style="-fx-background-color: #f8fafc; -fx-background-radius: 8px;">
+                     <columnConstraints>
+                        <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+                        <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+                     </columnConstraints>
+                     <rowConstraints>
+                        <RowConstraints />
+                        <RowConstraints />
+                        <RowConstraints minHeight="10.0" prefHeight="40.0" vgrow="SOMETIMES" />
+                        <RowConstraints minHeight="10.0" prefHeight="40.0" vgrow="SOMETIMES" />
+                     </rowConstraints>
+                     <children>
+                        <Text fill="#374151" strokeType="OUTSIDE" strokeWidth="0.0" text="Tổng cộng:" GridPane.rowIndex="3">
+                           <font>
+                              <Font name="System Bold" size="18.0" />
+                           </font>
+                        </Text>
+                        <Text fill="#374151" strokeType="OUTSIDE" strokeWidth="0.0" text="Tổng tiền hàng:" GridPane.rowIndex="2">
+                           <font>
+                              <Font size="13.0" />
+                           </font>
+                        </Text>
+                        <Text fill="#374151" strokeType="OUTSIDE" strokeWidth="0.0" text="500.000đ" GridPane.columnIndex="1" GridPane.rowIndex="3">
+                           <font>
+                              <Font name="System Bold" size="18.0" />
+                           </font>
+                        </Text>
+                        <Text fill="#374151" strokeType="OUTSIDE" strokeWidth="0.0" text="120.000 ₫" GridPane.columnIndex="1" GridPane.rowIndex="2">
+                           <font>
+                              <Font size="13.0" />
+                           </font>
+                        </Text>
+                        <Text fill="#374151" strokeType="OUTSIDE" strokeWidth="0.0" text="Ghi chú:" GridPane.rowIndex="1">
+                           <font>
+                              <Font size="13.0" />
+                           </font>
+                        </Text>
+                        <Text fill="#374151" strokeType="OUTSIDE" strokeWidth="0.0" text="Giao hàng buổi chiều" GridPane.columnIndex="1" GridPane.rowIndex="1">
+                           <font>
+                              <Font size="13.0" />
+                           </font>
+                        </Text>
+                     </children>
+                     <VBox.margin>
+                        <Insets />
+                     </VBox.margin>
+                     <padding>
+                        <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                     </padding>
+                  </GridPane>
+               </children>
+               <padding>
+                  <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+               </padding>
+            </VBox>
+         </children>
+      </AnchorPane>
+   </content>
+
+</DialogPane>

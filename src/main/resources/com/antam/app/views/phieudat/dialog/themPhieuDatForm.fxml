@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcon?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.DialogPane?>
+<?import javafx.scene.control.Spinner?>
+<?import javafx.scene.control.TextArea?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.FlowPane?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.RowConstraints?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
+<?import javafx.scene.text.Text?>
+
+<DialogPane fx:id="dialogPane" prefWidth="800.0" style="-fx-background-color: white;" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.antam.app.controller.phieudat.ThemPhieuDatFormController">
+    <header>
+        <FlowPane alignment="CENTER" style="-fx-background-color: #1e3a8a;">
+            <children>
+                <Text fill="WHITE" strokeType="OUTSIDE" strokeWidth="0.0" text="Tạo phiếu đặt mới">
+                    <font>
+                        <Font name="System Bold" size="15.0" />
+                    </font>
+                    <FlowPane.margin>
+                        <Insets bottom="10.0" top="10.0" />
+                    </FlowPane.margin>
+                </Text>
+            </children>
+        </FlowPane>
+    </header>
+   <content>
+      <AnchorPane>
+         <children>
+            <VBox spacing="10.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0">
+               <children>
+                  <GridPane hgap="5.0">
+                    <columnConstraints>
+                      <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+                      <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+                    </columnConstraints>
+                    <rowConstraints>
+                      <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                      <RowConstraints minHeight="10.0" prefHeight="40.0" vgrow="SOMETIMES" />
+                      <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                    </rowConstraints>
+                     <children>
+                        <Text fill="#374151" strokeType="OUTSIDE" strokeWidth="0.0" text="Tên khách hàng:" />
+                        <TextField maxHeight="-Infinity" prefHeight="40.0" styleClass="text-field" stylesheets="@../../../styles/dashboard_style.css" GridPane.rowIndex="1" />
+                        <TextField maxHeight="-Infinity" prefHeight="40.0" styleClass="text-field" stylesheets="@../../../styles/dashboard_style.css" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+                        <Text fill="#374151" strokeType="OUTSIDE" strokeWidth="0.0" text="Số điện thoại:" GridPane.columnIndex="1" />
+                        <Text fill="#374151" strokeType="OUTSIDE" strokeWidth="0.0" text="Thuốc đặt:" GridPane.rowIndex="2" />
+                     </children>
+                  </GridPane>
+                  <VBox maxWidth="1.7976931348623157E308" spacing="5.0" style="-fx-border-color: #e5e7eb; -fx-border-radius: 6px; -fx-border-width: 2px;">
+                     <children>
+                        <HBox spacing="10.0" style="-fx-background-color: #f8fafc;">
+                           <padding>
+                              <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                           </padding>
+                           <children>
+                              <ComboBox prefWidth="150.0" promptText="Chọn thuốc" stylesheets="@../../../styles/dashboard_style.css" />
+                              <ComboBox prefWidth="150.0" promptText="Chọn đơn vị" stylesheets="@../../../styles/dashboard_style.css" />
+                              <Spinner stylesheets="@../../../styles/dashboard_style.css" />
+                              <Spinner stylesheets="@../../../styles/dashboard_style.css" />
+                              <Button mnemonicParsing="false" style="-fx-background-color: #ef4444; -fx-background-radius: 50%;">
+                                 <graphic>
+                                    <FontAwesomeIcon fill="WHITE" glyphName="REMOVE" />
+                                 </graphic>
+                              </Button>
+                           </children>
+                        </HBox>
+                        <HBox spacing="10.0" style="-fx-background-color: #f8fafc;">
+                           <padding>
+                              <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                           </padding>
+                           <children>
+                              <ComboBox prefWidth="150.0" promptText="Chọn thuốc" stylesheets="@../../../styles/dashboard_style.css" />
+                              <ComboBox prefWidth="150.0" promptText="Chọn đơn vị" stylesheets="@../../../styles/dashboard_style.css" />
+                              <Spinner stylesheets="@../../../styles/dashboard_style.css" />
+                              <Spinner stylesheets="@../../../styles/dashboard_style.css" />
+                              <Button mnemonicParsing="false" style="-fx-background-color: #ef4444; -fx-background-radius: 50%;">
+                                 <graphic>
+                                    <FontAwesomeIcon fill="WHITE" glyphName="REMOVE" />
+                                 </graphic>
+                              </Button>
+                           </children>
+                        </HBox>
+                     </children>
+                     <padding>
+                        <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                     </padding>
+                  </VBox>
+                  <Button mnemonicParsing="false" styleClass="btn-gray" stylesheets="@../../../styles/dashboard_style.css" text="Thêm thuốc" />
+                  <GridPane hgap="5.0">
+                     <columnConstraints>
+                        <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+                     </columnConstraints>
+                     <rowConstraints>
+                        <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                        <RowConstraints minHeight="10.0" prefHeight="100.0" vgrow="SOMETIMES" />
+                     </rowConstraints>
+                     <children>
+                        <Text fill="#374151" strokeType="OUTSIDE" strokeWidth="0.0" text="Ghi chú:" />
+                        <TextArea prefHeight="300.0" prefWidth="200.0" promptText="Ghi chú thêm cho phiếu đặt" stylesheets="@../../../styles/dashboard_style.css" GridPane.rowIndex="1" />
+                     </children>
+                  </GridPane>
+                  <GridPane hgap="5.0" style="-fx-background-color: #f8fafc; -fx-background-radius: 8px;">
+                     <columnConstraints>
+                        <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+                        <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+                     </columnConstraints>
+                     <rowConstraints>
+                        <RowConstraints minHeight="10.0" prefHeight="40.0" vgrow="SOMETIMES" />
+                     </rowConstraints>
+                     <children>
+                        <Text fill="#374151" strokeType="OUTSIDE" strokeWidth="0.0" text="Tổng tiền:">
+                           <font>
+                              <Font name="System Bold" size="18.0" />
+                           </font>
+                        </Text>
+                        <Text fill="#374151" strokeType="OUTSIDE" strokeWidth="0.0" text="500.000đ" GridPane.columnIndex="1">
+                           <font>
+                              <Font name="System Bold" size="18.0" />
+                           </font>
+                        </Text>
+                     </children>
+                     <VBox.margin>
+                        <Insets />
+                     </VBox.margin>
+                     <padding>
+                        <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                     </padding>
+                  </GridPane>
+               </children>
+            </VBox>
+         </children>
+      </AnchorPane>
+   </content>
+
+</DialogPane>
