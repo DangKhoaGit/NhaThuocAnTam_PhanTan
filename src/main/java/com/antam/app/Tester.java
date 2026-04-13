@@ -8,6 +8,6 @@ package com.antam.app;
  */
 public class Tester {
     public static void main(String[] args) {
-
+        System.out.println("Hello world!");
     }
 }
