@@ -245,7 +245,7 @@ public class KhoiPhucPhieuDatController extends ScrollPane{
 
                     LoThuoc ctt =
                             ctThuoc_dao.getChiTietThuoc(
-                                    ct.getChiTietThuoc().getMaCTT()
+                                    ct.getMaThuoc().getMaLoThuoc()
                             );
 
                     if (ctt.getSoLuong() < ct.getSoLuong()) {
@@ -257,7 +257,7 @@ public class KhoiPhucPhieuDatController extends ScrollPane{
 
                     int soMoi = ctt.getSoLuong() - ct.getSoLuong();
                     ctThuoc_dao.CapNhatSoLuongChiTietThuoc(
-                            ctt.getMaCTT(), soMoi
+                            ctt.getMaLoThuoc(), soMoi
                     );
                 }
 

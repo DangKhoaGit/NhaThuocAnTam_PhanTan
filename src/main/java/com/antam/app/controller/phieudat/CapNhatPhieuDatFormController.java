@@ -235,7 +235,7 @@ public class CapNhatPhieuDatFormController extends DialogPane{
             for (ChiTietPhieuDatThuoc e : tbThuoc.getItems()){
                 ChiTietHoaDon i = new ChiTietHoaDon();
                 i.setMaHD(hoaDon);
-                i.setMaCTT(e.getChiTietThuoc());
+                i.setMaLoThuoc(e.getMaThuoc());
                 i.setThanhTien(e.getThanhTien());
                 i.setMaDVT(e.getDonViTinh());
                 i.setSoLuong(e.getSoLuong());
@@ -300,9 +300,9 @@ public class CapNhatPhieuDatFormController extends DialogPane{
 
     private void setupTable() {
         colSTT.setCellValueFactory(cellData -> new SimpleIntegerProperty(listChiTiet.indexOf(cellData.getValue()) + 1).asObject());
-        colTenThuoc.setCellValueFactory(cellData ->new SimpleStringProperty(cellData.getValue().getChiTietThuoc().getMaThuoc().getTenThuoc()));
+        colTenThuoc.setCellValueFactory(cellData ->new SimpleStringProperty(cellData.getValue().getMaThuoc().getMaThuoc().getTenThuoc()));
         colSoLuong.setCellValueFactory(cellData -> new SimpleIntegerProperty(cellData.getValue().getSoLuong()).asObject());
-        colDonGia.setCellValueFactory(cellData -> new SimpleStringProperty(dinhDangTien(cellData.getValue().getChiTietThuoc().getMaThuoc().getGiaBan())));
+        colDonGia.setCellValueFactory(cellData -> new SimpleStringProperty(dinhDangTien(cellData.getValue().getMaThuoc().getMaThuoc().getGiaBan())));
         colThanhTien.setCellValueFactory(cellData -> new SimpleStringProperty(dinhDangTien(cellData.getValue().getThanhTien())));
     }
 
@@ -377,7 +377,7 @@ public class CapNhatPhieuDatFormController extends DialogPane{
             return thue;
         }
         for (ChiTietPhieuDatThuoc e : listChiTiet){
-            thue += e.getSoLuong() * e.getChiTietThuoc().getMaThuoc().getGiaBan()* e.getChiTietThuoc().getMaThuoc().getThue();
+            thue += e.getSoLuong() * e.getMaThuoc().getMaThuoc().getGiaBan()* e.getMaThuoc().getMaThuoc().getThue();
         }
         return thue;
     }}

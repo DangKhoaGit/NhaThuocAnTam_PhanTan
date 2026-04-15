@@ -6,66 +6,56 @@
 
 package com.antam.app.entity;
 
+import jakarta.persistence.*;
+import lombok.*;
+
 /*
  * @description
  * @author: Duong Nguyen
  * @date: 9/25/2025
  * version: 1.0
  */
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+
+@Entity
+@Table(name = "ChiTietPhieuNhap")
+@IdClass(ChiTietPhieuNhap.ChiTietPhieuNhapId.class)
 public class ChiTietPhieuNhap {
-    private PhieuNhap MaPN;
-    private Thuoc maThuoc;
-    private DonViTinh maDVT;
+
+    @Column(name = "SoLuong")
     private int soLuong;
+    @Column(name = "GiaNhap")
     private double giaNhap;
+    @Column(name = "ThanhTien")
     private double thanhTien;
 
-    public ChiTietPhieuNhap() {
-        this.MaPN = new PhieuNhap();
-        this.maThuoc = new Thuoc();
-        this.maDVT = new DonViTinh();
-        this.soLuong = 0;
-        this.giaNhap = 0;
-        this.thanhTien = 0;
-    }
+    @Id
+    @ManyToOne
+    @JoinColumn(name = "MaPN")
+    private PhieuNhap MaPN;
 
-    public ChiTietPhieuNhap(PhieuNhap maPN, Thuoc maThuoc, DonViTinh maDVT, int soLuong, double giaNhap) {
+    @Id
+    @ManyToOne
+    @JoinColumn(name = "MaLoThuoc")
+    private LoThuoc loThuoc;
+
+    @ManyToOne()
+    @JoinColumn(name = "MaDVT")
+    private DonViTinh maDVT;
+
+
+    public ChiTietPhieuNhap(PhieuNhap maPN, LoThuoc maLoThuoc, DonViTinh maDVT, int soLuong, double giaNhap) {
         this.MaPN = maPN;
-        this.maThuoc = maThuoc;
+        this.loThuoc = maLoThuoc;
         this.maDVT = maDVT;
         setSoLuong(soLuong);
         setGiaNhap(giaNhap);
         setThanhTien();
     }
 
-
-    public PhieuNhap getMaPN() {
-        return MaPN;
-    }
-
-    public void setMaPN(PhieuNhap maPN) {
-        MaPN = maPN;
-    }
-
-    public Thuoc getSoDangKy() {
-        return maThuoc;
-    }
-
-    public void setSoDangKy(Thuoc soDangKy) {
-        this.maThuoc = soDangKy;
-    }
-
-    public DonViTinh getMaDVT() {
-        return maDVT;
-    }
-
-    public void setMaDVT(DonViTinh maDVT) {
-        this.maDVT = maDVT;
-    }
-
-    public int getSoLuong() {
-        return soLuong;
-    }
 
     public void setSoLuong(int soLuong) {
         if (soLuong < 0) {
@@ -75,16 +65,6 @@ public class ChiTietPhieuNhap {
         setThanhTien();
     }
 
-    public double getGiaNhap() {
-        return giaNhap;
-    }
-
-    public void setGiaNhap(double giaNhap) {
-        if (giaNhap < 0) {
-            throw new IllegalArgumentException("Giá nhập không được âm");
-        }
-        this.giaNhap = giaNhap;
-    }
 
     public void setThanhTien() {
         this.thanhTien = thanhTien();
@@ -92,17 +72,28 @@ public class ChiTietPhieuNhap {
 
 
     public double thanhTien() {
-        float thue = maThuoc.getThue();
+        float thue = loThuoc.getMaThuoc().getThue();
         return soLuong * giaNhap * (1 + thue);
     }
     @Override
     public String toString() {
         return "ChiTietPhieuNhap{" +
                 "MaPN=" + MaPN +
-                ", MaThuoc=" + maThuoc +
+                ", MaThuoc=" + loThuoc.getMaThuoc() +
                 ", maDVT=" + maDVT +
                 ", soLuong=" + soLuong +
                 ", giaNhap=" + giaNhap +
                 '}';
+    }
+
+    @EqualsAndHashCode
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Setter
+    @Getter
+    @ToString
+    public static class ChiTietPhieuNhapId implements java.io.Serializable {
+        private PhieuNhap MaPN;
+        private LoThuoc loThuoc;
     }
 }

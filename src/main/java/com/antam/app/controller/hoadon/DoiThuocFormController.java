@@ -335,7 +335,7 @@ public class DoiThuocFormController extends DialogPane{
             }
             else {
                 for (ChiTietHoaDon ct : selectedItems) {
-                    chiTietHoaDon_dao.xoaMemChiTietHoaDon(ct.getMaHD().getMaHD(), ct.getMaCTT().getMaCTT(), "Trả Khi Đổi");
+                    chiTietHoaDon_dao.xoaMemChiTietHoaDon(ct.getMaHD().getMaHD(), ct.getMaLoThuoc().getMaLoThuoc(), "Trả Khi Đổi");
                     switch (lyDo) {
                         // Các lý do KHÔNG cộng lại vào kho
                         case "Hết hạn sử dụng":
@@ -350,7 +350,7 @@ public class DoiThuocFormController extends DialogPane{
                         case "Nhập nhầm lô / dư":
                         case "Sai thông tin đơn / bảo hiểm":
                             chiTietThuoc_dao.CapNhatSoLuongChiTietThuoc(
-                                    ct.getMaCTT().getMaCTT(),
+                                    ct.getMaLoThuoc().getMaLoThuoc(),
                                     ct.getSoLuong()
                             );
                             break;
@@ -399,7 +399,7 @@ public class DoiThuocFormController extends DialogPane{
                                                 t.getGiaBan() * soLuong
                                         );
                                         chiTietHoaDon_dao.themChiTietHoaDon1(newCTHD);
-                                        chiTietThuoc_dao.CapNhatSoLuongChiTietThuoc(ctt.getMaCTT(), -soLuong);
+                                        chiTietThuoc_dao.CapNhatSoLuongChiTietThuoc(ctt.getMaLoThuoc(), -soLuong);
                                         tongTienMua += Math.round(t.getGiaBan() * soLuong * (1 + t.getThue()) * 100.0) / 100.0;
                                         break;
                                     }else{
@@ -413,7 +413,7 @@ public class DoiThuocFormController extends DialogPane{
                                                 t.getGiaBan() * ctt.getSoLuong()
                                         );
                                         chiTietHoaDon_dao.themChiTietHoaDon1(newCTHD);
-                                        chiTietThuoc_dao.CapNhatSoLuongChiTietThuoc(ctt.getMaCTT(), -ctt.getSoLuong());
+                                        chiTietThuoc_dao.CapNhatSoLuongChiTietThuoc(ctt.getMaLoThuoc(), -ctt.getSoLuong());
                                         tongTienMua += Math.round(t.getGiaBan() * ctt.getSoLuong() * (1 + t.getThue()) * 100.0) / 100.0;
                                     }
                                 }
@@ -422,7 +422,7 @@ public class DoiThuocFormController extends DialogPane{
                             double tongTienTra = 0;
                             double tongTienCoKM = 0;
                             for (ChiTietHoaDon ct : selectedItems) {
-                                LoThuoc ctt = ct.getMaCTT();
+                                LoThuoc ctt = ct.getMaLoThuoc();
                                 Thuoc thuoc = thuoc_dao.getThuocTheoMa(ctt.getMaThuoc().getMaThuoc());
                                 if (!ct.getTinhTrang().equals("Thuốc Mới Khi Đổi")){
                                     tongTienCoKM += ct.getThanhTien() * (1 + thuoc.getThue());
@@ -513,7 +513,7 @@ public class DoiThuocFormController extends DialogPane{
         // Kết nối DB
         try { Connection con = ConnectDB.getInstance().connect(); }
         catch (SQLException e) { throw new RuntimeException(e); }
-        LoThuoc ctt = chiTietThuoc_dao.getChiTietThuoc(chiTietHoaDon.getMaCTT().getMaCTT());
+        LoThuoc ctt = chiTietThuoc_dao.getChiTietThuoc(chiTietHoaDon.getMaLoThuoc().getMaLoThuoc());
         Thuoc t = thuoc_dao.getThuocTheoMa(ctt.getMaThuoc().getMaThuoc());
         Text txtMaThuoc = new Text(t.getTenThuoc());
         txtMaThuoc.setStyle("-fx-font-size: 15px;");
@@ -622,7 +622,7 @@ public class DoiThuocFormController extends DialogPane{
         double tongTienTraCoKM = 0;
         double tongTienKhiTra = 0;
         for (ChiTietHoaDon ct : selectedItems) {
-            LoThuoc  ctt = ct.getMaCTT();
+            LoThuoc  ctt = ct.getMaLoThuoc();
             Thuoc t = thuoc_dao.getThuocTheoMa(ctt.getMaThuoc().getMaThuoc());
             if (ct.getTinhTrang().equals("Thuốc Mới Khi Đổi")){
                 tongTienKhiTra += ct.getThanhTien() * (1 + t.getThue());

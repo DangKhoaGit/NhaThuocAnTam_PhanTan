@@ -6,7 +6,15 @@
 
 package com.antam.app.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
 import java.time.LocalDate;
+import java.util.List;
 
 /*
  * @description
@@ -14,15 +22,40 @@ import java.time.LocalDate;
  * @date: 9/25/2025
  * version: 1.0
  */
+@Data
+@NoArgsConstructor(force = true)
+@AllArgsConstructor
+@Builder
+
+@Entity
+@Table(name = "KhuyenMai")
 public class KhuyenMai {
+    @Id
     private final String MaKM;
     private String TenKM;
+    @Column(name = "NgayBatDau")
     private LocalDate NgayBatDau;
+    @Column(name = "NgayKetThuc")
     private LocalDate NgayKetThuc;
-    private LoaiKhuyenMai loaiKhuyenMai;
+
+    @Column(name = "So")
     private double so;
+    @Column(name = "SoLuongToiDa")
     private int soLuongToiDa;
-    private boolean deleteAt;
+    @Column(columnDefinition = "BOOLEAN DEFAULT FALSE")
+    private boolean deleteAt = false;
+
+    @OneToOne
+    @JoinColumn(name = "LoaiKhuyenMai")
+    private LoaiKhuyenMai loaiKhuyenMai;
+
+    @OneToMany(mappedBy = "maKM")
+    @JsonIgnore
+    private List<HoaDon> hoaDons;
+
+    @OneToMany(mappedBy = "khuyenMai")
+    @JsonIgnore
+    private List<PhieuDatThuoc> phieuDatThuocs;
 
     public KhuyenMai(String s, String ten) {
         MaKM = "";
@@ -44,31 +77,18 @@ public class KhuyenMai {
         soLuongToiDa = 0;
         deleteAt = false;
     }
-    public KhuyenMai(String maKM, String tenKM, LocalDate ngayBatDau, LocalDate ngayKetThuc, LoaiKhuyenMai loaiKhuyenMai, double so, int soLuongToiDa, boolean deleteAt) {
-        this.MaKM = maKM;
-        setTenKM(tenKM);
+
+    public KhuyenMai(String maKM, String tenKM, LocalDate ngayBatDau, LocalDate ngayKetThuc, LoaiKhuyenMai loai, double so, int soLuongToiDa, boolean deleteAt) {
+        MaKM = maKM;
+        TenKM = tenKM;
         setNgayBatDau(ngayBatDau);
         setNgayKetThuc(ngayKetThuc);
-        this.loaiKhuyenMai = loaiKhuyenMai;
+        this.loaiKhuyenMai = loai;
         setSo(so);
         setSoLuongToiDa(soLuongToiDa);
         this.deleteAt = deleteAt;
     }
-    public String getMaKM() {
-        return MaKM;
-    }
-    public String getTenKM() {
-        return TenKM;
-    }
-    public void setTenKM(String tenKM) {
-        if (tenKM == null || tenKM.isEmpty()) {
-            throw new IllegalArgumentException("Tên khuyến mãi không được để trống");
-        }
-        TenKM = tenKM;
-    }
-    public LocalDate getNgayBatDau() {
-        return NgayBatDau;
-    }
+
     public void setNgayBatDau(LocalDate ngayBatDau) {
         if (ngayBatDau == null)
             throw new IllegalArgumentException("Ngày bắt đầu không được để trống");
@@ -86,12 +106,7 @@ public class KhuyenMai {
         }
         NgayKetThuc = ngayKetThuc;
     }
-    public LoaiKhuyenMai getLoaiKhuyenMai() {
-        return loaiKhuyenMai;
-    }
-    public void setLoaiKhuyenMai(LoaiKhuyenMai loaiKhuyenMai) {
-        this.loaiKhuyenMai = loaiKhuyenMai;
-    }
+
     public double getSo() {
         return so;
     }
@@ -101,30 +116,12 @@ public class KhuyenMai {
         }
         this.so = so;
     }
-    public int getSoLuongToiDa() {
-        return soLuongToiDa;
-    }
+
     public void setSoLuongToiDa(int soLuongToiDa) {
         if (soLuongToiDa < 0) {
             throw new IllegalArgumentException("Số lượng tối đa không được âm");
         }
         this.soLuongToiDa = soLuongToiDa;
     }
-    public boolean isDeleteAt() {
-        return deleteAt;
-    }
-    public void setDeleteAt(boolean deleteAt) {
-        this.deleteAt = deleteAt;
-    }
-    @Override
-    public String toString() {
-        return TenKM;
-    }
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        KhuyenMai khuyenMai = (KhuyenMai) o;
-        return MaKM.equals(khuyenMai.MaKM);
-    }
+
 }

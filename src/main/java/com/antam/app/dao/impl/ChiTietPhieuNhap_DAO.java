@@ -38,7 +38,7 @@ public class ChiTietPhieuNhap_DAO implements I_ChiTietPhieuNhap_DAO {
             while (rs.next()) {
                 ChiTietPhieuNhap ctpn = new ChiTietPhieuNhap();
                 ctpn.setMaPN(new PhieuNhap(rs.getString("MaPN")));
-                ctpn.setSoDangKy(new Thuoc(rs.getString("MaThuoc")));
+                ctpn.setLoThuoc(new LoThuoc());
 
                 DonViTinh dvt = new DonViTinh(rs.getInt("MaDVT"));
                 dvt.setTenDVT(rs.getString("TenDVT"));
@@ -65,7 +65,7 @@ public class ChiTietPhieuNhap_DAO implements I_ChiTietPhieuNhap_DAO {
             Connection con = ConnectDB.getConnection();
             PreparedStatement ps = con.prepareStatement(sql);
             ps.setString(1, ctpn.getMaPN().getMaPhieuNhap());
-            ps.setString(2, ctpn.getSoDangKy().getMaThuoc());
+            ps.setString(2, ctpn.getLoThuoc().getMaThuoc().getMaThuoc());
             ps.setInt(3, ctpn.getMaDVT().getMaDVT());
             ps.setInt(4, ctpn.getSoLuong());
             ps.setDouble(5, ctpn.getGiaNhap());

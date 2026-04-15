@@ -1,12 +1,20 @@
 /*
- * @ (#) ChiTietThuoc.java   1.0 10/6/2025
+ * @ (#) LoThuoc.java   1.0 10/6/2025
  *
  * Copyright (c) 2025 IUH. All rights reserved.
  */
 
 package com.antam.app.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
 import java.time.LocalDate;
+import java.util.List;
 
 /*
  * @description
@@ -14,57 +22,81 @@ import java.time.LocalDate;
  * @date: 10/6/2025
  * version: 1.0
  */
+@Data
+@NoArgsConstructor(force = true)
+@AllArgsConstructor
+@Builder
+
+@Entity
+@Table(name = "LoThuoc")
 public class LoThuoc {
-    private final int maCTT;
-    private PhieuNhap maPN;
+    @Id
+    @Column(name = "MaLoThuoc")
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private int MaLoThuoc;
+
+    @OneToMany(mappedBy = "loThuoc")
+    @JsonIgnore
+    private List<ChiTietPhieuNhap> maCTPN;
+
+    @JoinColumn(name = "MaThuoc")
+    @ManyToOne()
     private Thuoc maThuoc;
+
+    @OneToMany(mappedBy = "maLoThuoc")
+    @JsonIgnore
+    private List<ChiTietHoaDon> chiTietHoaDons;
+
+    @Column(name = "TonKho")
     private int soLuong;
+
+    @Column(name = "HanSuDung")
     private LocalDate hanSuDung;
+
+    @Column(name = "NgaySanXuat")
     private LocalDate ngaySanXuat;
 
-    public LoThuoc() {
-        this.maCTT = 0;
-        this.maPN = new PhieuNhap();
-        this.maThuoc = new Thuoc();
-        this.soLuong = 0;
-        this.hanSuDung = LocalDate.now();
-        this.ngaySanXuat = LocalDate.now();
+    @OneToMany(mappedBy = "maThuoc")
+    @JsonIgnore
+    private List<ChiTietPhieuDatThuoc> chiTietPhieuDatThuocList;
+
+    /**
+     * Constructor for LoThuoc Chưa chuẩn cần được sửa lại
+     * được sử dụng trong ThemPhieuNhapFormController
+     * @param i
+     * @param pn
+     * @param value
+     * @param value1
+     * @param value2
+     * @param value3
+     */
+    public LoThuoc(int i, PhieuNhap pn, Thuoc value, Integer value1, LocalDate value2, LocalDate value3, int maLoThuoc) {
+        this.maThuoc = value;
+        MaLoThuoc = maLoThuoc;
+        setSoLuong(value1);
+        setHanSuDung(value2);
+        setNgaySanXuat(value3);
     }
 
-    public LoThuoc(int maCTT) {
-        this.maCTT = maCTT;
-        this.maPN = new PhieuNhap();
-        this.maThuoc = new Thuoc();
-        this.soLuong = 0;
-        this.hanSuDung = LocalDate.now();
-        this.ngaySanXuat = LocalDate.now();
+    /**
+     * Constructor for LoThuoc Chưa chuẩn cần được sửa lại
+     * được sử dụng trong ThemPhieuNhapFormController
+     * @param i
+     * @param pn
+     * @param value
+     * @param value1
+     * @param value2
+     * @param value3
+     */
+    public LoThuoc(int i, PhieuNhap pn, Thuoc value, Integer value1, LocalDate value2, LocalDate value3) {
+        this.maThuoc = value;
+        MaLoThuoc = i;
+        setSoLuong(value1);
+        setHanSuDung(value2);
+        setNgaySanXuat(value3);
     }
 
-    public LoThuoc(int maCTT, PhieuNhap maPN, Thuoc maThuoc, int soLuong, LocalDate hanSuDung, LocalDate ngaySanXuat) {
-        this.maCTT = maCTT;
-        this.maPN = maPN;
-        this.maThuoc = maThuoc;
-        setSoLuong(soLuong);
-        setNgaySanXuat(ngaySanXuat);
-        setHanSuDung(hanSuDung);
-    }
 
-    public int getMaCTT() {
-        return maCTT;
-    }
-
-    public PhieuNhap getMaPN() {
-        return maPN;
-    }
-    public void setMaPN(PhieuNhap maPN) {
-        this.maPN = maPN;
-    }
-    public Thuoc getMaThuoc() {
-        return maThuoc;
-    }
-    public void setMaThuoc(Thuoc maThuoc) {
-        this.maThuoc = maThuoc;
-    }
     public int getSoLuong() {
         return soLuong;
     }
@@ -91,18 +123,6 @@ public class LoThuoc {
             throw new IllegalArgumentException("Ngày sản xuất không được sau ngày hiện tại");
         }
         this.ngaySanXuat = ngaySanXuat;
-    }
-
-    @Override
-    public String toString() {
-        return "ChiTietThuoc{" +
-                "maCTT=" + maCTT +
-                ", maPN=" + (maPN != null ? maPN.getMaPhieuNhap() : "null") +
-                ", maThuoc=" + (maThuoc != null ? maThuoc.getTenThuoc() : "null") +
-                ", soLuong=" + soLuong +
-                ", hanSuDung=" + hanSuDung +
-                ", ngaySanXuat=" + ngaySanXuat +
-                '}';
     }
 
 }

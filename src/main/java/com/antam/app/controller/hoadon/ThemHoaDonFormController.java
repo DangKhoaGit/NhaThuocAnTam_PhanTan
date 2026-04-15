@@ -576,7 +576,7 @@ public class ThemHoaDonFormController extends DialogPane {
                     chiTietHoaDonDAO.themChiTietHoaDon(cthd);
                     listCTHD.add(cthd); // Thêm vào danh sách để xuất PDF
                     // Trừ kho lô này
-                    chiTietThuocDAO.CapNhatSoLuongChiTietThuoc(ctt.getMaCTT(), -soLuongXuat);
+                    chiTietThuocDAO.CapNhatSoLuongChiTietThuoc(ctt.getMaLoThuoc(), -soLuongXuat);
                     soLuongConLai -= soLuongXuat;
                 }
             }
@@ -806,7 +806,10 @@ public class ThemHoaDonFormController extends DialogPane {
         // Nếu không tìm thấy, tạo khách hàng mới với số điện thoại đã nhập
         List<KhachHang> allKH = khachHangDAO.getAllKhachHang();
         String newMaKH = generateNewMaKhachHang(allKH);
-        KhachHang newKH = new KhachHang(newMaKH, tenKH, soDienThoai, false);
+        KhachHang newKH = new KhachHang(
+                newMaKH, tenKH, soDienThoai, false
+
+        );
         khachHangDAO.insertKhachHang(newKH);
         return newMaKH;
     }
@@ -909,8 +912,8 @@ public class ThemHoaDonFormController extends DialogPane {
 
                     System.out.println("CHI TIẾT HÓA ĐƠN:");
                     for (ChiTietHoaDon ct : listCTHD) {
-                        String tenThuoc = (ct.getMaCTT() != null && ct.getMaCTT().getMaThuoc() != null)
-                            ? ct.getMaCTT().getMaThuoc().getTenThuoc()
+                        String tenThuoc = (ct.getMaLoThuoc() != null && ct.getMaLoThuoc().getMaThuoc() != null)
+                            ? ct.getMaLoThuoc().getMaThuoc().getTenThuoc()
                             : "N/A";
                         String donVi = (ct.getMaDVT() != null)
                             ? ct.getMaDVT().getTenDVT()

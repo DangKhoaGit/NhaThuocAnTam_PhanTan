@@ -6,16 +6,14 @@
 
 package com.antam.app.entity;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.Objects;
+import java.util.List;
 
 /*
  * @description
@@ -39,13 +37,31 @@ public class Ke {
     private String tenKe;
     @Column(name = "LoaiKe")
     private String loaiKe;
-    @Column(name = "DeleteAt")
-    private boolean deleteAt;
+    @Column(name = "DeleteAt", columnDefinition = "BOOLEAN DEFAULT FALSE")
+    private boolean deleteAt = false;
+
+    @OneToMany(mappedBy = "maKe")
+    @JsonIgnore
+    private List<Thuoc> thuocList;
 
     public Ke(String maKe) {
         MaKe = maKe;
         tenKe = "";
         loaiKe = "";
         deleteAt = false;
+    }
+
+    public Ke(String maKe,String tenKe, String loaiKe) {
+        MaKe = maKe;
+        tenKe = tenKe;
+        loaiKe = loaiKe;
+        deleteAt = false;
+    }
+
+    public Ke(String maKe, String tenKe, String loaiKe, boolean deleteAt) {
+        MaKe = maKe;
+        this.tenKe = tenKe;
+        this.loaiKe = loaiKe;
+        this.deleteAt = deleteAt;
     }
 }

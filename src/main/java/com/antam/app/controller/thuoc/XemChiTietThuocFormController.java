@@ -142,7 +142,7 @@ public class XemChiTietThuocFormController extends DialogPane {
         );
 
         colMaPN_CTT.setCellValueFactory(
-                c -> new SimpleStringProperty(c.getValue().getMaPN().getMaPhieuNhap())
+                c -> new SimpleStringProperty(c.getValue().getMaCTPN().get(0).getMaPN().getMaPhieuNhap())
         );
 
         colSoLuong_CTT.setCellValueFactory(new PropertyValueFactory<>("soLuong"));

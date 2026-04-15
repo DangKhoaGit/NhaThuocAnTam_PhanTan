@@ -256,8 +256,12 @@ public class ThemPhieuNhapFormController extends DialogPane{
                         Spinner<Double> spGiaNhap = (Spinner<Double>) vboxGiaNhap.getChildren().get(1);
 
                         // Nếu tất cả các trường đều hợp lệ
-                        ChiTietPhieuNhap ctpt = new ChiTietPhieuNhap(new PhieuNhap(tfMaPhieuNhap.getText()), cbDanhSachThuocNhap.getValue(), cbDonViTinh.getValue(), spSoLuong.getValue(), spGiaNhap.getValue());
-                        LoThuoc ctt = new LoThuoc(-1, pn, cbDanhSachThuocNhap.getValue(), spSoLuong.getValue(), dpHanSuDung.getValue(), dpNgaySanXuat.getValue());
+                        ChiTietPhieuNhap ctpt = new ChiTietPhieuNhap(
+//                                new PhieuNhap(tfMaPhieuNhap.getText()), cbDanhSachThuocNhap.getValue(), cbDonViTinh.getValue(), spSoLuong.getValue(), spGiaNhap.getValue()
+                        );
+                        LoThuoc ctt = new LoThuoc(
+                                -1, pn, cbDanhSachThuocNhap.getValue(), spSoLuong.getValue(), dpHanSuDung.getValue(), dpNgaySanXuat.getValue()
+                        );
                         if(kiemTraThanhCong){
                             chiTietPhieuNhap_DAO.themChiTietPhieuNhap(ctpt);
                             chiTietThuoc_DAO.themChiTietThuoc(ctt);

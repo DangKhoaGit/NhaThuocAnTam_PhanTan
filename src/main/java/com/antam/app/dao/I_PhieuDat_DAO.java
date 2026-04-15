@@ -249,7 +249,7 @@ public interface I_PhieuDat_DAO {
             String updateSQL = "insert into ChiTietPhieuDatThuoc values(?,?,?,?,?,?)";
             PreparedStatement state = con.prepareStatement(updateSQL);
             state.setString(1, ctPDT.getMaPhieu().getMaPhieu());
-            state.setString(2, ctPDT.getChiTietThuoc().getMaThuoc().getMaThuoc());
+            state.setString(2, ctPDT.getMaThuoc().getMaThuoc().getMaThuoc());
             state.setInt(3, ctPDT.getSoLuong());
             state.setInt(4, ctPDT.getDonViTinh().getMaDVT());
             state.setString(5, "Đặt");

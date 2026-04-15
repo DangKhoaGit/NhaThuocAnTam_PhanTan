@@ -6,8 +6,12 @@
 
 package com.antam.app.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.persistence.*;
+import lombok.*;
+
 import java.time.LocalDate;
-import java.util.Objects;
+import java.util.List;
 
 /*
  * @description
@@ -15,32 +19,41 @@ import java.util.Objects;
  * @date: 9/25/2025
  * version: 1.0
  */
+@AllArgsConstructor
+@NoArgsConstructor(force = true)
+@Data
+@ToString
+
+@Builder
+
+@Entity
+@Table(name = "PhieuDatThuoc")
 public class PhieuDatThuoc {
+    @Id
+    @Column(name = "MaPDT")
     private final String maPhieu;
+    @Column(name = "NgayTao")
     private LocalDate ngayTao;
+    @Column(name = "IsThanhToan")
     private boolean isThanhToan;
-    private NhanVien nhanVien;
-    private KhachHang khachHang;
-    private KhuyenMai khuyenMai;
+    @Column(name = "TongTien")
     private double tongTien;
-    private boolean daXoa;
+    @Column(columnDefinition = "BOOLEAN DEFAULT FALSE")
+    private boolean daXoa = false;
 
-    public boolean isDaXoa() {
-        return daXoa;
-    }
+    @ManyToOne
+    @JoinColumn(name = "MaNV")
+    private NhanVien nhanVien;
+    @ManyToOne
+    @JoinColumn(name = "MaKH")
+    private KhachHang khachHang;
+    @ManyToOne
+    @JoinColumn(name = "MaKM")
+    private KhuyenMai khuyenMai;
 
-    public void setDaXoa(boolean daXoa) {
-        this.daXoa = daXoa;
-    }
-
-    public PhieuDatThuoc() {
-        this.maPhieu = "";
-        this.ngayTao = LocalDate.now();
-        this.isThanhToan = false;
-        this.nhanVien = new NhanVien();
-        this.khachHang = new KhachHang();
-        this.khuyenMai = new KhuyenMai("", "Không áp dụng");
-    }
+    @OneToMany(mappedBy = "maPhieu")
+    @JsonIgnore
+    private List<ChiTietPhieuDatThuoc> chiTietPhieuDatThuocList;
 
     public PhieuDatThuoc(String maPhieu, LocalDate ngayTao, boolean isThanhToan, NhanVien nhanVien, KhachHang maKH, KhuyenMai maKM, double tongTien) {
         this.maPhieu = maPhieu;
@@ -63,13 +76,6 @@ public class PhieuDatThuoc {
         this.daXoa = daXoa;
     }
 
-    public String getMaPhieu() {
-        return maPhieu;
-    }
-
-    public LocalDate getNgayTao() {
-        return ngayTao;
-    }
 
     public void setNgayTao(LocalDate ngayTao) {
         if (ngayTao.isAfter(LocalDate.now())) {
@@ -78,69 +84,4 @@ public class PhieuDatThuoc {
         this.ngayTao = ngayTao;
     }
 
-    public boolean isThanhToan() {
-        return isThanhToan;
-    }
-
-    public void setThanhToan(boolean isThanhToan) {
-        this.isThanhToan = isThanhToan;
-    }
-
-    public NhanVien getNhanVien() {
-        return nhanVien;
-    }
-
-    public void setNhanVien(NhanVien nhanVien) {
-        this.nhanVien = nhanVien;
-    }
-
-    public KhachHang getKhachHang() {
-        return khachHang;
-    }
-
-    public void setKhachHang(KhachHang khachHang) {
-        this.khachHang = khachHang;
-    }
-
-    public KhuyenMai getKhuyenMai() {
-        return khuyenMai;
-    }
-
-    public void setKhuyenMai(KhuyenMai khuyenMai) {
-        this.khuyenMai = khuyenMai;
-    }
-
-    public double getTongTien() {
-        return tongTien;
-    }
-
-    public void setTongTien(double tongTien) {
-        this.tongTien = tongTien;
-    }
-
-    @Override
-    public String toString() {
-        return "PhieuDatThuoc{" +
-                "maPhieu='" + maPhieu + '\'' +
-                ", ngayTao=" + ngayTao +
-                ", isThanhToan=" + isThanhToan +
-                ", nhanVien=" + nhanVien +
-                ", khachHang=" + khachHang +
-                ", khuyenMai=" + khuyenMai +
-                ", tongTien=" + tongTien +
-                '}';
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        PhieuDatThuoc that = (PhieuDatThuoc) o;
-        return Objects.equals(maPhieu, that.maPhieu);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(maPhieu);
-    }
 }

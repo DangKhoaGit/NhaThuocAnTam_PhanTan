@@ -6,7 +6,10 @@
 
 package com.antam.app.entity;
 
-import java.util.Objects;
+import jakarta.persistence.*;
+import lombok.*;
+
+import java.io.Serializable;
 
 /*
  * @description
@@ -14,21 +17,40 @@ import java.util.Objects;
  * @date: 9/25/2025
  * version: 1.0
  */
-public class ChiTietPhieuDatThuoc {
-    private PhieuDatThuoc maPhieu;
-    private LoThuoc maThuoc;
-    private int soLuong;
-    private DonViTinh donViTinh;
-    private double thanhTien;
-    private boolean isThanhToan;
+@AllArgsConstructor
+@NoArgsConstructor
+@Data
+@ToString
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 
-    public ChiTietPhieuDatThuoc() {
-        this.maPhieu = new PhieuDatThuoc();
-        this.maThuoc = new LoThuoc();
-        this.soLuong = 0;
-        this.donViTinh = new DonViTinh();
-        this.thanhTien = 0;
-    }
+@Builder
+@IdClass(ChiTietPhieuDatThuoc.ChiTietPhieuDatThuocId.class)
+@Entity
+@Table(name = "ChiTietPhieuDatThuoc")
+public class ChiTietPhieuDatThuoc {
+    @Id
+    @ManyToOne
+    @JoinColumn(name = "MaPDT")
+    @EqualsAndHashCode.Include
+    private PhieuDatThuoc maPhieu;
+
+    @Id
+    @ManyToOne
+    @JoinColumn(name = "MaLoThuoc")
+    @EqualsAndHashCode.Include
+    private LoThuoc maThuoc;
+
+    private int soLuong;
+
+    @ManyToOne
+    @JoinColumn(name = "MaDVT")
+    private DonViTinh donViTinh;
+
+    private double thanhTien;
+
+    @Column(name = "TinhTrang", columnDefinition = "BOOLEAN DEFAULT FALSE")
+    private boolean isThanhToan = false;
+
 
     public ChiTietPhieuDatThuoc(PhieuDatThuoc maPhieu, LoThuoc maThuoc, int soLuong, DonViTinh donViTinh) {
         this.maPhieu = maPhieu;
@@ -55,21 +77,6 @@ public class ChiTietPhieuDatThuoc {
         this.thanhTien = thanhTien;
     }
 
-    public PhieuDatThuoc getMaPhieu() {
-        return maPhieu;
-    }
-    public void setMaPhieu(PhieuDatThuoc maPhieu) {
-        this.maPhieu = maPhieu;
-    }
-    public LoThuoc getChiTietThuoc() {
-        return maThuoc;
-    }
-    public void setChiTietThuoc(LoThuoc ctt) {
-        this.maThuoc = ctt;
-    }
-    public int getSoLuong() {
-        return soLuong;
-    }
     public void setSoLuong(int soLuong) {
         if (soLuong < 0) {
             throw new IllegalArgumentException("Số lượng không được âm");
@@ -77,15 +84,7 @@ public class ChiTietPhieuDatThuoc {
         this.soLuong = soLuong;
         setThanhTien();
     }
-    public DonViTinh getDonViTinh() {
-        return donViTinh;
-    }
-    public void setDonViTinh(DonViTinh donViTinh) {
-        this.donViTinh = donViTinh;
-    }
-    public double getThanhTien() {
-        return thanhTien;
-    }
+
     public void setThanhTien() {
         this.thanhTien = tinhThanhTien();
     }
@@ -99,48 +98,22 @@ public class ChiTietPhieuDatThuoc {
     public String toString() {
         return "ChiTietPhieuDatThuoc{" +
                 "maPhieu=" + maPhieu +
-                ", soDangKy=" + maThuoc +
+                ", maThuoc=" + maThuoc +
                 ", soLuong=" + soLuong +
                 ", donViTinh=" + donViTinh +
                 '}';
     }
 
-    public boolean isThanhToan() {
-        return isThanhToan;
-    }
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @EqualsAndHashCode
+    @ToString
+    @Builder
+    public static class ChiTietPhieuDatThuocId implements Serializable {
+        private String maPhieu;
+        private int maThuoc;
 
-    public void setThanhToan(boolean thanhToan) {
-        isThanhToan = thanhToan;
-    }
-
-//    @Override
-//    public boolean equals(Object o) {
-//        if (this == o) return true;
-//        if (o == null || getClass() != o.getClass()) return false;
-//
-//        ChiTietPhieuDatThuoc that = (ChiTietPhieuDatThuoc) o;
-//
-//        return this.maThuoc.getMaThuoc().equals(that.maThuoc.getMaThuoc())
-//                && this.donViTinh.getMaDVT() == that.donViTinh.getMaDVT();
-//    }
-//
-//    @Override
-//    public int hashCode() {
-//        int result = maThuoc.getMaThuoc().hashCode();
-//        result = 31 * result + donViTinh.getMaDVT();  // maDVT là int → dùng trực tiếp
-//        return result;
-//    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        ChiTietPhieuDatThuoc that = (ChiTietPhieuDatThuoc) o;
-        return Objects.equals(maThuoc, that.maThuoc) && Objects.equals(donViTinh, that.donViTinh);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(maThuoc, donViTinh);
     }
 }

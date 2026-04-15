@@ -480,7 +480,7 @@ public class ThemPhieuDatFormController extends DialogPane{
 
         int soLuongdaChon = 0;
         for (ChiTietPhieuDatThuoc ct : tbChonThuoc.getItems()) {
-            if (ct.getChiTietThuoc().getMaThuoc().equals(selectedThuoc.getMaThuoc())) {
+            if (ct.getMaThuoc().getMaThuoc().equals(selectedThuoc.getMaThuoc())) {
                 soLuongdaChon += ct.getSoLuong();
             }
         }
@@ -537,7 +537,7 @@ public class ThemPhieuDatFormController extends DialogPane{
 
             // 3. Nếu đã tồn tại cùng lô → cộng dồn
             Optional<ChiTietPhieuDatThuoc> existing = list.stream()
-                    .filter(x -> x.getChiTietThuoc().getMaCTT() == lo.getMaCTT())
+                    .filter(x -> x.getMaThuoc().getMaLoThuoc() == lo.getMaLoThuoc())
                     .findFirst();
 
             if (existing.isPresent()) {
@@ -624,11 +624,11 @@ public class ThemPhieuDatFormController extends DialogPane{
             // 6.2 Thêm chi tiết + trừ kho
             for (ChiTietPhieuDatThuoc ct : tbChonThuoc.getItems()) {
 
-                LoThuoc lo = ct.getChiTietThuoc();
+                LoThuoc lo = ct.getMaThuoc();
                 int soLuongDat = ct.getSoLuong();
 
                 if (lo.getSoLuong() < soLuongDat) {
-                    throw new RuntimeException("Không đủ tồn kho cho lô " + lo.getMaCTT());
+                    throw new RuntimeException("Không đủ tồn kho cho lô " + lo.getMaLoThuoc());
                 }
 
                 // Thêm chi tiết phiếu
@@ -643,7 +643,7 @@ public class ThemPhieuDatFormController extends DialogPane{
 
                 // Trừ kho đúng lô
                 chiTietThuoc_dao.CapNhatSoLuongChiTietThuoc(
-                        lo.getMaCTT(),
+                        lo.getMaLoThuoc(),
                         lo.getSoLuong() - soLuongDat
                 );
             }
@@ -712,8 +712,8 @@ public class ThemPhieuDatFormController extends DialogPane{
         double tongTien = 0.0;
         for (ChiTietPhieuDatThuoc e : tbChonThuoc.getItems()){
             tongTien += e.getSoLuong()
-                    * e.getChiTietThuoc().getMaThuoc().getGiaBan()
-                    * (1 - e.getChiTietThuoc().getMaThuoc().getThue());
+                    * e.getMaThuoc().getMaThuoc().getGiaBan()
+                    * (1 - e.getMaThuoc().getMaThuoc().getThue());
         }
         // Áp dụng khuyến mãi nếu có
         if (cbKhuyenMai.getSelectionModel().getSelectedItem() != null &&
@@ -761,7 +761,7 @@ public class ThemPhieuDatFormController extends DialogPane{
             return thue;
         }
         for (ChiTietPhieuDatThuoc e : tbChonThuoc.getItems()){
-            thue += e.getSoLuong() * e.getChiTietThuoc().getMaThuoc().getGiaBan()* e.getChiTietThuoc().getMaThuoc().getThue();
+            thue += e.getSoLuong() * e.getMaThuoc().getMaThuoc().getGiaBan()* e.getMaThuoc().getMaThuoc().getThue();
         }
         return thue;
     }
@@ -808,12 +808,12 @@ public class ThemPhieuDatFormController extends DialogPane{
      * Cài đặt các cột trong bảng
      */
     private void setupTable(){
-        colTenThuoc.setCellValueFactory( cellData -> new SimpleStringProperty(cellData.getValue().getChiTietThuoc().getMaThuoc().getTenThuoc()));
-        colDonVi.setCellValueFactory( cellData -> new SimpleStringProperty(cellData.getValue().getChiTietThuoc().getMaThuoc().getMaDVTCoSo().getTenDVT()));
+        colTenThuoc.setCellValueFactory( cellData -> new SimpleStringProperty(cellData.getValue().getMaThuoc().getMaThuoc().getTenThuoc()));
+        colDonVi.setCellValueFactory( cellData -> new SimpleStringProperty(cellData.getValue().getMaThuoc().getMaThuoc().getMaDVTCoSo().getTenDVT()));
         colSoLuong.setCellValueFactory( cellData -> new SimpleStringProperty(String.valueOf(cellData.getValue().getSoLuong())));
-        colDonGia.setCellValueFactory( cellData -> new SimpleStringProperty(dinhDangTien(cellData.getValue().getChiTietThuoc().getMaThuoc().getGiaBan())));
+        colDonGia.setCellValueFactory( cellData -> new SimpleStringProperty(dinhDangTien(cellData.getValue().getMaThuoc().getMaThuoc().getGiaBan())));
         colThanhTien.setCellValueFactory( cellData -> {
-            double thanhTien = cellData.getValue().getSoLuong() * cellData.getValue().getChiTietThuoc().getMaThuoc().getGiaBan();
+            double thanhTien = cellData.getValue().getSoLuong() * cellData.getValue().getMaThuoc().getMaThuoc().getGiaBan();
             return new SimpleStringProperty(dinhDangTien(thanhTien));
         } );
     }

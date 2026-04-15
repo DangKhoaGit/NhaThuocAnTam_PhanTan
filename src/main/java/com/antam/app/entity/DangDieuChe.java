@@ -6,7 +6,14 @@
 
 package com.antam.app.entity;
 
-import java.util.Objects;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.util.List;
 
 /*
  * @description
@@ -14,16 +21,23 @@ import java.util.Objects;
  * @date: 9/24/2025
  * version: 1.0
  */
+
+@Data
+@NoArgsConstructor(force = true)
+@AllArgsConstructor
+@Builder
+
+@Entity
+@Table(name = "DangDieuChe")
 public class DangDieuChe {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private final int MaDDC;
     private String TenDDC;
-    private boolean deleteAt;
+    @Column(columnDefinition = "BOOLEAN DEFAULT FALSE")
+    private boolean DeleteAt = false;
 
-    public DangDieuChe() {
-        MaDDC = 0;
-        TenDDC = "";
-        deleteAt = false;
-    }
+
 
     public DangDieuChe(String tenDDC) {
         MaDDC = 0;
@@ -34,50 +48,13 @@ public class DangDieuChe {
         setTenDDC(tenDDC);
     }
 
+    @OneToMany(mappedBy = "dangDieuChe")
+    @JsonIgnore
+    private List<Thuoc> thuocList;
 
-    public DangDieuChe(int maDDC, String tenDDC, boolean deleteAt) {
+    public DangDieuChe(int maDDC, String tenDDC, Boolean deleteAt) {
         MaDDC = maDDC;
         setTenDDC(tenDDC);
-        this.deleteAt = deleteAt;
-    }
-
-    public int getMaDDC() {
-        return MaDDC;
-    }
-
-    public String getTenDDC() {
-        return TenDDC;
-    }
-
-    public void setTenDDC(String tenDDC) {
-        if (tenDDC == null || tenDDC.isEmpty()) {
-            throw new IllegalArgumentException("Tên dạng điều chế không được để trống");
-        }
-        TenDDC = tenDDC;
-    }
-
-    public boolean isDeleteAt() {
-        return deleteAt;
-    }
-    public void setDeleteAt(boolean deleteAt) {
-        this.deleteAt = deleteAt;
-    }
-
-    @Override
-    public String toString() {
-        return TenDDC;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        DangDieuChe that = (DangDieuChe) o;
-        return MaDDC == that.MaDDC;
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(MaDDC);
+        setDeleteAt(deleteAt);
     }
 }

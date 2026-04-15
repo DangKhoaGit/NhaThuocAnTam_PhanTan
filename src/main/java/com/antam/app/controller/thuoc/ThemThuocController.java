@@ -286,7 +286,7 @@ public class ThemThuocController extends ScrollPane{
         ke_dao = new Ke_DAO();
         ArrayList<Ke> arrayKe = ke_dao.getTatCaKeHoatDong();
         cbKe.getItems().clear();
-        Ke tatCa = new Ke("KE0001", "Tất cả", "Tất cả", false);
+        Ke tatCa = new Ke("KE0000", "Tất cả", "Tất cả");
         cbKe.getItems().add(tatCa);
         for (Ke ke : arrayKe) {
             cbKe.getItems().add(ke);

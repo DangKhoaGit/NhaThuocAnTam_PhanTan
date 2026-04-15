@@ -6,7 +6,14 @@
 
 package com.antam.app.entity;
 
-import java.util.Objects;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.util.List;
 
 /*
  * @description
@@ -14,30 +21,48 @@ import java.util.Objects;
  * @date: 9/25/2025
  * version: 1.0
  */
-public class NhanVien {
-    private final String MaNV;
-    private String hoTen;
-    private String soDienThoai;
-    private String email;
-    private String diaChi;
-    private double luongCoBan;
-    private String taiKhoan;
-    private String matKhau;
-    private boolean isQuanLy;
-    private boolean deleteAt;
+@Data
+@NoArgsConstructor(force = true)
+@AllArgsConstructor
+@Builder
 
-    public NhanVien() {
-        MaNV = "";
-        hoTen = "";
-        soDienThoai = "";
-        email = "";
-        diaChi = "";
-        luongCoBan = 0;
-        taiKhoan = "";
-        matKhau = "";
-        isQuanLy = false;
-        deleteAt = false;
-    }
+@Entity
+@Table(name = "NhanVien")
+public class NhanVien {
+    @Id
+    private final String MaNV;
+    @Column(name = "HoTen")
+    private String hoTen;
+    @Column(name = "SoDienThoai")
+    private String soDienThoai;
+    @Column(name = "Email")
+    private String email;
+    @Column(name = "DiaChi")
+    private String diaChi;
+    @Column(name = "LuongCoBan")
+    private double luongCoBan;
+    @Column(name = "TaiKhoan")
+    private String taiKhoan;
+    @Column(name = "MatKhau")
+    private String matKhau;
+    @Column(name = "IsQuanLi")
+    private boolean isQuanLy;
+    @Column(columnDefinition = "BOOLEAN DEFAULT FALSE")
+    private boolean deleteAt = false;
+
+
+    @OneToMany(mappedBy = "maNV")
+    @JsonIgnore
+    private List<PhieuNhap> phieuNhapList;
+
+
+    @OneToMany(mappedBy = "maNV")
+    @JsonIgnore
+    private List<HoaDon> hoaDonList;
+
+    @OneToMany(mappedBy = "nhanVien")
+    @JsonIgnore
+    private List<PhieuDatThuoc> phieuDatThuocList;
 
     public NhanVien(String MaNhanVien) {
         this.MaNV = MaNhanVien;
@@ -65,18 +90,6 @@ public class NhanVien {
         deleteAt = false;
     }
 
-    public NhanVien(String maNV, String hoTen, String soDienThoai, String email, String diaChi, double luongCoBan, String taiKhoan, String matKhau, boolean deleteAt, boolean isQuanLy) {
-        MaNV = maNV;
-        setHoTen(hoTen);
-        setSoDienThoai(soDienThoai);
-        setEmail(email);
-        setDiaChi(diaChi);
-        setLuongCoBan(luongCoBan);
-        setTaiKhoan(taiKhoan);
-        setMatKhau(matKhau);
-        this.deleteAt = deleteAt;
-        this.isQuanLy = isQuanLy;
-    }
     public NhanVien(String maNV, String hoTen, String soDienThoai, String email, String diaChi, double luongCoBan, String taiKhoan, String matKhau, boolean isQuanLy) {
         MaNV = maNV;
         setHoTen(hoTen);
@@ -107,104 +120,18 @@ public class NhanVien {
         isQuanLy = ql;
         deleteAt = false;
     }
-    public String getMaNV() {
-        return MaNV;
-    }
-    public String getHoTen() {
-        return hoTen;
-    }
-    public void setHoTen(String hoTen) {
-        if (hoTen == null || hoTen.isEmpty()) {
-            throw new IllegalArgumentException("Họ tên không được để trống");
-        }
-        this.hoTen = hoTen;
-    }
-    public String getSoDienThoai() {
-        return soDienThoai;
-    }
-    public void setSoDienThoai(String soDienThoai) {
-        if (soDienThoai == null || soDienThoai.isEmpty()) {
-            throw new IllegalArgumentException("Số điện thoại không được để trống");
-        } else if (!soDienThoai.matches("^0\\d{9}$")) {
-            throw new IllegalArgumentException("Số điện thoại không hợp lệ");
-        }
 
-        this.soDienThoai = soDienThoai;
-    }
 
-    public String getEmail() {
-        return email;
-    }
-    public void setEmail(String email) {
-        if (email == null || email.isEmpty()) {
-            throw new IllegalArgumentException("Email không được để trống");
-        }
-        this.email = email;
-    }
-    public String getDiaChi() {
-        return diaChi;
-    }
-    public void setDiaChi(String diaChi) {
-        if (diaChi == null || diaChi.isEmpty()) {
-            throw new IllegalArgumentException("Địa chỉ không được để trống");
-        }
-        this.diaChi = diaChi;
-    }
-    public double getLuongCoBan() {
-        return luongCoBan;
-    }
-    public void setLuongCoBan(double luongCoBan) {
-        if (luongCoBan <= 0) {
-            throw new IllegalArgumentException("Lương cơ bản không được âm");
-        }
-        this.luongCoBan = luongCoBan;
-    }
-    public String getTaiKhoan() {
-        return taiKhoan;
-    }
-    public void setTaiKhoan(String taiKhoan) {
-        if (taiKhoan == null || taiKhoan.isEmpty()) {
-            throw new IllegalArgumentException("Tài khoản không được để trống");
-        }
-        this.taiKhoan = taiKhoan;
-    }
-    public String getMatKhau() {
-        return matKhau;
-    }
-    public void setMatKhau(String matKhau) {
-        if (matKhau == null || matKhau.isEmpty()) {
-            throw new IllegalArgumentException("Mật khẩu không được để trống");
-        }
-        this.matKhau = matKhau;
-    }
-    public boolean isQuanLy() {
-        return isQuanLy;
-    }
-    public void setQuanLy(boolean quanLy) {
-        isQuanLy = quanLy;
-    }
-    public boolean isDeleteAt() {
-        return deleteAt;
-    }
-    public void setDeleteAt(boolean deleteAt) {
+    public NhanVien(String maNV, String hoTen, String soDT, String email, String diaChi, double luongCb, String taiKhoan, String matKhau, boolean deleteAt, boolean isQL) {
+        MaNV = maNV;
+        setHoTen(hoTen);
+        setSoDienThoai(soDT);
+        setEmail(email);
+        setDiaChi(diaChi);
+        setLuongCoBan(luongCb);
+        setTaiKhoan(taiKhoan);
+        setMatKhau(matKhau);
         this.deleteAt = deleteAt;
-    }
-
-    @Override
-    public String toString() {
-        return hoTen;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        NhanVien nhanVien = (NhanVien) o;
-        return Objects.equals(MaNV, nhanVien.MaNV);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(MaNV);
+        this.isQuanLy = isQL;
     }
 }

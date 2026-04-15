@@ -135,13 +135,13 @@ public class XemChiTietHoaDonFormController extends DialogPane{
         /** Sự kiện **/
         tenThuocCol.setCellValueFactory(cellData ->
                 new javafx.beans.property.SimpleStringProperty(
-                        cellData.getValue().getMaCTT().getMaThuoc().getTenThuoc()
+                        cellData.getValue().getMaLoThuoc().getMaThuoc().getTenThuoc()
                 )
         );
         soLuongCol.setCellValueFactory(new PropertyValueFactory<>("soLuong"));
         donGiaCol.setCellValueFactory(cellData ->
                 new javafx.beans.property.SimpleDoubleProperty(
-                        cellData.getValue().getMaCTT().getMaThuoc().getGiaBan()
+                        cellData.getValue().getMaLoThuoc().getMaThuoc().getGiaBan()
                 ).asObject()
         );
         donGiaCol.setCellFactory(col -> new javafx.scene.control.TableCell<ChiTietHoaDon, Double>() {
@@ -158,8 +158,8 @@ public class XemChiTietHoaDonFormController extends DialogPane{
         thanhTienCol.setCellValueFactory(cellData -> {
             double donGia = 0;
             int soLuong = cellData.getValue().getSoLuong();
-            if (cellData.getValue().getMaCTT() != null && cellData.getValue().getMaCTT().getMaThuoc() != null) {
-                donGia = cellData.getValue().getMaCTT().getMaThuoc().getGiaBan();
+            if (cellData.getValue().getMaLoThuoc() != null && cellData.getValue().getMaLoThuoc().getMaThuoc() != null) {
+                donGia = cellData.getValue().getMaLoThuoc().getMaThuoc().getGiaBan();
             }
             return new javafx.beans.property.SimpleDoubleProperty(donGia * soLuong).asObject();
         });
@@ -180,8 +180,8 @@ public class XemChiTietHoaDonFormController extends DialogPane{
         // Thuế GTGT
         thueCol.setCellValueFactory(cellData -> {
             double thue = 0;
-            if (cellData.getValue().getMaCTT() != null && cellData.getValue().getMaCTT().getMaThuoc() != null) {
-                thue = cellData.getValue().getMaCTT().getMaThuoc().getThue();
+            if (cellData.getValue().getMaLoThuoc() != null && cellData.getValue().getMaLoThuoc().getMaThuoc() != null) {
+                thue = cellData.getValue().getMaLoThuoc().getMaThuoc().getThue();
             }
             return new javafx.beans.property.SimpleDoubleProperty(thue).asObject();
         });
@@ -260,13 +260,13 @@ public class XemChiTietHoaDonFormController extends DialogPane{
         double soldItemsTotal = 0; // Tổng tiền của hàng bán
         double vatTotal = 0; // Tổng thuế VAT của hàng bán
         for (ChiTietHoaDon chiTietHoaDon : list) {
-            LoThuoc ctt = chiTietThuoc_dao.getChiTietThuoc(chiTietHoaDon.getMaCTT().getMaCTT());
+            LoThuoc ctt = chiTietThuoc_dao.getChiTietThuoc(chiTietHoaDon.getMaLoThuoc().getMaLoThuoc());
             if (ctt != null) {
                 Thuoc t = thuoc_dao.getThuocTheoMa(ctt.getMaThuoc().getMaThuoc());
                 if (t != null) {
                     ctt.setMaThuoc(t);
                 }
-                chiTietHoaDon.setMaCTT(ctt);
+                chiTietHoaDon.setMaLoThuoc(ctt);
             }
             // Lấy lại thông tin đơn vị tính
             DonViTinh dvt = donViTinh_dao.getDVTTheoMa(chiTietHoaDon.getMaDVT().getMaDVT());
@@ -281,8 +281,8 @@ public class XemChiTietHoaDonFormController extends DialogPane{
             } else {
                 // Chỉ tính thuế VAT cho hàng bán (không phải trả hoặc đổi)
                 soldItemsTotal += chiTietHoaDon.getThanhTien();
-                if (chiTietHoaDon.getMaCTT() != null && chiTietHoaDon.getMaCTT().getMaThuoc() != null) {
-                    double thue = chiTietHoaDon.getMaCTT().getMaThuoc().getThue(); // 0.1 = 10%
+                if (chiTietHoaDon.getMaLoThuoc() != null && chiTietHoaDon.getMaLoThuoc().getMaThuoc() != null) {
+                    double thue = chiTietHoaDon.getMaLoThuoc().getMaThuoc().getThue(); // 0.1 = 10%
                     double thanhTien = chiTietHoaDon.getThanhTien();
                     // Tính thuế VAT: nếu giá chưa bao gồm thuế thì nhân trực tiếp
                     vatTotal += thanhTien * thue;

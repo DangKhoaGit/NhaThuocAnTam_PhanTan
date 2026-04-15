@@ -332,15 +332,15 @@ public class CapNhatPhieuDatController extends ScrollPane{
                 // 2. Hoàn kho
                 for (ChiTietPhieuDatThuoc ct : chiTietList) {
                     LoThuoc ctt =
-                            ctThuoc_dao.getChiTietThuoc(ct.getChiTietThuoc().getMaCTT());
+                            ctThuoc_dao.getChiTietThuoc(ct.getMaThuoc().getSoLuong());
 
                     int soMoi = ctt.getSoLuong() + ct.getSoLuong();
 
                     boolean ok =
-                            ctThuoc_dao.CapNhatSoLuongChiTietThuoc(ctt.getMaCTT(), soMoi);
+                            ctThuoc_dao.CapNhatSoLuongChiTietThuoc(ctt.getSoLuong(), soMoi);
 
                     if (!ok) {
-                        showMess("Lỗi", "Hoàn kho thất bại cho lô " + ctt.getMaCTT());
+                        showMess("Lỗi", "Hoàn kho thất bại cho lô " + ctt.getSoLuong());
                         return;
                     }
                 }

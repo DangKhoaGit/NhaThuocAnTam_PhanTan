@@ -325,7 +325,7 @@ public class XemChiTietKhachHangController extends DialogPane {
 
         try {
             // Flow: ChiTietHoaDon -> ChiTietThuoc -> Thuoc (để lấy tên thuốc và dạng điều chế)
-            LoThuoc chiTietThuoc = chiTiet.getMaCTT();
+            LoThuoc chiTietThuoc = chiTiet.getMaLoThuoc();
             System.out.println(chiTietThuoc);
             if (chiTietThuoc != null) {
                 Thuoc thuoc = chiTietThuoc.getMaThuoc();

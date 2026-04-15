@@ -34,7 +34,7 @@ public interface I_ChiTietPhieuDat_DAO {
         try (Connection con = ConnectDB.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setString(1, ct.getMaPhieu().getMaPhieu());
-            ps.setInt(2, ct.getChiTietThuoc().getMaCTT());
+            ps.setInt(2, ct.getMaThuoc().getMaLoThuoc());
             ps.setInt(3, ct.getSoLuong());
             ps.setInt(4, ct.getDonViTinh().getMaDVT());
             ps.setString(5, "Đặt");
@@ -85,7 +85,7 @@ public interface I_ChiTietPhieuDat_DAO {
 
                     ChiTietPhieuDatThuoc ct = new ChiTietPhieuDatThuoc();
                     ct.setMaPhieu(phieu);
-                    ct.setChiTietThuoc(ctThuoc);
+                    ct.setMaThuoc(ctThuoc);
                     ct.setSoLuong(soLuong);
                     ct.setDonViTinh(donVi);
                     ct.setThanhTien();

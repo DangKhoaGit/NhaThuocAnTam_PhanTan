@@ -179,7 +179,7 @@ public class XemChiTietPhieuNhapFormController extends DialogPane{
         );
 
         TableColumn<ChiTietPhieuNhap, String> colMaThuoc = new TableColumn<>("Mã thuốc");
-        colMaThuoc.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getSoDangKy().getMaThuoc()));
+        colMaThuoc.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getLoThuoc().getMaThuoc().getMaThuoc()));
 
         TableColumn<ChiTietPhieuNhap, String> colDonViTinh = new TableColumn<>("Đơn Vị Tính");
         colDonViTinh.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getMaDVT().getTenDVT()));

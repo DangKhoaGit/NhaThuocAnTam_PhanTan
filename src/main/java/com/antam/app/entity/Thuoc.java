@@ -6,7 +6,14 @@
 
 package com.antam.app.entity;
 
-import java.time.LocalDate;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.util.List;
 
 /*
  * @description
@@ -14,30 +21,46 @@ import java.time.LocalDate;
  * @date: 9/25/2025
  * version: 1.0
  */
+@Data
+@NoArgsConstructor(force = true)
+@AllArgsConstructor
+@Builder
+
+@Entity
+@Table(name = "Thuoc")
 public class Thuoc {
+
+    @Id
+    @Column(name = "MaThuoc")
     private final String maThuoc;
+    @Column(name = "TenThuoc")
     private String TenThuoc;
+    @Column(name = "HamLuong")
     private String hamLuong;
+    @Column(name = "GiaBan")
     private double giaBan;
+    @Column(name = "GiaGoc")
     private double giaGoc;
+    @Column(name = "Thue")
     private float thue;
+    @Column(columnDefinition = "BOOLEAN DEFAULT FALSE",name = "DeleteAt")
     private boolean deleteAt;
+
+    @ManyToOne
+    @JoinColumn(name = "DangDieuChe")
     private DangDieuChe dangDieuChe;
+
+    @ManyToOne
+    @JoinColumn(name = "MaDVTCoso")
     private DonViTinh maDVTCoSo;
+
+    @ManyToOne
+    @JoinColumn(name = "MaKe")
     private Ke maKe;
 
-    public Thuoc() {
-        this.maThuoc = "";
-        this.TenThuoc = "";
-        this.hamLuong = "";
-        this.giaBan = 0;
-        this.giaGoc = 0;
-        this.thue = 0;
-        this.deleteAt = false;
-        this.dangDieuChe = new DangDieuChe();
-        this.maDVTCoSo = new DonViTinh();
-        this.maKe = new Ke();
-    }
+    @OneToMany(mappedBy = "maThuoc")
+    @JsonIgnore
+    private List<LoThuoc> loThuocList;
 
     public Thuoc(String maThuoc) {
         this.maThuoc = maThuoc;
@@ -51,99 +74,17 @@ public class Thuoc {
         this.maDVTCoSo = new DonViTinh();
         this.maKe = new Ke();
     }
-    public Thuoc(String maThuoc, String tenThuoc, String hamLuong, double giaBan, double giaGoc, float thue, boolean deleteAt, DangDieuChe dangDieuChe, DonViTinh maDVTCoSo, Ke maKe) {
+
+    public Thuoc(String maThuoc, String tenThuoc, String hamLuong, Double giaBan, Double giaGoc, float v, boolean b, DangDieuChe dangDieuChe, DonViTinh donViCoSo, Ke ke) {
         this.maThuoc = maThuoc;
-        setTenThuoc(tenThuoc);
-        setHamLuong(hamLuong);
-        setGiaBan(giaBan);
-        setGiaGoc(giaGoc);
-        setThue(thue);
-        this.deleteAt = deleteAt;
-        this.dangDieuChe = dangDieuChe;
-        this.maDVTCoSo = maDVTCoSo;
-        this.maKe = maKe;
-    }
-    public String getMaThuoc() {
-        return maThuoc;
-    }
-    public String getTenThuoc() {
-        return TenThuoc;
-    }
-    public void setTenThuoc(String tenThuoc) {
-        if (tenThuoc == null || tenThuoc.isEmpty()) {
-            throw new IllegalArgumentException("Tên thuốc không được để trống");
-        }
-        TenThuoc = tenThuoc;
-    }
-    public String getHamLuong() {
-        return hamLuong;
-    }
-    public void setHamLuong(String hamLuong) {
-        if (hamLuong == null || hamLuong.isEmpty()) {
-            throw new IllegalArgumentException("Hàm lượng không được để trống");
-        }
+        this.TenThuoc = tenThuoc;
         this.hamLuong = hamLuong;
-    }
-    public double getGiaBan() {
-        return giaBan;
-    }
-    public void setGiaBan(double giaBan) {
-        if (giaBan <= 0) {
-            throw new IllegalArgumentException("Giá bán không được âm");
-        }
         this.giaBan = giaBan;
-    }
-    public double getGiaGoc() {
-        return giaGoc;
-    }
-    public void setGiaGoc(double giaGoc) {
-        if (giaGoc <= 0) {
-            throw new IllegalArgumentException("Giá gốc không được âm");
-        }
         this.giaGoc = giaGoc;
-    }
-    public float getThue() {
-        return thue;
-    }
-    public void setThue(float thue) {
-        if (thue < 0) {
-            throw new IllegalArgumentException("Thuế không được âm");
-        }
-        this.thue = thue;
-    }
-    public DangDieuChe getDangDieuChe() {
-        return dangDieuChe;
-    }
-    public void setDangDieuChe(DangDieuChe dangDieuChe) {
+        this.thue = v;
+        this.deleteAt = b;
         this.dangDieuChe = dangDieuChe;
-    }
-    public DonViTinh getMaDVTCoSo() {
-        return maDVTCoSo;
-    }
-    public void setMaDVTCoSo(DonViTinh maDVTCoSo) {
-        this.maDVTCoSo = maDVTCoSo;
-    }
-    public Ke getMaKe() {
-        return maKe;
-    }
-    public void setMaKe(Ke maKe) {
-        this.maKe = maKe;
-    }
-    public boolean isDeleteAt() {
-        return deleteAt;
-    }
-    public void setDeleteAt(boolean deleteAt) {
-        this.deleteAt = deleteAt;
-    }
-    @Override
-    public String toString() {
-        return getTenThuoc();
-    }
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        Thuoc thuoc = (Thuoc) o;
-        return maThuoc.equals(thuoc.maThuoc);
+        this.maDVTCoSo = donViCoSo;
+        this.maKe = ke;
     }
 }

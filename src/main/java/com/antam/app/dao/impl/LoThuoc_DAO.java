@@ -34,7 +34,7 @@ public class LoThuoc_DAO implements I_LoThuoc_DAO {
         try {
             Connection con = ConnectDB.getConnection();
             PreparedStatement ps = con.prepareStatement(sql);
-            ps.setString(1, ctt.getMaPN().getMaPhieuNhap());
+//            ps.setString(1, ctt.get().getMaPhieuNhap());
             ps.setString(2, ctt.getMaThuoc().getMaThuoc());
             ps.setString(3, ctt.getHanSuDung().toString());
             ps.setString(4, ctt.getNgaySanXuat().toString());
@@ -72,12 +72,12 @@ public class LoThuoc_DAO implements I_LoThuoc_DAO {
                 java.sql.Date ngaySanXuat = rs.getDate("NgaySanXuat");
 
                 LoThuoc loThuoc = new LoThuoc(
-                        maCTT,
-                        new PhieuNhap(maPN),
-                        new Thuoc(maThuoc),
-                        soLuong,
-                        hanSuDung.toLocalDate(),
-                        ngaySanXuat.toLocalDate()
+//                        maCTT,
+//                        new PhieuNhap(maPN),
+//                        new Thuoc(maThuoc),
+//                        soLuong,
+//                        hanSuDung.toLocalDate(),
+//                        ngaySanXuat.toLocalDate()
                 );
                 listLoThuoc.add(loThuoc);
             }
@@ -114,12 +114,12 @@ public class LoThuoc_DAO implements I_LoThuoc_DAO {
                 java.sql.Date ngaySanXuat = rs.getDate("NgaySanXuat");
 
                 LoThuoc loThuoc = new LoThuoc(
-                        maCTT,
-                        new PhieuNhap(maPN),
-                        new Thuoc(maThuoc),
-                        soLuong,
-                        hanSuDung.toLocalDate(),
-                        ngaySanXuat.toLocalDate()
+//                        maCTT,
+//                        new PhieuNhap(maPN),
+//                        new Thuoc(maThuoc),
+//                        soLuong,
+//                        hanSuDung.toLocalDate(),
+//                        ngaySanXuat.toLocalDate()
                 );
                 listLoThuoc.add(loThuoc);
             }
@@ -162,12 +162,12 @@ public class LoThuoc_DAO implements I_LoThuoc_DAO {
                     }
 
                     loThuoc = new LoThuoc(
-                            maCTT,
-                            new PhieuNhap(maPN),
-                            thuoc,
-                            soLuong,
-                            hanSuDung.toLocalDate(),
-                            ngaySanXuat.toLocalDate()
+//                            maCTT,
+//                            new PhieuNhap(maPN),
+//                            thuoc,
+//                            soLuong,
+//                            hanSuDung.toLocalDate(),
+//                            ngaySanXuat.toLocalDate()
                     );
                 }
             }
@@ -226,12 +226,12 @@ public class LoThuoc_DAO implements I_LoThuoc_DAO {
                 java.sql.Date ngaySanXuat = rs.getDate("NgaySanXuat");
 
                 LoThuoc loThuoc = new LoThuoc(
-                        maCTT,
-                        new PhieuNhap(maPN),
-                        new Thuoc(maThuocDB),
-                        soLuong,
-                        hanSuDung.toLocalDate(),
-                        ngaySanXuat.toLocalDate()
+//                        maCTT,
+//                        new PhieuNhap(maPN),
+//                        new Thuoc(maThuocDB),
+//                        soLuong,
+//                        hanSuDung.toLocalDate(),
+//                        ngaySanXuat.toLocalDate()
                 );
                 listLoThuoc.add(loThuoc);
             }
@@ -298,12 +298,12 @@ public class LoThuoc_DAO implements I_LoThuoc_DAO {
                     while (rs.next()) {
 
                         LoThuoc ctt = new LoThuoc(
-                                rs.getInt("MaCTT"),
-                                new PhieuNhap(rs.getString("MaPN")),
-                                thuoc,
-                                rs.getInt("TonKho"),
-                                rs.getDate("HanSuDung").toLocalDate(),
-                                rs.getDate("NgaySanXuat").toLocalDate()
+//                                rs.getInt("MaCTT"),
+//                                new PhieuNhap(rs.getString("MaPN")),
+//                                thuoc,
+//                                rs.getInt("TonKho"),
+//                                rs.getDate("HanSuDung").toLocalDate(),
+//                                rs.getDate("NgaySanXuat").toLocalDate()
                         );
 
                         ds.add(ctt);

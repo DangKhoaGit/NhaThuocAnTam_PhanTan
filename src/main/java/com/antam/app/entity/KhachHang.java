@@ -6,8 +6,15 @@
 
 package com.antam.app.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
 import java.time.LocalDate;
-import java.util.Objects;
+import java.util.List;
 
 /*
  * @description
@@ -15,27 +22,39 @@ import java.util.Objects;
  * @date: 9/25/2025
  * version: 1.0
  */
+
+@Data
+@NoArgsConstructor(force = true)
+@AllArgsConstructor
+@Builder
+
+@Entity
+@Table(name = "KhachHang")
 public class KhachHang {
     // Các field có trong database
+    @Id
     private final String MaKH;
     private String tenKH;
     private String soDienThoai;
-    private boolean deleteAt;
+    @Column(columnDefinition = "BOOLEAN DEFAULT FALSE")
+    private boolean deleteAt = false;
 
     // Các field tính toán cho thống kê (không lưu trong DB)
-    private double tongChiTieu;
-    private int soDonHang;
+
+    @Column(columnDefinition = "INT DEFAULT 0")
+    private double tongChiTieu =0;
+    @Column(columnDefinition = "INT DEFAULT 0")
+    private int soDonHang = 0;
+
     private LocalDate ngayMuaGanNhat;
 
-    public KhachHang() {
-        MaKH = "";
-        tenKH = "";
-        soDienThoai = "";
-        deleteAt = false;
-        tongChiTieu = 0;
-        soDonHang = 0;
-        ngayMuaGanNhat = null;
-    }
+    @OneToMany(mappedBy = "maKH")
+    @JsonIgnore
+    private List<HoaDon> hoaDonList;
+
+    @OneToMany(mappedBy = "khachHang")
+    @JsonIgnore
+    private List<PhieuDatThuoc> phieuDatList;
 
     public KhachHang(String maKH) {
         MaKH = maKH;
@@ -47,22 +66,14 @@ public class KhachHang {
         ngayMuaGanNhat = null;
     }
 
-    public KhachHang(String maKH, String tenKH, String soDienThoai, boolean deleteAt) {
-        MaKH = maKH;
+    public KhachHang(String newMaKH, String tenKH, String soDienThoai, boolean b) {
+        MaKH = newMaKH;
         setTenKH(tenKH);
         setSoDienThoai(soDienThoai);
-        this.deleteAt = deleteAt;
-        this.tongChiTieu = 0;
-        this.soDonHang = 0;
-        this.ngayMuaGanNhat = null;
-    }
-
-    public String getMaKH() {
-        return MaKH;
-    }
-
-    public String getTenKH() {
-        return tenKH;
+        deleteAt = b;
+        tongChiTieu = 0;
+        soDonHang = 0;
+        ngayMuaGanNhat = null;
     }
 
     public void setTenKH(String tenKH) {
@@ -72,9 +83,6 @@ public class KhachHang {
         this.tenKH = tenKH;
     }
 
-    public String getSoDienThoai() {
-        return soDienThoai;
-    }
 
     public void setSoDienThoai(String soDienThoai) {
         if (soDienThoai == null || soDienThoai.isEmpty()) {
@@ -83,39 +91,6 @@ public class KhachHang {
             throw new IllegalArgumentException("Số điện thoại không hợp lệ");
         }
         this.soDienThoai = soDienThoai;
-    }
-
-    public boolean isDeleteAt() {
-        return deleteAt;
-    }
-
-    public void setDeleteAt(boolean deleteAt) {
-        this.deleteAt = deleteAt;
-    }
-
-    // Getter và setter cho các field thống kê
-    public double getTongChiTieu() {
-        return tongChiTieu;
-    }
-
-    public void setTongChiTieu(double tongChiTieu) {
-        this.tongChiTieu = tongChiTieu;
-    }
-
-    public int getSoDonHang() {
-        return soDonHang;
-    }
-
-    public void setSoDonHang(int soDonHang) {
-        this.soDonHang = soDonHang;
-    }
-
-    public LocalDate getNgayMuaGanNhat() {
-        return ngayMuaGanNhat;
-    }
-
-    public void setNgayMuaGanNhat(LocalDate ngayMuaGanNhat) {
-        this.ngayMuaGanNhat = ngayMuaGanNhat;
     }
 
     // Phương thức tiện ích để lấy loại khách hàng
@@ -128,21 +103,4 @@ public class KhachHang {
         }
     }
 
-    @Override
-    public String toString() {
-        return tenKH;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        KhachHang khachHang = (KhachHang) o;
-        return Objects.equals(MaKH, khachHang.MaKH);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(MaKH);
-    }
 }

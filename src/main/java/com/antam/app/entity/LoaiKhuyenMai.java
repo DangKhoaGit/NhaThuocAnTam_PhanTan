@@ -6,7 +6,11 @@
 
 package com.antam.app.entity;
 
-import java.util.Objects;
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /*
  * @description
@@ -14,43 +18,26 @@ import java.util.Objects;
  * @date: 9/25/2025
  * version: 1.0
  */
+
+@Data
+@NoArgsConstructor(force = true)
+@AllArgsConstructor
+@Builder
+
+@Entity
+@Table(name = "LoaiKhuyenMai")
 public class LoaiKhuyenMai {
+    @Id
+    @GeneratedValue(strategy =  GenerationType.IDENTITY)
     private final int MaLKM;
+    @Column(name = "TenLKM")
     private String TenLKM;
 
-    public LoaiKhuyenMai() {
-        MaLKM = 0;
-        TenLKM = "";
-    }
-    public LoaiKhuyenMai(int maLKM, String tenLKM) {
-        MaLKM = maLKM;
-        TenLKM = tenLKM;
-    }
-    public int getMaLKM() {
-        return MaLKM;
-    }
-    public String getTenLKM() {
-        return TenLKM;
-    }
-    public void setTenLKM(String tenLKM) {
-        TenLKM = tenLKM;
-    }
+    @OneToOne(mappedBy = "loaiKhuyenMai")
+    private KhuyenMai khuyenMai;
 
-    @Override
-    public String toString() {
-        return TenLKM;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        LoaiKhuyenMai that = (LoaiKhuyenMai) o;
-        return MaLKM == that.MaLKM;
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(MaLKM);
+    public LoaiKhuyenMai(int maLoaiKM, String tenLoaiKM) {
+        MaLKM = maLoaiKM;
+        TenLKM = tenLoaiKM;
     }
 }

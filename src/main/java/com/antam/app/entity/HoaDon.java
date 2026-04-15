@@ -6,8 +6,15 @@
 
 package com.antam.app.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
 import java.time.LocalDate;
-import java.util.Objects;
+import java.util.List;
 
 /*
  * @description
@@ -15,14 +22,38 @@ import java.util.Objects;
  * @date: 9/25/2025
  * version: 1.0
  */
+@Data
+@NoArgsConstructor(force = true)
+@AllArgsConstructor
+@Builder
+
+@Entity
+@Table(name = "HoaDon")
 public class HoaDon {
+    @Id
     private final String MaHD;
+    @Column(name = "NgayTao")
     private LocalDate ngayTao;
-    private NhanVien maNV;
-    private KhachHang maKH;
-    private KhuyenMai maKM;
+    @Column(name = "TongTien")
     private double tongTien;
-    private boolean deleteAt;
+    @Column(columnDefinition = "BOOLEAN DEFAULT FALSE")
+    private boolean deleteAt = false;
+
+    @ManyToOne()
+    @JoinColumn(name = "MaNV")
+    private NhanVien maNV;
+
+    @ManyToOne()
+    @JoinColumn(name = "MaKH")
+    private KhachHang maKH;
+
+    @ManyToOne()
+    @JoinColumn(name = "MaKM")
+    private KhuyenMai maKM;
+
+    @OneToMany(mappedBy = "MaHD")
+    @JsonIgnore
+    private List<ChiTietHoaDon> chiTietHoaDons;
 
     public HoaDon(String maHD) {
         MaHD = maHD;
@@ -34,93 +65,14 @@ public class HoaDon {
         deleteAt = false;
     }
 
-    public HoaDon() {
-        MaHD = "";
-        ngayTao = LocalDate.now();
-        maNV = new NhanVien();
-        maKH = new KhachHang();
-        maKM = null;
-        tongTien = 0;
-        deleteAt = false;
-    }
 
-    public HoaDon(String maHD, LocalDate ngayTao, NhanVien maNV, KhachHang maKH, KhuyenMai maKM, double tongTien , boolean deleteAt) {
+    public HoaDon(String maHD, LocalDate now, NhanVien nhanVien, KhachHang kh, KhuyenMai km, double tongTien, boolean b) {
         MaHD = maHD;
-        setNgayTao(ngayTao);
-        this.maNV = maNV;
-        this.maKH = maKH;
-        this.maKM = maKM;
+        ngayTao = now;
+        maNV = nhanVien;
+        maKH = kh;
+        maKM = km;
         this.tongTien = tongTien;
-        this.deleteAt = deleteAt;
-    }
-    public String getMaHD() {
-        return MaHD;
-    }
-    public LocalDate getNgayTao() {
-        return ngayTao;
-    }
-    public void setNgayTao(LocalDate ngayTao) {
-        if (ngayTao.isAfter(LocalDate.now())) {
-            throw new IllegalArgumentException("Ngày tạo không được sau ngày hiện tại");
-        }
-        this.ngayTao = ngayTao;
-    }
-    public NhanVien getMaNV() {
-        return maNV;
-    }
-    public void setMaNV(NhanVien maNV) {
-        this.maNV = maNV;
-    }
-    public KhachHang getMaKH() {
-        return maKH;
-    }
-    public void setMaKH(KhachHang maKH) {
-        this.maKH = maKH;
-    }
-    public KhuyenMai getMaKM() {
-        return maKM;
-    }
-    public void setMaKM(KhuyenMai maKM) {
-        this.maKM = maKM;
-    }
-    public double getTongTien() {
-        return tongTien;
-    }
-    public void setTongTien(double tongTien) {
-        if (tongTien < 0) {
-            throw new IllegalArgumentException("Tổng tiền không được âm");
-        }
-        this.tongTien = tongTien;
-    }
-    public boolean isDeleteAt() {
-        return deleteAt;
-    }
-    public void setDeleteAt(boolean deleteAt) {
-        this.deleteAt = deleteAt;
-    }
-    @Override
-    public String toString() {
-        return "HoaDon{" +
-                "MaHD='" + MaHD + '\'' +
-                ", ngayTao=" + ngayTao +
-                ", maNV=" + maNV +
-                ", maKH=" + maKH +
-                ", maKM=" + maKM +
-                ", tongTien=" + tongTien +
-                ", deleteAt=" + deleteAt +
-                '}';
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        HoaDon hoaDon = (HoaDon) o;
-        return Objects.equals(MaHD, hoaDon.MaHD);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(MaHD);
+        deleteAt = b;
     }
 }

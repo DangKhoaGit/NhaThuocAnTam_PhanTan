@@ -118,7 +118,7 @@ public class XuatHoaDonPDF {
 
         int stt = 1;
         for (ChiTietHoaDon ct : dsThuoc) {
-            Thuoc t = ct.getMaCTT().getMaThuoc();
+            Thuoc t = ct.getMaLoThuoc().getMaThuoc();
             double thanhTien = ct.getSoLuong() * t.getGiaBan();
 
             table.addCell(String.valueOf(stt++));

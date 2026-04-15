@@ -119,7 +119,7 @@ public class Ke_DAO implements com.antam.app.dao.I_Ke_DAO {
                 String tenKe = rs.getString("TenKe");
                 String loaiKe = rs.getString("LoaiKe");
                 boolean deleteAt = rs.getBoolean("DeleteAt");
-                Ke ke = new Ke(maKe, tenKe, loaiKe, deleteAt);
+                Ke ke = new Ke();
                 listKe.add(ke);
             }
         } catch (SQLException e) {

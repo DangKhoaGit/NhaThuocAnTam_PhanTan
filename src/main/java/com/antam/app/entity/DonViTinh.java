@@ -6,7 +6,14 @@
 
 package com.antam.app.entity;
 
-import java.util.Objects;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.util.List;
 
 /*
  * @description
@@ -14,62 +21,45 @@ import java.util.Objects;
  * @date: 9/25/2025
  * version: 1.0
  */
+@Data
+@NoArgsConstructor(force = true)
+@AllArgsConstructor
+@Builder
+
+@Entity
+@Table(name = "DonViTinh")
 public class DonViTinh {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private final int MaDVT;
     private String TenDVT;
-    private boolean isDelete;
+    @Column(columnDefinition = "BOOLEAN DEFAULT FALSE")
+    private boolean isDelete = false;
 
-    public DonViTinh() {
-        MaDVT = 0;
-        TenDVT = "";
-    }
     public DonViTinh(int maDVT) {
         MaDVT = maDVT;
         TenDVT = "";
     }
-    public DonViTinh(int maDVT, String tenDVT,boolean isDelete) {
-        MaDVT = maDVT;
-        setTenDVT(tenDVT);
-        this.isDelete = isDelete;
-    }
 
+    @OneToMany(mappedBy = "maDVTCoSo")
+    @JsonIgnore
+    private List<Thuoc> thuocList;
 
-    public int getMaDVT() {
-        return MaDVT;
-    }
-    public String getTenDVT() {
-        return TenDVT;
-    }
-    public void setTenDVT(String tenDVT) {
-        if (tenDVT == null || tenDVT.isEmpty()) {
-            throw new IllegalArgumentException("Tên đơn vị tính không được để trống");
-        }
-        TenDVT = tenDVT;
-    }
+    @OneToMany(mappedBy = "maDVT")
+    @JsonIgnore
+    private List<ChiTietPhieuNhap> chiTietPhieuNhapList;
 
-    @Override
-    public String toString() {
-        return TenDVT;
-    }
+    @OneToMany(mappedBy = "maDVT")
+    @JsonIgnore
+    private List<ChiTietHoaDon> chiTietHoaDonList;
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        DonViTinh donViTinh = (DonViTinh) o;
-        return MaDVT == donViTinh.MaDVT;
-    }
+    @OneToMany(mappedBy = "donViTinh")
+    @JsonIgnore
+    private List<ChiTietPhieuDatThuoc> chiTietPhieuDatThuocList;
 
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(MaDVT);
-    }
-
-    public boolean isDelete() {
-        return isDelete;
-    }
-
-    public void setDelete(boolean delete) {
-        isDelete = delete;
+    public DonViTinh(int maInt, String ten, boolean b) {
+        	this.MaDVT = maInt;
+        	this.TenDVT = ten;
+        	this.isDelete = b;
     }
 }

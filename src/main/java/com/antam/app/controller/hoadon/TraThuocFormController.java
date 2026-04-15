@@ -228,7 +228,7 @@ public class TraThuocFormController extends DialogPane{
                 }
 
                 for (ChiTietHoaDon ct : selectedItems) {
-                    chiTietHoaDon_dao.xoaMemChiTietHoaDon(ct.getMaHD().getMaHD(), ct.getMaCTT().getMaCTT(), "Trả");
+                    chiTietHoaDon_dao.xoaMemChiTietHoaDon(ct.getMaHD().getMaHD(), ct.getMaLoThuoc().getMaLoThuoc(), "Trả");
 
                     switch (lyDoTra) {
                         // Các lý do KHÔNG cộng lại vào kho
@@ -245,12 +245,12 @@ public class TraThuocFormController extends DialogPane{
                         case "Sai thông tin đơn / bảo hiểm":
                             Thuoc t = thuoc_dao.getThuocTheoMa(
                                     chiTietThuoc_dao
-                                            .getChiTietThuoc(ct.getMaCTT().getMaCTT())
+                                            .getChiTietThuoc(ct.getMaLoThuoc().getMaLoThuoc())
                                             .getMaThuoc()
                                             .getMaThuoc()
                             );
                             chiTietThuoc_dao.CapNhatSoLuongChiTietThuoc(
-                                    ct.getMaCTT().getMaCTT(),
+                                    ct.getMaLoThuoc().getMaLoThuoc(),
                                     ct.getSoLuong()
                             );
                             break;
@@ -270,7 +270,7 @@ public class TraThuocFormController extends DialogPane{
                     double tongTienTra = 0;
                     double tongTienCoKM = 0;
                     for (ChiTietHoaDon ct : selectedItems) {
-                        LoThuoc ctt = ct.getMaCTT();
+                        LoThuoc ctt = ct.getMaLoThuoc();
                         Thuoc t = thuoc_dao.getThuocTheoMa(ctt.getMaThuoc().getMaThuoc());
                         if (ct.getTinhTrang().equals("Thuốc Mới Khi Đổi")){
                             tongTienTra += ct.getThanhTien() * (1 + t.getThue());
@@ -304,7 +304,7 @@ public class TraThuocFormController extends DialogPane{
         double tongTien = 0;
         double tongTienKhiTra = 0;
         for (ChiTietHoaDon ct : selectedItems){
-            LoThuoc ctt = ct.getMaCTT();
+            LoThuoc ctt = ct.getMaLoThuoc();
             Thuoc t = thuoc_dao.getThuocTheoMa(ctt.getMaThuoc().getMaThuoc());
             if (ct.getTinhTrang().equals("Thuốc Mới Khi Đổi")){
                 tongTienKhiTra += ct.getThanhTien() * (1 + t.getThue());
@@ -380,7 +380,7 @@ public class TraThuocFormController extends DialogPane{
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
-        LoThuoc ctt = chiTietThuoc_dao.getChiTietThuoc(chiTietHoaDon.getMaCTT().getMaCTT());
+        LoThuoc ctt = chiTietThuoc_dao.getChiTietThuoc(chiTietHoaDon.getMaLoThuoc().getMaLoThuoc());
         Thuoc t = thuoc_dao.getThuocTheoMa(ctt.getMaThuoc().getMaThuoc());
         Text txtMaThuoc = new Text(t.getTenThuoc());
         txtMaThuoc.setStyle("-fx-font-size: 15px;");
