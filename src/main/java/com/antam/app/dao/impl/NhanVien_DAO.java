@@ -12,7 +12,7 @@ import com.antam.app.entity.NhanVien;
 import java.sql.*;
 import java.util.ArrayList;
 
-public class NhanVien_DAO implements com.antam.app.dao.I_NhanVien_DAO {
+public class NhanVien_DAO implements I_NhanVien_DAO {
 
     //danh sách nhân viên truy xuất trực tiếp khi vào tầng Application.
     public static ArrayList<NhanVien> dsNhanViens = I_NhanVien_DAO.getDsNhanVienformDBS();

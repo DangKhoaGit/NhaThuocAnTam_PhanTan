@@ -6,8 +6,8 @@
 package com.antam.app.controller.khuyenmai;
 
 import com.antam.app.connect.ConnectDB;
-import com.antam.app.dao.impl.KhuyenMai_DAO;
-import com.antam.app.entity.KhuyenMai;
+import com.antam.app.service.impl.KhuyenMai_Service;
+import com.antam.app.dto.KhuyenMaiDTO;
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcon;
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcons;
 import javafx.beans.property.SimpleStringProperty;
@@ -35,12 +35,12 @@ public class ThemKhuyenMaiController extends ScrollPane{
     private DatePicker dpTuNgay, dpDenNgay;
     private TextField txtTiemKiemKhuyenMai;
     private Button btnTimKiem, btnclear;
-    private TableView<KhuyenMai> tableKhuyenMai;
+    private TableView<KhuyenMaiDTO> tableKhuyenMai;
     
-    private TableColumn<KhuyenMai, String> colMaKhuyenMai, colTenKhuyenMai, colLoaiKhuyenMai, colSo, colSoLuongToiDa, colTinhTrang;
-    private ObservableList<KhuyenMai> khuyenMaiList = FXCollections.observableArrayList();
-    private ArrayList<KhuyenMai> arrayKhuyenMai = new ArrayList<>();
-    private KhuyenMai_DAO khuyenMai_dao = new KhuyenMai_DAO();
+    private TableColumn<KhuyenMaiDTO, String> colMaKhuyenMai, colTenKhuyenMai, colLoaiKhuyenMai, colSo, colSoLuongToiDa, colTinhTrang;
+    private ObservableList<KhuyenMaiDTO> khuyenMaiList = FXCollections.observableArrayList();
+    private ArrayList<KhuyenMaiDTO> arrayKhuyenMai = new ArrayList<>();
+    private KhuyenMai_Service khuyenMai_dao = new KhuyenMai_Service();
     public ThemKhuyenMaiController() {
         /** Giao diện **/
         this.setFitToHeight(true);
@@ -185,9 +185,9 @@ public class ThemKhuyenMaiController extends ScrollPane{
         colMaKhuyenMai.setCellValueFactory(new PropertyValueFactory<>("MaKM"));
         colTenKhuyenMai.setCellValueFactory(new PropertyValueFactory<>("TenKM"));
         colLoaiKhuyenMai.setCellValueFactory(celldata -> {
-            KhuyenMai km = celldata.getValue();
-            if (km.getLoaiKhuyenMai() != null) {
-                return new SimpleStringProperty(km.getLoaiKhuyenMai().getTenLKM());
+            KhuyenMaiDTO km = celldata.getValue();
+            if (km.getLoaiKhuyenMaiDTO() != null) {
+                return new SimpleStringProperty(km.getLoaiKhuyenMaiDTO().getTenLKM());
             } else {
                 return new SimpleStringProperty("Không xác định");
             }
@@ -195,7 +195,7 @@ public class ThemKhuyenMaiController extends ScrollPane{
         colSo.setCellValueFactory(new PropertyValueFactory<>("so"));
         colSoLuongToiDa.setCellValueFactory(new PropertyValueFactory<>("soLuongToiDa"));
         colTinhTrang.setCellValueFactory(cellData -> {
-            KhuyenMai km = cellData.getValue();
+            KhuyenMaiDTO km = cellData.getValue();
             if (LocalDate.now().isBefore(km.getNgayBatDau())) {
                 return new SimpleStringProperty("Chưa bắt đầu");
             } else if (LocalDate.now().isAfter(km.getNgayKetThuc())) {
@@ -205,7 +205,7 @@ public class ThemKhuyenMaiController extends ScrollPane{
             }
         });
         // load du lieu
-        khuyenMai_dao = new KhuyenMai_DAO();
+        khuyenMai_dao = new KhuyenMai_Service();
         arrayKhuyenMai = khuyenMai_dao.getAllKhuyenMaiChuaXoa();
         khuyenMaiList.setAll(arrayKhuyenMai);
         tableKhuyenMai.setItems(khuyenMaiList);
@@ -260,13 +260,13 @@ public class ThemKhuyenMaiController extends ScrollPane{
             return;
         }
 
-        ObservableList<KhuyenMai> filteredList = FXCollections.observableArrayList();
+        ObservableList<KhuyenMaiDTO> filteredList = FXCollections.observableArrayList();
 
-        for (KhuyenMai km : arrayKhuyenMai) {
+        for (KhuyenMaiDTO km : arrayKhuyenMai) {
             boolean matchesLoai =
                     loaiKhuyenMai.equals("Tất cả") ||
-                            (loaiKhuyenMai.equals("Giảm theo phần trăm") && km.getLoaiKhuyenMai().getTenLKM().equals("Giảm theo phần trăm")) ||
-                            (loaiKhuyenMai.equals("Giảm theo số tiền") && km.getLoaiKhuyenMai().getTenLKM().equals("Giảm theo số tiền"));
+                            (loaiKhuyenMai.equals("Giảm theo phần trăm") && km.getLoaiKhuyenMaiDTO().getTenLKM().equals("Giảm theo phần trăm")) ||
+                            (loaiKhuyenMai.equals("Giảm theo số tiền") && km.getLoaiKhuyenMaiDTO().getTenLKM().equals("Giảm theo số tiền"));
 
             LocalDate today = LocalDate.now();
             boolean matchesTrangThai =

@@ -121,9 +121,9 @@ public class HoaDon_DAO implements I_HoaDon_DAO {
         String sql = "SELECT * FROM HoaDon WHERE MaHD = ?";
         Connection con = ConnectDB.getConnection();
         try{
-            java.sql.PreparedStatement statement = con.prepareStatement(sql);
+            PreparedStatement statement = con.prepareStatement(sql);
             statement.setString(1, maHD);
-            java.sql.ResultSet rs = statement.executeQuery();
+            ResultSet rs = statement.executeQuery();
             if(rs.next()){
                 hd.setMaKH(new KhachHang(rs.getString("MaKH")));
                 hd.setMaNV(new NhanVien(rs.getString("MaNV")));
@@ -169,7 +169,7 @@ public class HoaDon_DAO implements I_HoaDon_DAO {
         String sql = "UPDATE HoaDon SET DeleteAt = 1 WHERE MaHD = ?";
         Connection con = ConnectDB.getConnection();
         try{
-            java.sql.PreparedStatement statement = con.prepareStatement(sql);
+            PreparedStatement statement = con.prepareStatement(sql);
             statement.setString(1, maHD);
             int rowsAffected = statement.executeUpdate();
             return rowsAffected > 0;
@@ -222,7 +222,7 @@ public class HoaDon_DAO implements I_HoaDon_DAO {
             }
 
             // Bước 1: Đọc tất cả dữ liệu từ ResultSet trước
-            try (java.sql.PreparedStatement ps = con.prepareStatement(sql)) {
+            try (PreparedStatement ps = con.prepareStatement(sql)) {
                 ps.setString(1, "%" + maHd + "%"); // Tìm tương đối
                 try (ResultSet rs = ps.executeQuery()) {
                     while (rs.next()) {
@@ -471,13 +471,13 @@ public class HoaDon_DAO implements I_HoaDon_DAO {
             }
             try (PreparedStatement ps = con.prepareStatement(sql)) {
                 ps.setString(1, hoaDon.getMaHD());
-                ps.setDate(2, java.sql.Date.valueOf(hoaDon.getNgayTao()));
+                ps.setDate(2, Date.valueOf(hoaDon.getNgayTao()));
                 ps.setString(3, hoaDon.getMaNV() != null ? hoaDon.getMaNV().getMaNV() : null);
                 ps.setString(4, hoaDon.getMaKH() != null ? hoaDon.getMaKH().getMaKH() : null);
                 if (hoaDon.getMaKM() != null) {
                     ps.setString(5, hoaDon.getMaKM().getMaKM());
                 } else {
-                    ps.setNull(5, java.sql.Types.VARCHAR);
+                    ps.setNull(5, Types.VARCHAR);
                 }
                 ps.setDouble(6, hoaDon.getTongTien());
                 ps.setBoolean(7, hoaDon.isDeleteAt());

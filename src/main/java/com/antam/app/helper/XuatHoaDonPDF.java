@@ -1,5 +1,8 @@
 package com.antam.app.helper;
 
+import com.antam.app.dto.ChiTietHoaDonDTO;
+import com.antam.app.dto.HoaDonDTO;
+import com.antam.app.dto.ThuocDTO;
 import com.antam.app.entity.ChiTietHoaDon;
 import com.antam.app.entity.ChiTietPhieuDatThuoc;
 import com.antam.app.entity.HoaDon;
@@ -49,8 +52,8 @@ public class XuatHoaDonPDF {
      */
     public static void xuatFilePDF(
             File file,
-            HoaDon hoaDon,
-            List<ChiTietHoaDon> dsThuoc,
+            HoaDonDTO hoaDon,
+            List<ChiTietHoaDonDTO> dsThuoc,
             double thue,
             double tongTien
     ) throws Exception {
@@ -117,8 +120,8 @@ public class XuatHoaDonPDF {
         addHeader(table, "Thành tiền", boldFont);
 
         int stt = 1;
-        for (ChiTietHoaDon ct : dsThuoc) {
-            Thuoc t = ct.getMaLoThuoc().getMaThuoc();
+        for (ChiTietHoaDonDTO ct : dsThuoc) {
+            ThuocDTO t = ct.getMaLoThuocDTO().getMaThuocDTO();
             double thanhTien = ct.getSoLuong() * t.getGiaBan();
 
             table.addCell(String.valueOf(stt++));

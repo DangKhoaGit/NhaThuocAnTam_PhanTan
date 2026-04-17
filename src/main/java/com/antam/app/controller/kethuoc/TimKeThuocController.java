@@ -6,8 +6,8 @@
 package com.antam.app.controller.kethuoc;
 
 import com.antam.app.connect.ConnectDB;
-import com.antam.app.dao.impl.Ke_DAO;
-import com.antam.app.entity.Ke;
+import com.antam.app.service.impl.Ke_Service;
+import com.antam.app.dto.KeDTO;
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcon;
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcons;
 import javafx.beans.property.SimpleStringProperty;
@@ -29,15 +29,15 @@ import javafx.scene.text.Text;
 
 public class TimKeThuocController extends ScrollPane{
 
-    private TableView<Ke> tbKeThuoc;
+    private TableView<KeDTO> tbKeThuoc;
     private ComboBox<String> cbLuaChon;
     private Button btnTimKiem, btnXoaRong;
     private TextField tfTimKiem;
-    private Ke_DAO ke_DAO = new Ke_DAO();
+    private Ke_Service ke_DAO = new Ke_Service();
 
     /* Lấy dữ liệu từ DAO */
-    private ArrayList<Ke> dsKeThuoc;
-    private ObservableList<Ke> data = FXCollections.observableArrayList();
+    private ArrayList<KeDTO> dsKeThuoc;
+    private ObservableList<KeDTO> data = FXCollections.observableArrayList();
 
     public TimKeThuocController() {
         /** Giao diện **/
@@ -199,19 +199,19 @@ public class TimKeThuocController extends ScrollPane{
     public void loadDanhSachKeThuoc(){
 
         /* Tên cột */
-        TableColumn<Ke, String> colMaKe = new TableColumn<>("Mã Kệ");
+        TableColumn<KeDTO, String> colMaKe = new TableColumn<>("Mã Kệ");
         colMaKe.setCellValueFactory(new PropertyValueFactory<>("MaKe"));
 
-        TableColumn<Ke, String> colTenKe = new TableColumn<>("Tên Kệ");
+        TableColumn<KeDTO, String> colTenKe = new TableColumn<>("Tên Kệ");
         colTenKe.setCellValueFactory(new PropertyValueFactory<>("tenKe"));
 
-        TableColumn<Ke, Date> colLoaiKe = new TableColumn<>("Loại Kệ");
+        TableColumn<KeDTO, Date> colLoaiKe = new TableColumn<>("Loại Kệ");
         colLoaiKe.setCellValueFactory(new PropertyValueFactory<>("LoaiKe"));
 
-        TableColumn<Ke, String> colTrangThai = new TableColumn<>("Trạng Thái");
+        TableColumn<KeDTO, String> colTrangThai = new TableColumn<>("Trạng Thái");
         colTrangThai.setCellValueFactory(cellData -> {
-            Ke ke = cellData.getValue();
-            return new SimpleStringProperty(ke.isDeleteAt() ? "Đã xoá" : "Hoạt động");
+            KeDTO keDTO = cellData.getValue();
+            return new SimpleStringProperty(keDTO.isDeleteAt() ? "Đã xoá" : "Hoạt động");
         });
 
         tbKeThuoc.getColumns().addAll(colMaKe, colTenKe, colLoaiKe, colTrangThai);
@@ -221,31 +221,31 @@ public class TimKeThuocController extends ScrollPane{
         String selectedOption = cbLuaChon.getValue();
         String searchText = tfTimKiem.getText().trim().toLowerCase();
 
-        ObservableList<Ke> filteredData = FXCollections.observableArrayList();
+        ObservableList<KeDTO> filteredData = FXCollections.observableArrayList();
 
-        for (Ke ke : dsKeThuoc) {
+        for (KeDTO keDTO : dsKeThuoc) {
             boolean match = false;
 
             if (selectedOption == null || selectedOption.equals("Tất cả")) {
-                match = ke.getMaKe().toLowerCase().contains(searchText) ||
-                        ke.getTenKe().toLowerCase().contains(searchText) ||
-                        ke.getLoaiKe().toLowerCase().contains(searchText);
+                match = keDTO.getMaKe().toLowerCase().contains(searchText) ||
+                        keDTO.getTenKe().toLowerCase().contains(searchText) ||
+                        keDTO.getLoaiKe().toLowerCase().contains(searchText);
             } else {
                 switch (selectedOption) {
                     case "Mã kệ":
-                        match = ke.getMaKe().toLowerCase().contains(searchText);
+                        match = keDTO.getMaKe().toLowerCase().contains(searchText);
                         break;
                     case "Tên kệ":
-                        match = ke.getTenKe().toLowerCase().contains(searchText);
+                        match = keDTO.getTenKe().toLowerCase().contains(searchText);
                         break;
                     case "Loại kệ":
-                        match = ke.getLoaiKe().toLowerCase().contains(searchText);
+                        match = keDTO.getLoaiKe().toLowerCase().contains(searchText);
                         break;
                 }
             }
 
             if (match) {
-                filteredData.add(ke);
+                filteredData.add(keDTO);
             }
         }
 

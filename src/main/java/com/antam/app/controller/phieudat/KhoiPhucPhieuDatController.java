@@ -6,17 +6,14 @@
 package com.antam.app.controller.phieudat;
 
 import com.antam.app.connect.ConnectDB;
-import com.antam.app.dao.I_ChiTietPhieuDat_DAO;
-import com.antam.app.dao.I_NhanVien_DAO;
-import com.antam.app.dao.I_PhieuDat_DAO;
-import com.antam.app.dao.impl.ChiTietPhieuDat_DAO;
-import com.antam.app.dao.impl.LoThuoc_DAO;
-import com.antam.app.dao.impl.NhanVien_DAO;
-import com.antam.app.dao.impl.PhieuDat_DAO;
-import com.antam.app.entity.ChiTietPhieuDatThuoc;
-import com.antam.app.entity.LoThuoc;
-import com.antam.app.entity.NhanVien;
-import com.antam.app.entity.PhieuDatThuoc;
+import com.antam.app.service.I_ChiTietPhieuDat_Service;
+import com.antam.app.service.I_NhanVien_Service;
+import com.antam.app.service.I_PhieuDat_Service;
+import com.antam.app.service.impl.LoThuoc_Service;
+import com.antam.app.dto.ChiTietPhieuDatThuocDTO;
+import com.antam.app.dto.LoThuocDTO;
+import com.antam.app.dto.NhanVienDTO;
+import com.antam.app.dto.PhieuDatThuocDTO;
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcon;
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcons;
 import javafx.beans.property.SimpleStringProperty;
@@ -42,7 +39,7 @@ public class KhoiPhucPhieuDatController extends ScrollPane{
 
     private Button btnKhoiPhuc;
 
-    private ComboBox<NhanVien> cbNhanVien = new ComboBox<>();
+    private ComboBox<NhanVienDTO> cbNhanVien = new ComboBox<>();
 
     private ComboBox<String> cbTrangThai = new ComboBox<>();
     private ComboBox<String> cbGia = new ComboBox<>();
@@ -55,23 +52,23 @@ public class KhoiPhucPhieuDatController extends ScrollPane{
     private Button btnFind = new Button();
     private Button btnXoaRong = new Button();
 
-    private TableView<PhieuDatThuoc> tvPhieuDat = new TableView<>();
+    private TableView<PhieuDatThuocDTO> tvPhieuDat = new TableView<>();
 
-    private TableColumn<PhieuDatThuoc,String> colMaPhieu = new TableColumn<>("Mã phiếu");
-    private TableColumn<PhieuDatThuoc,String> colNgay = new TableColumn<>("Ngày tạo");
-    private TableColumn<PhieuDatThuoc,String> colKhach = new TableColumn<>("Khách hàng");
-    private TableColumn<PhieuDatThuoc,String> colSDT = new TableColumn<>("SĐT");
-    private TableColumn<PhieuDatThuoc,String> colNhanVien = new TableColumn<>("Nhân viên");
-    private TableColumn<PhieuDatThuoc,String> colStatus = new TableColumn<>("Trạng thái");
-    private TableColumn<PhieuDatThuoc,String> colTotal = new TableColumn<>("Tổng tiền");
+    private TableColumn<PhieuDatThuocDTO,String> colMaPhieu = new TableColumn<>("Mã phiếu");
+    private TableColumn<PhieuDatThuocDTO,String> colNgay = new TableColumn<>("Ngày tạo");
+    private TableColumn<PhieuDatThuocDTO,String> colKhach = new TableColumn<>("Khách hàng");
+    private TableColumn<PhieuDatThuocDTO,String> colSDT = new TableColumn<>("SĐT");
+    private TableColumn<PhieuDatThuocDTO,String> colNhanVien = new TableColumn<>("Nhân viên");
+    private TableColumn<PhieuDatThuocDTO,String> colStatus = new TableColumn<>("Trạng thái");
+    private TableColumn<PhieuDatThuocDTO,String> colTotal = new TableColumn<>("Tổng tiền");
 
-    public static PhieuDatThuoc selectedPDT;
+    public static PhieuDatThuocDTO selectedPDT;
 
-    ArrayList<PhieuDatThuoc> listPDT = I_PhieuDat_DAO.getAllPhieuDatThuocFromDBS();
-    public LoThuoc_DAO ctThuoc_dao = new LoThuoc_DAO();
-    ArrayList<NhanVien> listNV = I_NhanVien_DAO.getDsNhanVienformDBS();
-    ObservableList<PhieuDatThuoc> origin;
-    ObservableList<PhieuDatThuoc> filter= FXCollections.observableArrayList();
+    ArrayList<PhieuDatThuocDTO> listPDT = I_PhieuDat_Service.getAllPhieuDatThuocFromDBS();
+    public LoThuoc_Service ctThuoc_dao = new LoThuoc_Service();
+    ArrayList<NhanVienDTO> listNV = I_NhanVien_Service.getDsNhanVienformDBS();
+    ObservableList<PhieuDatThuocDTO> origin;
+    ObservableList<PhieuDatThuocDTO> filter= FXCollections.observableArrayList();
 
     public KhoiPhucPhieuDatController() {
         this.setFitToHeight(true);
@@ -208,7 +205,7 @@ public class KhoiPhucPhieuDatController extends ScrollPane{
         });
         btnKhoiPhuc.setOnAction(e -> {
 
-            PhieuDatThuoc selected =
+            PhieuDatThuocDTO selected =
                     tvPhieuDat.getSelectionModel().getSelectedItem();
 
             if (selected == null) {
@@ -230,20 +227,20 @@ public class KhoiPhucPhieuDatController extends ScrollPane{
 
                 // 1. Khôi phục phiếu
                 boolean kqPhieu =
-                        I_PhieuDat_DAO.khoiPhucPhieuDat(selected.getMaPhieu());
+                        I_PhieuDat_Service.khoiPhucPhieuDat(selected.getMaPhieu());
 
                 if (!kqPhieu) {
                     throw new RuntimeException("Không thể khôi phục phiếu đặt");
                 }
 
                 // 2. Lấy chi tiết phiếu
-                ArrayList<ChiTietPhieuDatThuoc> chiTietList =
-                        I_ChiTietPhieuDat_DAO.getChiTietTheoPhieu(selected.getMaPhieu());
+                ArrayList<ChiTietPhieuDatThuocDTO> chiTietList =
+                        I_ChiTietPhieuDat_Service.getChiTietTheoPhieu(selected.getMaPhieu());
 
                 // 3. Trừ kho lại & khôi phục chi tiết
-                for (ChiTietPhieuDatThuoc ct : chiTietList) {
+                for (ChiTietPhieuDatThuocDTO ct : chiTietList) {
 
-                    LoThuoc ctt =
+                    LoThuocDTO ctt =
                             ctThuoc_dao.getChiTietThuoc(
                                     ct.getMaThuoc().getMaLoThuoc()
                             );
@@ -251,7 +248,7 @@ public class KhoiPhucPhieuDatController extends ScrollPane{
                     if (ctt.getSoLuong() < ct.getSoLuong()) {
                         throw new RuntimeException(
                                 "Không đủ tồn kho để khôi phục thuốc "
-                                        + ctt.getMaThuoc().getTenThuoc()
+                                        + ctt.getMaThuocDTO().getTenThuoc()
                         );
                     }
 
@@ -262,7 +259,7 @@ public class KhoiPhucPhieuDatController extends ScrollPane{
                 }
 
                 // 4. Khôi phục trạng thái chi tiết
-                I_ChiTietPhieuDat_DAO.khoiPhucChiTietPhieu(
+                I_ChiTietPhieuDat_Service.khoiPhucChiTietPhieu(
                         selected.getMaPhieu()
                 );
 
@@ -330,7 +327,7 @@ public class KhoiPhucPhieuDatController extends ScrollPane{
     private void setupListenerComboBox() {
         String gia = cbGia.getSelectionModel().getSelectedItem();
         String trangThai = cbTrangThai.getSelectionModel().getSelectedItem();
-        NhanVien nv = cbNhanVien.getSelectionModel().getSelectedItem();
+        NhanVienDTO nv = cbNhanVien.getSelectionModel().getSelectedItem();
         LocalDate start = dpstart.getValue();
         LocalDate end = dpend.getValue();
 
@@ -359,9 +356,9 @@ public class KhoiPhucPhieuDatController extends ScrollPane{
         else if ("Chưa thanh toán".equals(trangThai)) filStatus = false;
 
         // Bắt đầu lọc
-        ObservableList<PhieuDatThuoc> filter = FXCollections.observableArrayList();
+        ObservableList<PhieuDatThuocDTO> filter = FXCollections.observableArrayList();
 
-        for (PhieuDatThuoc e : origin) {
+        for (PhieuDatThuocDTO e : origin) {
             boolean match = true;
 
             // Giá
@@ -371,7 +368,7 @@ public class KhoiPhucPhieuDatController extends ScrollPane{
             // Nhân viên
             if (nv != null && nv.getHoTen() != null &&
                     !nv.getHoTen().equals("Tất cả") &&
-                    !e.getNhanVien().getMaNV().equals(nv.getMaNV()))
+                    !e.getNhanVienDTO().getMaNV().equals(nv.getMaNV()))
                 match = false;
 
             // Trạng thái
@@ -403,7 +400,7 @@ public class KhoiPhucPhieuDatController extends ScrollPane{
                 return;
             }
 
-            ObservableList<PhieuDatThuoc> filtered =
+            ObservableList<PhieuDatThuocDTO> filtered =
                     origin.filtered(p ->
                             p.getMaPhieu().toLowerCase().contains(key)
                                     || p.getKhachHang().getTenKH().toLowerCase().contains(key)
@@ -419,7 +416,7 @@ public class KhoiPhucPhieuDatController extends ScrollPane{
         colNgay.setCellValueFactory(t -> new SimpleStringProperty(t.getValue().getNgayTao().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))));
         colKhach.setCellValueFactory(t -> new SimpleStringProperty(t.getValue().getKhachHang().getTenKH()));
         colSDT.setCellValueFactory(t -> new SimpleStringProperty(t.getValue().getKhachHang().getSoDienThoai()));
-        colNhanVien.setCellValueFactory(t -> new SimpleStringProperty(t.getValue().getNhanVien().getHoTen()));
+        colNhanVien.setCellValueFactory(t -> new SimpleStringProperty(t.getValue().getNhanVienDTO().getHoTen()));
         colStatus.setCellValueFactory(t -> new SimpleStringProperty("Đã xóa"));
         colTotal.setCellValueFactory(t -> new SimpleStringProperty( dinhDangTien(t.getValue().getTongTien()) ));
     }
@@ -429,7 +426,7 @@ public class KhoiPhucPhieuDatController extends ScrollPane{
     }
 
     private void loadDataVaoBang() {
-        listPDT = I_PhieuDat_DAO.getAllPhieuDatThuocDaXoa();
+        listPDT = I_PhieuDat_Service.getAllPhieuDatThuocDaXoa();
         origin = FXCollections.observableArrayList(listPDT);
         filter = FXCollections.observableArrayList(origin);
         tvPhieuDat.setItems(filter);
@@ -438,9 +435,9 @@ public class KhoiPhucPhieuDatController extends ScrollPane{
 
 
     public void loadDataComboBox(){
-        NhanVien all = new NhanVien("Tất cả",false);
+        NhanVienDTO all = new NhanVienDTO("Tất cả",false);
         cbNhanVien.getItems().add(all);
-        for (NhanVien e : listNV){
+        for (NhanVienDTO e : listNV){
             cbNhanVien.getItems().add(e);
         }
         cbTrangThai.getItems().add("Tất cả");

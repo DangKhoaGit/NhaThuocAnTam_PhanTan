@@ -5,17 +5,15 @@
 
 package com.antam.app.controller.donvitinh;
 
-import com.antam.app.dao.I_DonViTinh_DAO;
-import com.antam.app.dao.impl.DonViTinh_DAO;
-import com.antam.app.entity.DonViTinh;
+import com.antam.app.service.I_DonViTinh_Service;
+import com.antam.app.service.impl.DonViTinh_Service;
+import com.antam.app.dto.DonViTinhDTO;
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcon;
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcons;
 import javafx.beans.property.SimpleStringProperty;
-import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.control.*;
 import javafx.scene.effect.DropShadow;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
@@ -27,12 +25,12 @@ import java.util.ArrayList;
 public class ThemDonViTinhController extends ScrollPane {
 
     private TextField txtMa,txtTen;
-    private TableView<DonViTinh> tableThuoc;
-    private TableColumn<DonViTinh, String> colMaThuoc, colTenThuoc,colTrangThai;
+    private TableView<DonViTinhDTO> tableThuoc;
+    private TableColumn<DonViTinhDTO, String> colMaThuoc, colTenThuoc,colTrangThai;
     private Button btnThem;
 
-    DonViTinh_DAO donViTinh_dao = new DonViTinh_DAO();
-    ArrayList<DonViTinh> listDVT ;
+    DonViTinh_Service donViTinh_dao = new DonViTinh_Service();
+    ArrayList<DonViTinhDTO> listDVT ;
 
     public ThemDonViTinhController() {
         /** Giao diện **/
@@ -136,8 +134,8 @@ public class ThemDonViTinhController extends ScrollPane {
                 String ma = txtMa.getText();
                 int maInt = Integer.parseInt(ma);
                 String ten = txtTen.getText();
-                DonViTinh donViTinh = new DonViTinh(maInt, ten, false);
-                donViTinh_dao.themDonViTinh(donViTinh);
+                DonViTinhDTO donViTinhDTO = new DonViTinhDTO(maInt, ten, false);
+                donViTinh_dao.themDonViTinh(donViTinhDTO);
                 loadTable();
             }catch (Exception ex) {
                 // Hiển thị thông báo lỗi nếu có
@@ -146,7 +144,7 @@ public class ThemDonViTinhController extends ScrollPane {
 
         txtMa.setEditable(false);
         try {
-            int maxMa = Integer.parseInt(I_DonViTinh_DAO.getHashDVT());
+            int maxMa = Integer.parseInt(I_DonViTinh_Service.getHashDVT());
             txtMa.setText(String.valueOf(++maxMa));
         } catch (Exception e) {
             e.printStackTrace();
@@ -166,7 +164,7 @@ public class ThemDonViTinhController extends ScrollPane {
             listDVT = donViTinh_dao.getTatCaDonViTinh();
 
             // Loại bỏ các đơn vị đã xóa
-            listDVT.removeIf(DonViTinh::isDelete);
+            listDVT.removeIf(DonViTinhDTO::isDelete);
 
             // Cập nhật dữ liệu cho TableView
             tableThuoc.getItems().setAll(listDVT);

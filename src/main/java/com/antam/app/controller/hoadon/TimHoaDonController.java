@@ -5,11 +5,11 @@
 
 package com.antam.app.controller.hoadon;
 
-import com.antam.app.dao.I_NhanVien_DAO;
-import com.antam.app.dao.impl.HoaDon_DAO;
-import com.antam.app.dao.impl.NhanVien_DAO;
-import com.antam.app.entity.HoaDon;
-import com.antam.app.entity.NhanVien;
+import com.antam.app.service.I_NhanVien_Service;
+import com.antam.app.service.impl.HoaDon_Service;
+import com.antam.app.service.impl.NhanVien_Service;
+import com.antam.app.dto.HoaDonDTO;
+import com.antam.app.dto.NhanVienDTO;
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcon;
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcons;
 import javafx.beans.property.SimpleDoubleProperty;
@@ -38,18 +38,18 @@ import java.util.ArrayList;
  * - Khi double-click vào 1 dòng hóa đơn sẽ mở dialog chi tiết hóa đơn.
  */
 public class TimHoaDonController extends ScrollPane{
-    private TableView<HoaDon> table_invoice;
-    private TableColumn<HoaDon, String> colMaHD;
-    private TableColumn<HoaDon, String> colNgayTao;
-    private TableColumn<HoaDon, String> colKhachHang;
-    private TableColumn<HoaDon, String> colNhanVien;
-    private TableColumn<HoaDon, String> colKhuyenMai;
-    private TableColumn<HoaDon, Double> colTongTien;
-    private TableColumn<HoaDon, String> colTrangThai;
-    private javafx.scene.control.TextField txtSearchInvoice;
+    private TableView<HoaDonDTO> table_invoice;
+    private TableColumn<HoaDonDTO, String> colMaHD;
+    private TableColumn<HoaDonDTO, String> colNgayTao;
+    private TableColumn<HoaDonDTO, String> colKhachHang;
+    private TableColumn<HoaDonDTO, String> colNhanVien;
+    private TableColumn<HoaDonDTO, String> colKhuyenMai;
+    private TableColumn<HoaDonDTO, Double> colTongTien;
+    private TableColumn<HoaDonDTO, String> colTrangThai;
+    private TextField txtSearchInvoice;
     private Button btnSearchInvoice;
     private Button btnResetInvoice;
-    private ComboBox<NhanVien> cbEmployee;
+    private ComboBox<NhanVienDTO> cbEmployee;
     private ComboBox<String> cbStatus;
     private ComboBox<String> cbPrice;
     private DatePicker cbFirstDate;
@@ -168,12 +168,12 @@ public class TimHoaDonController extends ScrollPane{
         colKhachHang.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getMaKH().getTenKH()));
         colNhanVien.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getMaNV().getHoTen()));
         colKhuyenMai.setCellValueFactory(cellData -> {
-            HoaDon hoaDon = cellData.getValue();
-            String tenKM = (hoaDon.getMaKM() != null) ? hoaDon.getMaKM().getTenKM() : "Không có khuyến mãi";
+            HoaDonDTO hoaDonDTO = cellData.getValue();
+            String tenKM = (hoaDonDTO.getMaKM() != null) ? hoaDonDTO.getMaKM().getTenKM() : "Không có khuyến mãi";
             return new SimpleStringProperty(tenKM);
         });
         colTongTien.setCellValueFactory(cellData -> new SimpleDoubleProperty(cellData.getValue().getTongTien()).asObject());
-        colTongTien.setCellFactory(column -> new javafx.scene.control.TableCell<HoaDon, Double>() {
+        colTongTien.setCellFactory(column -> new TableCell<HoaDonDTO, Double>() {
             @Override
             protected void updateItem(Double item, boolean empty) {
                 super.updateItem(item, empty);
@@ -187,22 +187,22 @@ public class TimHoaDonController extends ScrollPane{
         colTrangThai.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().isDeleteAt() ? "Đã huỷ" : "Hoạt động"));
 
         // Load dữ liệu hóa đơn từ DB lên bảng
-        HoaDon_DAO hoaDonDAO = new HoaDon_DAO();
-        ObservableList<HoaDon> hoaDonList = FXCollections.observableArrayList(hoaDonDAO.getAllHoaDon());
+        HoaDon_Service hoaDonDAO = new HoaDon_Service();
+        ObservableList<HoaDonDTO> hoaDonList = FXCollections.observableArrayList(hoaDonDAO.getAllHoaDon());
         table_invoice.setItems(hoaDonList);
 
         // --- Khởi tạo ComboBox nhân viên ---
-        NhanVien_DAO nhanVienDAO = new NhanVien_DAO();
-        ObservableList<NhanVien> dsNhanVien = FXCollections.observableArrayList(I_NhanVien_DAO.getDsNhanVienformDBS());
+        NhanVien_Service nhanVienDAO = new NhanVien_Service();
+        ObservableList<NhanVienDTO> dsNhanVien = FXCollections.observableArrayList(I_NhanVien_Service.getDsNhanVienformDBS());
         // Thêm lựa chọn "Tất cả" vào đầu danh sách
-        NhanVien tatCaNV = new NhanVien("Tất cả");
+        NhanVienDTO tatCaNV = new NhanVienDTO("Tất cả");
         dsNhanVien.add(0, tatCaNV);
         cbEmployee.setItems(dsNhanVien);
         cbEmployee.setPromptText("Chọn nhân viên");
         // Hiển thị tên nhân viên trong ComboBox thay vì mã
-        cbEmployee.setCellFactory(lv -> new javafx.scene.control.ListCell<NhanVien>() {
+        cbEmployee.setCellFactory(lv -> new ListCell<NhanVienDTO>() {
             @Override
-            protected void updateItem(NhanVien item, boolean empty) {
+            protected void updateItem(NhanVienDTO item, boolean empty) {
                 super.updateItem(item, empty);
                 if (empty || item == null) {
                     setText(null);
@@ -212,9 +212,9 @@ public class TimHoaDonController extends ScrollPane{
                 }
             }
         });
-        cbEmployee.setButtonCell(new javafx.scene.control.ListCell<NhanVien>() {
+        cbEmployee.setButtonCell(new ListCell<NhanVienDTO>() {
             @Override
-            protected void updateItem(NhanVien item, boolean empty) {
+            protected void updateItem(NhanVienDTO item, boolean empty) {
                 super.updateItem(item, empty);
                 if (empty || item == null) {
                     setText(null);
@@ -241,8 +241,8 @@ public class TimHoaDonController extends ScrollPane{
 
         // --- Hàm lọc hóa đơn theo nhân viên, trạng thái, khoảng giá, ngày ---
         Runnable filterInvoices = () -> {
-            HoaDon_DAO hoaDonDAO1 = new HoaDon_DAO();
-            NhanVien selectedNV = cbEmployee.getValue();
+            HoaDon_Service hoaDonDAO1 = new HoaDon_Service();
+            NhanVienDTO selectedNV = cbEmployee.getValue();
             String selectedStatus = cbStatus.getValue();
             String selectedPrice = cbPrice.getValue();
             LocalDate fromDate = cbFirstDate != null ? cbFirstDate.getValue() : null;
@@ -250,9 +250,9 @@ public class TimHoaDonController extends ScrollPane{
             boolean allNV = (selectedNV == null || "Tất cả".equals(selectedNV.getMaNV()));
             boolean allStatus = (selectedStatus == null || "Tất cả".equals(selectedStatus));
             boolean allPrice = (selectedPrice == null || "Tất cả".equals(selectedPrice));
-            ObservableList<HoaDon> filtered;
+            ObservableList<HoaDonDTO> filtered;
             // Lọc theo nhân viên và trạng thái trước
-            ArrayList<HoaDon> baseList;
+            ArrayList<HoaDonDTO> baseList;
             if (allNV && allStatus) {
                 baseList = new ArrayList<>(hoaDonDAO1.getAllHoaDon());
             } else if (!allNV && allStatus) {
@@ -260,9 +260,9 @@ public class TimHoaDonController extends ScrollPane{
             } else if (allNV && !allStatus) {
                 baseList = new ArrayList<>(hoaDonDAO1.searchHoaDonByStatus(selectedStatus));
             } else {
-                ArrayList<HoaDon> byStatus = hoaDonDAO1.searchHoaDonByStatus(selectedStatus);
+                ArrayList<HoaDonDTO> byStatus = hoaDonDAO1.searchHoaDonByStatus(selectedStatus);
                 baseList = new ArrayList<>();
-                for (HoaDon hd : byStatus) {
+                for (HoaDonDTO hd : byStatus) {
                     if (hd.getMaNV() != null && selectedNV.getMaNV().equals(hd.getMaNV().getMaNV())) {
                         baseList.add(hd);
                     }
@@ -288,8 +288,8 @@ public class TimHoaDonController extends ScrollPane{
                         max = Double.MAX_VALUE;
                         break;
                 }
-                ArrayList<HoaDon> priceFiltered = new ArrayList<>();
-                for (HoaDon hd : baseList) {
+                ArrayList<HoaDonDTO> priceFiltered = new ArrayList<>();
+                for (HoaDonDTO hd : baseList) {
                     double tongTien = hd.getTongTien();
                     if (tongTien >= min && tongTien < max) {
                         priceFiltered.add(hd);
@@ -299,8 +299,8 @@ public class TimHoaDonController extends ScrollPane{
             }
             // Lọc tiếp theo ngày (lấy hóa đơn có ngày tạo nằm trong khoảng [fromDate, toDate])
             if (fromDate != null || toDate != null) {
-                ArrayList<HoaDon> dateFiltered = new ArrayList<>();
-                for (HoaDon hd : baseList) {
+                ArrayList<HoaDonDTO> dateFiltered = new ArrayList<>();
+                for (HoaDonDTO hd : baseList) {
                     LocalDate ngayTao = hd.getNgayTao();
                     boolean afterFrom = (fromDate == null) || !ngayTao.isBefore(fromDate);
                     boolean beforeTo = (toDate == null) || !ngayTao.isAfter(toDate);
@@ -322,7 +322,7 @@ public class TimHoaDonController extends ScrollPane{
             if (cbFirstDate != null) cbFirstDate.setValue(null);
             if (cbEndDate != null) cbEndDate.setValue(null);
             // Load lại toàn bộ hóa đơn
-            ObservableList<HoaDon> allHoaDon = FXCollections.observableArrayList(hoaDonDAO.getAllHoaDon());
+            ObservableList<HoaDonDTO> allHoaDon = FXCollections.observableArrayList(hoaDonDAO.getAllHoaDon());
             table_invoice.setItems(allHoaDon);
         });
 
@@ -337,11 +337,11 @@ public class TimHoaDonController extends ScrollPane{
         txtSearchInvoice.textProperty().addListener((observable, oldValue, newValue) -> {
             if (newValue == null || newValue.trim().isEmpty()) {
                 // Nếu ô tìm kiếm rỗng, load lại toàn bộ hóa đơn
-                ObservableList<HoaDon> allHoaDon = FXCollections.observableArrayList(hoaDonDAO.getAllHoaDon());
+                ObservableList<HoaDonDTO> allHoaDon = FXCollections.observableArrayList(hoaDonDAO.getAllHoaDon());
                 table_invoice.setItems(allHoaDon);
             } else {
                 // Nếu có nội dung, search theo mã
-                ObservableList<HoaDon> searchResult = FXCollections.observableArrayList(hoaDonDAO.searchHoaDonByMaHd(newValue));
+                ObservableList<HoaDonDTO> searchResult = FXCollections.observableArrayList(hoaDonDAO.searchHoaDonByMaHd(newValue));
                 table_invoice.setItems(searchResult);
             }
         });
@@ -349,17 +349,17 @@ public class TimHoaDonController extends ScrollPane{
         btnSearchInvoice.setOnAction(e -> {
             String maHd = txtSearchInvoice.getText();
             if (maHd == null || maHd.trim().isEmpty()) {
-                ObservableList<HoaDon> allHoaDon = FXCollections.observableArrayList(hoaDonDAO.getAllHoaDon());
+                ObservableList<HoaDonDTO> allHoaDon = FXCollections.observableArrayList(hoaDonDAO.getAllHoaDon());
                 table_invoice.setItems(allHoaDon);
             } else {
-                ObservableList<HoaDon> searchResult = FXCollections.observableArrayList(hoaDonDAO.searchHoaDonByMaHd(maHd));
+                ObservableList<HoaDonDTO> searchResult = FXCollections.observableArrayList(hoaDonDAO.searchHoaDonByMaHd(maHd));
                 table_invoice.setItems(searchResult);
             }
         });
         // Đặt row factory để tô màu dòng được chọn
-        this.table_invoice.setRowFactory(tv -> new javafx.scene.control.TableRow<>() {
+        this.table_invoice.setRowFactory(tv -> new TableRow<>() {
             @Override
-            protected void updateItem(HoaDon item, boolean empty) {
+            protected void updateItem(HoaDonDTO item, boolean empty) {
                 super.updateItem(item, empty);
                 if (!empty && item != null && isSelected()) {
                     setStyle("-fx-background-color: #d1fae5;"); // Màu xanh nhạt
@@ -372,10 +372,10 @@ public class TimHoaDonController extends ScrollPane{
         this.table_invoice.setOnMouseClicked(event -> {
             // Nếu double click và có dòng được chọn thì mở dialog chi tiết hóa đơn
             if (event.getClickCount() == 2 && table_invoice.getSelectionModel().getSelectedItem() != null) {
-                HoaDon selectedHoaDon = table_invoice.getSelectionModel().getSelectedItem();
+                HoaDonDTO selectedHoaDonDTO = table_invoice.getSelectionModel().getSelectedItem();
 
                 XemChiTietHoaDonFormController xemDialog = new XemChiTietHoaDonFormController();
-                xemDialog.setInvoice(selectedHoaDon);
+                xemDialog.setInvoice(selectedHoaDonDTO);
 
                 Dialog<Void> dialog = new Dialog<>();
                 dialog.setDialogPane(xemDialog);

@@ -1,14 +1,11 @@
 package com.antam.app.controller.thuoc;
 
 import com.antam.app.connect.ConnectDB;
-import com.antam.app.dao.impl.LoThuoc_DAO;
-import com.antam.app.dao.impl.DangDieuChe_DAO;
-import com.antam.app.dao.impl.Ke_DAO;
-import com.antam.app.dao.impl.Thuoc_DAO;
-import com.antam.app.entity.LoThuoc;
-import com.antam.app.entity.DangDieuChe;
-import com.antam.app.entity.Ke;
-import com.antam.app.entity.Thuoc;
+import com.antam.app.service.impl.LoThuoc_Service;
+import com.antam.app.service.impl.DangDieuChe_Service;
+import com.antam.app.service.impl.Ke_Service;
+import com.antam.app.service.impl.Thuoc_Service;
+import com.antam.app.dto.*;
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcon;
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcons;
 import javafx.beans.property.SimpleStringProperty;
@@ -31,25 +28,25 @@ import java.util.HashMap;
 
 public class ThemThuocController extends ScrollPane{
 
-    private Ke_DAO ke_dao;
-    private DangDieuChe_DAO ddc_dao;
-    private Thuoc_DAO thuoc_dao;
-    private LoThuoc_DAO chiTietThuoc_dao;
+    private Ke_Service ke_dao;
+    private DangDieuChe_Service ddc_dao;
+    private Thuoc_Service thuoc_dao;
+    private LoThuoc_Service chiTietThuoc_dao;
     private HashMap<String, Integer> mapTonKho = new HashMap<>();
 
     private Button btnAddMedicine;
-    private ComboBox<Ke> cbKe;
-    private ComboBox<DangDieuChe> cbDangDieuChe;
+    private ComboBox<KeDTO> cbKe;
+    private ComboBox<DangDieuCheDTO> cbDangDieuChe;
     private ComboBox<String>cbTonKho;
     private TextField searchNameThuoc;
     private Button btnSearchThuoc;
-    private TableView<Thuoc> tableThuoc;
-    private TableColumn<Thuoc, String> colMaThuoc, colTenThuoc, colHamLuong, colDangDieuChe, colGiaBan, colKe;
-    private TableColumn<Thuoc, String> colTonKho;
+    private TableView<ThuocDTO> tableThuoc;
+    private TableColumn<ThuocDTO, String> colMaThuoc, colTenThuoc, colHamLuong, colDangDieuChe, colGiaBan, colKe;
+    private TableColumn<ThuocDTO, String> colTonKho;
     private Button btnSearchInvoice1;
 
-    private ObservableList<Thuoc> thuocList = FXCollections.observableArrayList();
-    private ArrayList<Thuoc> arrayThuoc = new ArrayList<>();
+    private ObservableList<ThuocDTO> thuocList = FXCollections.observableArrayList();
+    private ArrayList<ThuocDTO> arrayThuoc = new ArrayList<>();
 
     public ThemThuocController(){
         /** Giao diện **/
@@ -222,8 +219,8 @@ public class ThemThuocController extends ScrollPane{
             return new SimpleStringProperty(String.valueOf(tonKho));
         });
 
-        colDangDieuChe.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getDangDieuChe().getTenDDC()));
-        colKe.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getMaKe().getTenKe()));
+        colDangDieuChe.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getDangDieuCheDTO().getTenDDC()));
+        colKe.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getMaKeDTO().getTenKe()));
 
         // Load comboBox
         addComBoBoxKe();
@@ -231,7 +228,7 @@ public class ThemThuocController extends ScrollPane{
         addComboboxTonKho();
 
         // Load dữ liệu
-        thuoc_dao = new Thuoc_DAO();
+        thuoc_dao = new Thuoc_Service();
         arrayThuoc = thuoc_dao.getAllThuoc();
         thuocList.addAll(arrayThuoc);
         tableThuoc.setItems(thuocList);
@@ -246,14 +243,14 @@ public class ThemThuocController extends ScrollPane{
         searchNameThuoc.setOnKeyReleased(e -> filterAndSearchThuoc());
         // su kien table view
         tableThuoc.setRowFactory(tv -> {
-            TableRow<Thuoc> row = new TableRow<>();
+            TableRow<ThuocDTO> row = new TableRow<>();
 
             row.setOnMouseClicked(event -> {
                 if (event.getClickCount() == 2 && !row.isEmpty()) {
-                    Thuoc selectedThuoc = row.getItem();
+                    ThuocDTO selectedThuocDTO = row.getItem();
 
                     XemChiTietThuocFormController xemDialog = new XemChiTietThuocFormController();
-                    xemDialog.setThuoc(selectedThuoc);
+                    xemDialog.setThuoc(selectedThuocDTO);
                     xemDialog.showData();
 
                     Dialog<Void> dialog = new Dialog<>();
@@ -283,25 +280,25 @@ public class ThemThuocController extends ScrollPane{
 
     // them value vao combobox ke
     public void addComBoBoxKe() {
-        ke_dao = new Ke_DAO();
-        ArrayList<Ke> arrayKe = ke_dao.getTatCaKeHoatDong();
+        ke_dao = new Ke_Service();
+        ArrayList<KeDTO> arrayKe = ke_dao.getTatCaKeHoatDong();
         cbKe.getItems().clear();
-        Ke tatCa = new Ke("KE0000", "Tất cả", "Tất cả");
+        KeDTO tatCa = new KeDTO("KE0000", "Tất cả", "Tất cả");
         cbKe.getItems().add(tatCa);
-        for (Ke ke : arrayKe) {
-            cbKe.getItems().add(ke);
+        for (KeDTO keDTO : arrayKe) {
+            cbKe.getItems().add(keDTO);
         }
         cbKe.getSelectionModel().selectFirst();
     }
 
     // them value vao combobox dang dieu che
     public void addComBoBoxDDC() {
-        ddc_dao = new DangDieuChe_DAO();
-        ArrayList<DangDieuChe> arrayDDC = ddc_dao.getDangDieuCheHoatDong();
+        ddc_dao = new DangDieuChe_Service();
+        ArrayList<DangDieuCheDTO> arrayDDC = ddc_dao.getDangDieuCheHoatDong();
         cbDangDieuChe.getItems().clear();
-        DangDieuChe Tatca = new DangDieuChe(-1, "Tất cả");
+        DangDieuCheDTO Tatca = new DangDieuCheDTO(-1, "Tất cả");
         cbDangDieuChe.getItems().add(Tatca);
-        for (DangDieuChe ddc : arrayDDC){
+        for (DangDieuCheDTO ddc : arrayDDC){
             cbDangDieuChe.getItems().add(ddc);
         }
         cbDangDieuChe.getSelectionModel().selectFirst();
@@ -318,7 +315,7 @@ public class ThemThuocController extends ScrollPane{
     public void updateTableThuoc(){
         thuocList.clear();
         tableThuoc.refresh();
-        thuoc_dao = new Thuoc_DAO();
+        thuoc_dao = new Thuoc_Service();
         arrayThuoc = thuoc_dao.getAllThuoc();
         thuocList.addAll(arrayThuoc);
         tableThuoc.setItems(thuocList);
@@ -331,16 +328,16 @@ public class ThemThuocController extends ScrollPane{
         String selectedTonKho =  cbTonKho.getValue();
         String searchText = searchNameThuoc.getText().trim().toLowerCase();
 
-        ArrayList<Thuoc> filteredList = new ArrayList<>();
+        ArrayList<ThuocDTO> filteredList = new ArrayList<>();
 
-        for (Thuoc p : arrayThuoc) { // luôn thao tác trên danh sách gốc
+        for (ThuocDTO p : arrayThuoc) { // luôn thao tác trên danh sách gốc
             boolean match = true;
 
             // Filter Ke
-            if (!selectedKe.equals("Tất cả") && !p.getMaKe().getTenKe().equals(selectedKe)) match = false;
+            if (!selectedKe.equals("Tất cả") && !p.getMaKeDTO().getTenKe().equals(selectedKe)) match = false;
 
             // Filter DDC
-            if (!selectedDDC.equals("Tất cả") && !p.getDangDieuChe().getTenDDC().equals(selectedDDC)) match = false;
+            if (!selectedDDC.equals("Tất cả") && !p.getDangDieuCheDTO().getTenDDC().equals(selectedDDC)) match = false;
 
             // Filter TonKho
             if (!selectedTonKho.equals("Tất cả")) {
@@ -367,12 +364,12 @@ public class ThemThuocController extends ScrollPane{
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
-        chiTietThuoc_dao = new LoThuoc_DAO();
-        ArrayList<LoThuoc> list = chiTietThuoc_dao.getAllChiTietThuoc();
+        chiTietThuoc_dao = new LoThuoc_Service();
+        ArrayList<LoThuocDTO> list = chiTietThuoc_dao.getAllChiTietThuoc();
         mapTonKho.clear();
 
-        for (LoThuoc ct : list) {
-            String maThuoc = ct.getMaThuoc().getMaThuoc();
+        for (LoThuocDTO ct : list) {
+            String maThuoc = ct.getMaThuocDTO().getMaThuoc();
             mapTonKho.put(maThuoc, mapTonKho.getOrDefault(maThuoc, 0) + ct.getSoLuong());
         }
     }
@@ -387,8 +384,8 @@ public class ThemThuocController extends ScrollPane{
     }
 
     // ham tinh ton kho
-    public int TinhTonKho(Thuoc thuoc) {
-        return mapTonKho.getOrDefault(thuoc.getMaThuoc(), 0);
+    public int TinhTonKho(ThuocDTO thuocDTO) {
+        return mapTonKho.getOrDefault(thuocDTO.getMaThuoc(), 0);
     }
 
 

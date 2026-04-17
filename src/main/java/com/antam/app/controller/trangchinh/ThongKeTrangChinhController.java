@@ -5,11 +5,9 @@
  */
 package com.antam.app.controller.trangchinh;
 
-import com.antam.app.dao.impl.ThongKeTrangChinh_DAO;
+import com.antam.app.service.impl.ThongKeTrangChinh_Service;
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcon;
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcons;
-import javafx.fxml.FXML;
-import javafx.fxml.Initializable;
 import javafx.geometry.Pos;
 import javafx.geometry.VPos;
 import javafx.scene.chart.*;
@@ -49,12 +47,12 @@ public class ThongKeTrangChinhController extends ScrollPane{
     private VBox vboxThuocTonKhoThap = new VBox();          // Danh sách thuốc tồn kho thấp
 
     // ==================== CÁC BIẾN CẤU HÌNH ====================
-    private ThongKeTrangChinh_DAO thongKeDAO;
+    private ThongKeTrangChinh_Service thongKeDAO;
     private final DecimalFormat formatter = new DecimalFormat("#,###");
 
 
     public ThongKeTrangChinhController() {
-        thongKeDAO = new ThongKeTrangChinh_DAO();
+        thongKeDAO = new ThongKeTrangChinh_Service();
         /** Giao diện **/
         this.setFitToHeight(true);
         this.setFitToWidth(true);
@@ -354,7 +352,7 @@ public class ThongKeTrangChinhController extends ScrollPane{
             series.setName("Số lượng bán");
 
             // Map để lưu tên đầy đủ của thuốc
-            Map<String, String> fullNamesMap = new java.util.HashMap<>();
+            Map<String, String> fullNamesMap = new HashMap<>();
 
             for (Map.Entry<String, Integer> entry : topProducts.entrySet()) {
                 String tenThuocDayDu = entry.getKey();

@@ -4,6 +4,7 @@ package com.antam.app.helper;/*
  * @date: 08/12/2025
  * @version: 1.0
  */
+import com.antam.app.dto.KhachHangDTO;
 import com.antam.app.entity.KhachHang;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
@@ -23,7 +24,7 @@ public class TuDongGoiY {
      * @param dsKhach - Danh sách khách hàng để gợi ý
      */
     public static void goiYKhach(TextField txtTen, TextField txtSDT,
-                                 ObservableList<KhachHang> dsKhach) {
+                                 ObservableList<KhachHangDTO> dsKhach) {
         taoGoiY(txtTen, dsKhach, true, txtSDT);
         taoGoiY(txtSDT, dsKhach, false, txtTen);
     }
@@ -36,7 +37,7 @@ public class TuDongGoiY {
 
     private static void taoGoiY(
             TextField textField,
-            ObservableList<KhachHang> dsKhach,
+            ObservableList<KhachHangDTO> dsKhach,
             boolean timTheoTen,
             TextField textFieldConLai
     ) {
@@ -66,7 +67,7 @@ public class TuDongGoiY {
             if (timTheoTen && newVal.length() < 2) return;
             if (!timTheoTen && newVal.length() < 3) return;
 
-            FilteredList<KhachHang> listLoc = dsKhach.filtered(kh -> {
+            FilteredList<KhachHangDTO> listLoc = dsKhach.filtered(kh -> {
                 if (timTheoTen) {
                     return kh.getTenKH() != null
                             && kh.getTenKH().toLowerCase()
@@ -84,7 +85,7 @@ public class TuDongGoiY {
 
             // Nếu chỉ có 1 kết quả và nhập trùng → không hiện menu
             if (listLoc.size() == 1) {
-                KhachHang kh = listLoc.get(0);
+                KhachHangDTO kh = listLoc.get(0);
                 if ((timTheoTen && kh.getTenKH().equalsIgnoreCase(newVal)) ||
                         (!timTheoTen && kh.getSoDienThoai().equals(newVal))) {
                     menuGoiY.hide();
@@ -95,7 +96,7 @@ public class TuDongGoiY {
             menuGoiY.getItems().clear();
 
             int count = 0;
-            for (KhachHang kh : listLoc) {
+            for (KhachHangDTO kh : listLoc) {
                 if (count++ >= 5) break;
 
                 String label = kh.getTenKH() + " — " + kh.getSoDienThoai();

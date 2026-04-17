@@ -5,9 +5,9 @@
  */
 package com.antam.app.controller.khachhang;
 
-import com.antam.app.dao.impl.HoaDon_DAO;
-import com.antam.app.dao.impl.KhachHang_DAO;
-import com.antam.app.entity.KhachHang;
+import com.antam.app.service.impl.HoaDon_Service;
+import com.antam.app.service.impl.KhachHang_Service;
+import com.antam.app.dto.KhachHangDTO;
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcon;
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcons;
 import javafx.collections.ObservableList;
@@ -40,20 +40,20 @@ public class KhoiPhucKhachHangController extends ScrollPane {
     private ComboBox<String> cbTrangThai; // Loại khách hàng filter
     private ComboBox<String> cbTongChiTieu; // Tổng chi tiêu filter
 
-    private TableView<KhachHang> tableViewKhachHang;
-    private TableColumn<KhachHang, String> colMaKH = new TableColumn<>("Mã khách hàng");
-    private TableColumn<KhachHang, String> colTenKH = new TableColumn<>("Tên khách hàng");
-    private TableColumn<KhachHang, String> colSoDienThoai = new TableColumn<>("Số điện thoại");
-    private TableColumn<KhachHang, Integer> colSoDonHang = new TableColumn<>("Số đơn hàng");
-    private TableColumn<KhachHang, Double> colTongChiTieu = new TableColumn<>("Tổng chi tiêu");
-    private TableColumn<KhachHang, String> colDonHangGanNhat = new TableColumn<>("Đơn hàng gần nhất");
-    private TableColumn<KhachHang, String> colLoaiKhachHang = new TableColumn<>("Loại khách hàng");
+    private TableView<KhachHangDTO> tableViewKhachHang;
+    private TableColumn<KhachHangDTO, String> colMaKH = new TableColumn<>("Mã khách hàng");
+    private TableColumn<KhachHangDTO, String> colTenKH = new TableColumn<>("Tên khách hàng");
+    private TableColumn<KhachHangDTO, String> colSoDienThoai = new TableColumn<>("Số điện thoại");
+    private TableColumn<KhachHangDTO, Integer> colSoDonHang = new TableColumn<>("Số đơn hàng");
+    private TableColumn<KhachHangDTO, Double> colTongChiTieu = new TableColumn<>("Tổng chi tiêu");
+    private TableColumn<KhachHangDTO, String> colDonHangGanNhat = new TableColumn<>("Đơn hàng gần nhất");
+    private TableColumn<KhachHangDTO, String> colLoaiKhachHang = new TableColumn<>("Loại khách hàng");
 
-    private ObservableList<KhachHang> dsKhachHang;
-    private ObservableList<KhachHang> dsKhachHangGoc; // Để lưu danh sách gốc cho việc lọc
+    private ObservableList<KhachHangDTO> dsKhachHang;
+    private ObservableList<KhachHangDTO> dsKhachHangGoc; // Để lưu danh sách gốc cho việc lọc
 
-    private KhachHang_DAO khachHangDAO;
-    private HoaDon_DAO hoaDonDAO;
+    private KhachHang_Service khachHangDAO;
+    private HoaDon_Service hoaDonDAO;
     private DateTimeFormatter formatter;
 
     // Định dạng tiền tệ kiểu Việt Nam: 1.000đ, 10.000đ

@@ -1,8 +1,7 @@
 package com.antam.app.controller.nhanvien;
 
-import com.antam.app.dao.I_NhanVien_DAO;
-import com.antam.app.dao.impl.NhanVien_DAO;
-import com.antam.app.entity.NhanVien;
+import com.antam.app.service.I_NhanVien_Service;
+import com.antam.app.dto.NhanVienDTO;
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcon;
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcons;
 import javafx.beans.property.SimpleStringProperty;
@@ -21,25 +20,25 @@ import java.util.ArrayList;
 
 public class KhoiPhucNhanVienController extends ScrollPane{
 
-    private final TableView<NhanVien> tbNhanVien;
+    private final TableView<NhanVienDTO> tbNhanVien;
     private final Button btnFindNV;
     private final Button btnXoaTrang;
     private final Button btnKhoiPhuc;
     private final TextField txtFindNV;
-    private final TableColumn<NhanVien, String> colMaNV;
-    private final TableColumn<NhanVien, String> colHoTen;
-    private final TableColumn<NhanVien, String> colChucVu;
-    private final TableColumn<NhanVien, String> colSDT;
-    private final TableColumn<NhanVien, String> colDiaChi;
-    private final TableColumn<NhanVien, String> colEmail;
-    private final TableColumn<NhanVien, String> colLuong;
+    private final TableColumn<NhanVienDTO, String> colMaNV;
+    private final TableColumn<NhanVienDTO, String> colHoTen;
+    private final TableColumn<NhanVienDTO, String> colChucVu;
+    private final TableColumn<NhanVienDTO, String> colSDT;
+    private final TableColumn<NhanVienDTO, String> colDiaChi;
+    private final TableColumn<NhanVienDTO, String> colEmail;
+    private final TableColumn<NhanVienDTO, String> colLuong;
     private final ComboBox<String> cbChucVu;
     private final ComboBox<String> cbLuongCB;
-    private ArrayList<NhanVien> listNV = I_NhanVien_DAO.getDsNhanVienformDBS();
+    private ArrayList<NhanVienDTO> listNV = I_NhanVien_Service.getDsNhanVienformDBS();
 
-    private ObservableList<NhanVien> TVNhanVien;
-    private final ObservableList<NhanVien> filteredList = FXCollections.observableArrayList();
-    public  static NhanVien nhanVienSelected;
+    private ObservableList<NhanVienDTO> TVNhanVien;
+    private final ObservableList<NhanVienDTO> filteredList = FXCollections.observableArrayList();
+    public  static NhanVienDTO nhanVienDTOSelected;
 
     public KhoiPhucNhanVienController(){
         /** Giao diện **/
@@ -178,11 +177,11 @@ public class KhoiPhucNhanVienController extends ScrollPane{
 
         //sự kiện khôi phục
         btnKhoiPhuc.setOnAction(e -> {
-            nhanVienSelected = tbNhanVien.getSelectionModel().getSelectedItem();
-            if (nhanVienSelected == null) {
+            nhanVienDTOSelected = tbNhanVien.getSelectionModel().getSelectedItem();
+            if (nhanVienDTOSelected == null) {
                 showError("Chưa chọn nhân viên", "Vui lòng chọn nhân viên cần khôi phục.");
             }else{
-                boolean success = I_NhanVien_DAO.khoiPhucNhanVien(nhanVienSelected.getMaNV());
+                boolean success = I_NhanVien_Service.khoiPhucNhanVien(nhanVienDTOSelected.getMaNV());
                 if (success) {
                     showSuccess("Khôi phục thành công", "Nhân viên đã được khôi phục thành công.");
                     loadNhanVien();
@@ -196,13 +195,13 @@ public class KhoiPhucNhanVienController extends ScrollPane{
         // Sự kiện double click để khôi phục nhanh
         tbNhanVien.setOnMouseClicked(e -> {
             if (e.getClickCount() == 2) {
-                nhanVienSelected = tbNhanVien.getSelectionModel().getSelectedItem();
+                nhanVienDTOSelected = tbNhanVien.getSelectionModel().getSelectedItem();
 
-                if (nhanVienSelected == null) return;
+                if (nhanVienDTOSelected == null) return;
 
-                if (canhBao("Xác nhận khôi phục", "Bạn có chắc muốn khôi phục nhân viên " + nhanVienSelected.getHoTen() + " không?")) {
-                    if (nhanVienSelected != null) {
-                        boolean success = I_NhanVien_DAO.khoiPhucNhanVien(nhanVienSelected.getMaNV());
+                if (canhBao("Xác nhận khôi phục", "Bạn có chắc muốn khôi phục nhân viên " + nhanVienDTOSelected.getHoTen() + " không?")) {
+                    if (nhanVienDTOSelected != null) {
+                        boolean success = I_NhanVien_Service.khoiPhucNhanVien(nhanVienDTOSelected.getMaNV());
                         if (success) {
                             showSuccess("Khôi phục thành công", "Nhân viên đã được khôi phục thành công.");
                             loadNhanVien();
@@ -263,7 +262,7 @@ public class KhoiPhucNhanVienController extends ScrollPane{
     }
 
     private void loadNhanVien() {
-        listNV = I_NhanVien_DAO.getDsNhanVienformDBS();
+        listNV = I_NhanVien_Service.getDsNhanVienformDBS();
         TVNhanVien = FXCollections.observableArrayList(
                 listNV.stream()
                         .filter(nv -> nv.isDeleteAt())
@@ -313,7 +312,7 @@ public class KhoiPhucNhanVienController extends ScrollPane{
         String chucVu = cbChucVu.getSelectionModel().getSelectedItem();
         String luongCB = cbLuongCB.getSelectionModel().getSelectedItem();
 
-        for (NhanVien nv : TVNhanVien) {
+        for (NhanVienDTO nv : TVNhanVien) {
             boolean matchKeyword = keyword.isBlank() ||
                     nv.getMaNV().toLowerCase().contains(keyword) ||
                     nv.getHoTen().toLowerCase().contains(keyword);
@@ -346,7 +345,7 @@ public class KhoiPhucNhanVienController extends ScrollPane{
         String x = txtFindNV.getText().trim().toLowerCase();
         if (x.isEmpty()) return;
 
-        for (NhanVien a : tbNhanVien.getItems()) {
+        for (NhanVienDTO a : tbNhanVien.getItems()) {
             if (a.getMaNV().toLowerCase().contains(x) ||
                     a.getHoTen().toLowerCase().contains(x)) {
                 tbNhanVien.getSelectionModel().select(a);

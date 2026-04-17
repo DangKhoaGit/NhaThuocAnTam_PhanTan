@@ -7,8 +7,8 @@ package com.antam.app.controller.dangdieuche;
 
 import com.antam.app.connect.ConnectDB;
 
-import com.antam.app.dao.impl.DangDieuChe_DAO;
-import com.antam.app.entity.DangDieuChe;
+import com.antam.app.service.impl.DangDieuChe_Service;
+import com.antam.app.dto.DangDieuCheDTO;
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcon;
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcons;
 import javafx.collections.FXCollections;
@@ -29,14 +29,14 @@ import javafx.scene.text.Text;
 
 public class CapNhatDangDieuCheController extends ScrollPane{
 
-    private TableView<DangDieuChe> tbDangDieuChe = new TableView<>();
+    private TableView<DangDieuCheDTO> tbDangDieuChe = new TableView<>();
     private TextField tfMaDangDieuChe, tfTenDangDieuChe ;
     private Button btnCapNhat, btnXoa, btnKhoiPhuc;
-    private DangDieuChe_DAO DangDieuChe_DAO = new DangDieuChe_DAO();
+    private DangDieuChe_Service DangDieuChe_DAO = new DangDieuChe_Service();
 
     /* Lấy dữ liệu từ DAO */
-    private ArrayList<DangDieuChe> dsDangDieuCheThuoc;
-    private ObservableList<DangDieuChe> data = FXCollections.observableArrayList();
+    private ArrayList<DangDieuCheDTO> dsDangDieuCheThuoc;
+    private ObservableList<DangDieuCheDTO> data = FXCollections.observableArrayList();
 
     public CapNhatDangDieuCheController() {
         /** Giao diện **/
@@ -188,18 +188,18 @@ public class CapNhatDangDieuCheController extends ScrollPane{
 
         //Sự kiện khi chọn 1 hàng trong bảng
         tbDangDieuChe.setOnMouseClicked(e -> {
-            DangDieuChe DangDieuChe = tbDangDieuChe.getSelectionModel().getSelectedItem();
-            if (DangDieuChe == null) {
+            DangDieuCheDTO DangDieuCheDTO = tbDangDieuChe.getSelectionModel().getSelectedItem();
+            if (DangDieuCheDTO == null) {
                 return;
             }
-            tfMaDangDieuChe.setText(String.valueOf(DangDieuChe.getMaDDC()));
-            tfTenDangDieuChe.setText(DangDieuChe.getTenDDC());
+            tfMaDangDieuChe.setText(String.valueOf(DangDieuCheDTO.getMaDDC()));
+            tfTenDangDieuChe.setText(DangDieuCheDTO.getTenDDC());
         });
 
         //Sự kiện cho nút sửa dạng điều chế
         btnCapNhat.setOnAction(e -> {
             if (kiemTraHopLe()){
-                DangDieuChe_DAO.suaDangDieuChe(new DangDieuChe(Integer.parseInt(tfMaDangDieuChe.getText()), tfTenDangDieuChe.getText()));
+                DangDieuChe_DAO.suaDangDieuChe(new DangDieuCheDTO(Integer.parseInt(tfMaDangDieuChe.getText()), tfTenDangDieuChe.getText()));
                 showCanhBao("Thông báo","Cập nhật dạng điều chế thành công!");
                 //Cập nhật lại bảng
                 dsDangDieuCheThuoc =  DangDieuChe_DAO.getTatCaDangDieuChe();
@@ -213,7 +213,7 @@ public class CapNhatDangDieuCheController extends ScrollPane{
 
         btnXoa.setOnAction(e -> {
             if(!tfMaDangDieuChe.getText().isEmpty()){
-                DangDieuChe selected = tbDangDieuChe.getSelectionModel().getSelectedItem();
+                DangDieuCheDTO selected = tbDangDieuChe.getSelectionModel().getSelectedItem();
                 if (selected == null) return;
                 if (!selected.isDeleteAt()) {
                     DangDieuChe_DAO.xoaDangDieuChe(Integer.parseInt(tfMaDangDieuChe.getText()));
@@ -235,7 +235,7 @@ public class CapNhatDangDieuCheController extends ScrollPane{
 
         btnKhoiPhuc.setOnAction(e -> {
             if(!tfMaDangDieuChe.getText().isEmpty()){
-                DangDieuChe selected = tbDangDieuChe.getSelectionModel().getSelectedItem();
+                DangDieuCheDTO selected = tbDangDieuChe.getSelectionModel().getSelectedItem();
                 if (selected == null) return;
                 if (selected.isDeleteAt()){
                     DangDieuChe_DAO.khoiPhucDangDieuChe(Integer.parseInt(tfMaDangDieuChe.getText()));
@@ -259,13 +259,13 @@ public class CapNhatDangDieuCheController extends ScrollPane{
     public void loadDanhSachDangDieuCheThuoc(){
 
         /* Tên cột */
-        TableColumn<DangDieuChe, String> colMaDangDieuChe = new TableColumn<>("Mã Dạng Điều Chế");
+        TableColumn<DangDieuCheDTO, String> colMaDangDieuChe = new TableColumn<>("Mã Dạng Điều Chế");
         colMaDangDieuChe.setCellValueFactory(new PropertyValueFactory<>("MaDDC"));
 
-        TableColumn<DangDieuChe, String> colTenDangDieuChe = new TableColumn<>("Tên Dạng Điều Chế");
+        TableColumn<DangDieuCheDTO, String> colTenDangDieuChe = new TableColumn<>("Tên Dạng Điều Chế");
         colTenDangDieuChe.setCellValueFactory(new PropertyValueFactory<>("TenDDC"));
 
-        TableColumn<DangDieuChe, Boolean> colTrangThai = new TableColumn<>("Trạng Thái");
+        TableColumn<DangDieuCheDTO, Boolean> colTrangThai = new TableColumn<>("Trạng Thái");
         colTrangThai.setCellValueFactory(new PropertyValueFactory<>("deleteAt"));
         colTrangThai.setCellFactory(column -> new TableCell<>() {
             @Override

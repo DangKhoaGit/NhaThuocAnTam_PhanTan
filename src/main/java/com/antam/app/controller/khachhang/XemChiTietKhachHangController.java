@@ -5,19 +5,11 @@
  */
 package com.antam.app.controller.khachhang;
 
-import com.antam.app.dao.impl.ChiTietHoaDon_DAO;
-import com.antam.app.dao.impl.HoaDon_DAO;
-import com.antam.app.entity.ChiTietHoaDon;
-import com.antam.app.entity.LoThuoc;
-import com.antam.app.entity.DangDieuChe;
-import com.antam.app.entity.DonViTinh;
-import com.antam.app.entity.HoaDon;
-import com.antam.app.entity.KhachHang;
-import com.antam.app.entity.Thuoc;
+import com.antam.app.service.impl.ChiTietHoaDon_Service;
+import com.antam.app.service.impl.HoaDon_Service;
+import com.antam.app.dto.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.fxml.FXML;
-import javafx.fxml.Initializable;
 import javafx.geometry.Insets;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
@@ -51,20 +43,20 @@ public class XemChiTietKhachHangController extends DialogPane {
     private Text txtDonHangGanNhat;
 
     
-    private TableView<HoaDon> tableLichSuMuaHang;
-    private TableColumn<HoaDon, String> colMaHoaDon = new TableColumn<>("Mã HĐ");
-    private TableColumn<HoaDon, String> colNgayMua = new TableColumn<>("Ngày mua");
-    private TableColumn<HoaDon, Integer> colSoThuoc = new TableColumn<>("Số thuốc");
-    private TableColumn<HoaDon, Double> colTongTien = new TableColumn<>("Tổng tiền");
-    private TableColumn<HoaDon, String> colNhanVien = new TableColumn<>("Nhân viên");
+    private TableView<HoaDonDTO> tableLichSuMuaHang;
+    private TableColumn<HoaDonDTO, String> colMaHoaDon = new TableColumn<>("Mã HĐ");
+    private TableColumn<HoaDonDTO, String> colNgayMua = new TableColumn<>("Ngày mua");
+    private TableColumn<HoaDonDTO, Integer> colSoThuoc = new TableColumn<>("Số thuốc");
+    private TableColumn<HoaDonDTO, Double> colTongTien = new TableColumn<>("Tổng tiền");
+    private TableColumn<HoaDonDTO, String> colNhanVien = new TableColumn<>("Nhân viên");
 
     private Button btnDong;
 
-    private javafx.scene.layout.FlowPane flowPaneThuocDaMua;
+    private FlowPane flowPaneThuocDaMua;
 
-    private KhachHang khachHang;
-    private HoaDon_DAO hoaDonDAO;
-    private ChiTietHoaDon_DAO chiTietHoaDonDAO;
+    private KhachHangDTO khachHangDTO;
+    private HoaDon_Service hoaDonDAO;
+    private ChiTietHoaDon_Service chiTietHoaDonDAO;
     private DateTimeFormatter formatter;
     private DateTimeFormatter dateFormatter;
 
@@ -165,8 +157,8 @@ public class XemChiTietKhachHangController extends DialogPane {
         this.setContent(anchorPane);
         this.getStylesheets().add(getClass().getResource("/com/antam/app/styles/dashboard_style.css").toExternalForm());
         /** Sự kiện **/
-        hoaDonDAO = new HoaDon_DAO();
-        chiTietHoaDonDAO = new ChiTietHoaDon_DAO();
+        hoaDonDAO = new HoaDon_Service();
+        chiTietHoaDonDAO = new ChiTietHoaDon_Service();
         formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
         dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
@@ -178,8 +170,8 @@ public class XemChiTietKhachHangController extends DialogPane {
     /**
      * Thiết lập dữ liệu cho controller (gọi từ TimKhachHangController)
      */
-    public void setKhachHang(KhachHang kh) {
-        this.khachHang = kh;
+    public void setKhachHang(KhachHangDTO kh) {
+        this.khachHangDTO = kh;
         loadKhachHangInfo();
         loadLichSuMuaHang();
         loadThuocDaMua();
@@ -191,20 +183,20 @@ public class XemChiTietKhachHangController extends DialogPane {
     private void setupTableColumns() {
         colMaHoaDon.setCellValueFactory(new PropertyValueFactory<>("maHD"));
         colNgayMua.setCellValueFactory(cellData -> {
-            HoaDon hd = cellData.getValue();
+            HoaDonDTO hd = cellData.getValue();
             String dateStr = hd.getNgayTao() != null
                 ? hd.getNgayTao().format(formatter)
                 : "N/A";
             return new javafx.beans.property.SimpleStringProperty(dateStr);
         });
         colSoThuoc.setCellValueFactory(cellData -> {
-            HoaDon hd = cellData.getValue();
+            HoaDonDTO hd = cellData.getValue();
             // Lấy số lượng chi tiết hóa đơn
-            ArrayList<ChiTietHoaDon> chiTietList = chiTietHoaDonDAO.getAllChiTietHoaDonTheoMaHD(hd.getMaHD());
+            ArrayList<ChiTietHoaDonDTO> chiTietList = chiTietHoaDonDAO.getAllChiTietHoaDonTheoMaHD(hd.getMaHD());
             return new javafx.beans.property.SimpleObjectProperty<>(chiTietList.size());
         });
         colTongTien.setCellValueFactory(new PropertyValueFactory<>("tongTien"));
-        colTongTien.setCellFactory(column -> new javafx.scene.control.TableCell<HoaDon, Double>() {
+        colTongTien.setCellFactory(column -> new TableCell<HoaDonDTO, Double>() {
             @Override
             protected void updateItem(Double item, boolean empty) {
                 super.updateItem(item, empty);
@@ -216,7 +208,7 @@ public class XemChiTietKhachHangController extends DialogPane {
             }
         });
         colNhanVien.setCellValueFactory(cellData -> {
-            HoaDon hd = cellData.getValue();
+            HoaDonDTO hd = cellData.getValue();
             String tenNV = hd.getMaNV().getHoTen() != null ? hd.getMaNV().getHoTen() : "N/A";
             return new javafx.beans.property.SimpleStringProperty(tenNV);
         });
@@ -226,16 +218,16 @@ public class XemChiTietKhachHangController extends DialogPane {
      * Tải thông tin khách hàng
      */
     private void loadKhachHangInfo() {
-        if (khachHang == null) return;
+        if (khachHangDTO == null) return;
 
-        txtMaKhachHang.setText("Mã KH: " + khachHang.getMaKH());
-        txtTenKhachHang.setText(khachHang.getTenKH());
-        txtSoDienThoai.setText("SĐT: " + khachHang.getSoDienThoai());
-        txtTongDonHang.setText("Tổng đơn hàng: " + khachHang.getSoDonHang());
-        txtTongChiTieu.setText("Tổng chi tiêu: " + String.format("%,.0f VNĐ", khachHang.getTongChiTieu()));
+        txtMaKhachHang.setText("Mã KH: " + khachHangDTO.getMaKH());
+        txtTenKhachHang.setText(khachHangDTO.getTenKH());
+        txtSoDienThoai.setText("SĐT: " + khachHangDTO.getSoDienThoai());
+        txtTongDonHang.setText("Tổng đơn hàng: " + khachHangDTO.getSoDonHang());
+        txtTongChiTieu.setText("Tổng chi tiêu: " + String.format("%,.0f VNĐ", khachHangDTO.getTongChiTieu()));
 
-        String ngayGanNhat = khachHang.getNgayMuaGanNhat() != null
-            ? khachHang.getNgayMuaGanNhat().format(formatter)
+        String ngayGanNhat = khachHangDTO.getNgayMuaGanNhat() != null
+            ? khachHangDTO.getNgayMuaGanNhat().format(formatter)
             : "N/A";
         txtDonHangGanNhat.setText("Đơn hàng gần nhất: " + ngayGanNhat);
     }
@@ -244,19 +236,19 @@ public class XemChiTietKhachHangController extends DialogPane {
      * Tải lịch sử mua hàng của khách hàng
      */
     private void loadLichSuMuaHang() {
-        if (khachHang == null) return;
+        if (khachHangDTO == null) return;
 
         try {
             // Lấy tất cả hóa đơn từ database
-            ArrayList<HoaDon> allHoaDon = hoaDonDAO.getAllHoaDon();
+            ArrayList<HoaDonDTO> allHoaDon = hoaDonDAO.getAllHoaDon();
 
             // Lọc các hóa đơn của khách hàng này
-            List<HoaDon> hoaDonCuaKH = allHoaDon.stream()
-                .filter(hd -> hd.getMaKH().getMaKH().equals(khachHang.getMaKH()))
+            List<HoaDonDTO> hoaDonCuaKH = allHoaDon.stream()
+                .filter(hd -> hd.getMaKH().getMaKH().equals(khachHangDTO.getMaKH()))
                 .collect(Collectors.toList());
 
             // Chuyển đổi sang ObservableList
-            ObservableList<HoaDon> dsHoaDon = FXCollections.observableArrayList(hoaDonCuaKH);
+            ObservableList<HoaDonDTO> dsHoaDon = FXCollections.observableArrayList(hoaDonCuaKH);
 
             // Gán dữ liệu cho bảng
             tableLichSuMuaHang.setItems(dsHoaDon);
@@ -279,25 +271,25 @@ public class XemChiTietKhachHangController extends DialogPane {
      * Tải và hiển thị các card thuốc đã mua
      */
     private void loadThuocDaMua() {
-        if (khachHang == null || flowPaneThuocDaMua == null) return;
+        if (khachHangDTO == null || flowPaneThuocDaMua == null) return;
 
         try {
             // Xóa các card cũ
             flowPaneThuocDaMua.getChildren().clear();
 
             // Lấy tất cả hóa đơn của khách hàng
-            ArrayList<HoaDon> allHoaDon = hoaDonDAO.getAllHoaDon();
-            List<HoaDon> hoaDonCuaKH = allHoaDon.stream()
-                .filter(hd -> hd.getMaKH().getMaKH().equals(khachHang.getMaKH()))
+            ArrayList<HoaDonDTO> allHoaDon = hoaDonDAO.getAllHoaDon();
+            List<HoaDonDTO> hoaDonCuaKH = allHoaDon.stream()
+                .filter(hd -> hd.getMaKH().getMaKH().equals(khachHangDTO.getMaKH()))
                 .collect(Collectors.toList());
 
             // Duyệt qua từng hóa đơn và lấy chi tiết thuốc
-            for (HoaDon hoaDon : hoaDonCuaKH) {
-                ArrayList<ChiTietHoaDon> chiTietList = chiTietHoaDonDAO.getAllChiTietHoaDonTheoMaHD(hoaDon.getMaHD());
+            for (HoaDonDTO hoaDonDTO : hoaDonCuaKH) {
+                ArrayList<ChiTietHoaDonDTO> chiTietList = chiTietHoaDonDAO.getAllChiTietHoaDonTheoMaHD(hoaDonDTO.getMaHD());
 
                 // Tạo card cho mỗi chi tiết thuốc
-                for (ChiTietHoaDon chiTiet : chiTietList) {
-                    VBox thuocCard = createThuocCard(chiTiet, hoaDon);
+                for (ChiTietHoaDonDTO chiTiet : chiTietList) {
+                    VBox thuocCard = createThuocCard(chiTiet, hoaDonDTO);
                     flowPaneThuocDaMua.getChildren().add(thuocCard);
                 }
             }
@@ -311,7 +303,7 @@ public class XemChiTietKhachHangController extends DialogPane {
     /**
      * Tạo card hiển thị thông tin thuốc đã mua
      */
-    private VBox createThuocCard(ChiTietHoaDon chiTiet, HoaDon hoaDon) {
+    private VBox createThuocCard(ChiTietHoaDonDTO chiTiet, HoaDonDTO hoaDonDTO) {
         VBox vbox = new VBox(5);
         vbox.setPrefWidth(280);
         vbox.setStyle("-fx-background-color: white; -fx-border-radius: 6px; -fx-border-color: #10b981; -fx-border-width: 0px 0px 0px 4px; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 5, 0, 0, 2);");
@@ -325,26 +317,26 @@ public class XemChiTietKhachHangController extends DialogPane {
 
         try {
             // Flow: ChiTietHoaDon -> ChiTietThuoc -> Thuoc (để lấy tên thuốc và dạng điều chế)
-            LoThuoc chiTietThuoc = chiTiet.getMaLoThuoc();
+            LoThuocDTO chiTietThuoc = chiTiet.getMaLoThuocDTO();
             System.out.println(chiTietThuoc);
             if (chiTietThuoc != null) {
-                Thuoc thuoc = chiTietThuoc.getMaThuoc();
-                if (thuoc != null) {
+                ThuocDTO thuocDTO = chiTietThuoc.getMaThuocDTO();
+                if (thuocDTO != null) {
                     // Lấy tên thuốc
-                    String ten = thuoc.getTenThuoc();
+                    String ten = thuocDTO.getTenThuoc();
                     if (ten != null && !ten.trim().isEmpty()) {
                         tenThuoc = ten;
                     }
 
                     // Lấy hàm lượng
-                    String hl = thuoc.getHamLuong();
+                    String hl = thuocDTO.getHamLuong();
                     if (hl != null && !hl.trim().isEmpty()) {
                         hamLuong = " (" + hl + ")";
                     }
 
                     // Lấy dạng điều chế
-                    if (thuoc.getDangDieuChe() != null) {
-                        String ddc = thuoc.getDangDieuChe().getTenDDC();
+                    if (thuocDTO.getDangDieuCheDTO() != null) {
+                        String ddc = thuocDTO.getDangDieuCheDTO().getTenDDC();
                         if (ddc != null && !ddc.trim().isEmpty()) {
                             dangDieuChe = ddc;
                         }
@@ -353,7 +345,7 @@ public class XemChiTietKhachHangController extends DialogPane {
             }
 
             // Flow: ChiTietHoaDon -> DonViTinh (để lấy tên đơn vị tính)
-            DonViTinh dvt = chiTiet.getMaDVT();
+            DonViTinhDTO dvt = chiTiet.getMaDVT();
             if (dvt != null) {
                 String tenDVT = dvt.getTenDVT();
                 if (tenDVT != null && !tenDVT.trim().isEmpty()) {
@@ -376,8 +368,8 @@ public class XemChiTietKhachHangController extends DialogPane {
         Text txtThongTinMua = new Text("SL: " + chiTiet.getSoLuong() + " " + donViTinh + " | Thành tiền: " + String.format("%,.0f", chiTiet.getThanhTien()) + " ₫");
         txtThongTinMua.setStyle("-fx-fill: #059669; -fx-font-weight: bold; -fx-font-size: 12px;");
 
-        String ngayMua = hoaDon.getNgayTao() != null ? hoaDon.getNgayTao().format(dateFormatter) : "Không xác định";
-        Text txtThongTinHoaDon = new Text("HĐ: " + hoaDon.getMaHD() + " | Ngày: " + ngayMua);
+        String ngayMua = hoaDonDTO.getNgayTao() != null ? hoaDonDTO.getNgayTao().format(dateFormatter) : "Không xác định";
+        Text txtThongTinHoaDon = new Text("HĐ: " + hoaDonDTO.getMaHD() + " | Ngày: " + ngayMua);
         txtThongTinHoaDon.setStyle("-fx-fill: #6b7280; -fx-font-size: 11px;");
 
         vbox.getChildren().addAll(txtTenThuoc, txtLoaiThuoc, txtThongTinMua, txtThongTinHoaDon);

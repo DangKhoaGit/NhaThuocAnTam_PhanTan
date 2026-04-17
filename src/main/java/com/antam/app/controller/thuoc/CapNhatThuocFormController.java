@@ -1,14 +1,11 @@
 package com.antam.app.controller.thuoc;
 
 import com.antam.app.connect.ConnectDB;
-import com.antam.app.dao.impl.DangDieuChe_DAO;
-import com.antam.app.dao.impl.DonViTinh_DAO;
-import com.antam.app.dao.impl.Ke_DAO;
-import com.antam.app.dao.impl.Thuoc_DAO;
-import com.antam.app.entity.DangDieuChe;
-import com.antam.app.entity.DonViTinh;
-import com.antam.app.entity.Ke;
-import com.antam.app.entity.Thuoc;
+import com.antam.app.service.impl.DangDieuChe_Service;
+import com.antam.app.service.impl.DonViTinh_Service;
+import com.antam.app.service.impl.Ke_Service;
+import com.antam.app.service.impl.Thuoc_Service;
+import com.antam.app.dto.*;
 import javafx.event.ActionEvent;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -25,37 +22,37 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class CapNhatThuocFormController extends DialogPane{
-    private Thuoc thuoc;
+    private ThuocDTO thuocDTO;
     private TextField txtDUMaThuoc, txtDUTenThuoc, txtDUHamLuong;
     private Text txtDUGiaByDV = new Text();
     private Text notification_DUThuoc;
     private Spinner<Double> spDUGiaGoc, spDUGiaBan, spDUThue;
-    private ComboBox<DonViTinh> cbDUDVCS;
-    private ComboBox<DangDieuChe> cbDUDangDieuChe;
-    private ComboBox<Ke> cbDUKe;
-    private DangDieuChe_DAO ddc_dao = new DangDieuChe_DAO();
-    private DonViTinh_DAO dvt_dao = new DonViTinh_DAO();
-    private Thuoc_DAO thuoc_dao = new Thuoc_DAO();
-    private Ke_DAO ke_dao = new Ke_DAO();
+    private ComboBox<DonViTinhDTO> cbDUDVCS;
+    private ComboBox<DangDieuCheDTO> cbDUDangDieuChe;
+    private ComboBox<KeDTO> cbDUKe;
+    private DangDieuChe_Service ddc_dao = new DangDieuChe_Service();
+    private DonViTinh_Service dvt_dao = new DonViTinh_Service();
+    private Thuoc_Service thuoc_dao = new Thuoc_Service();
+    private Ke_Service ke_dao = new Ke_Service();
 
-    public void setThuoc(Thuoc thuoc) {
-        this.thuoc = thuoc;
+    public void setThuoc(ThuocDTO thuocDTO) {
+        this.thuocDTO = thuocDTO;
     }
 
-    public Thuoc getThuoc(){
-        return thuoc;
+    public ThuocDTO getThuoc(){
+        return thuocDTO;
     }
     // Hiển thị dữ liệu lên dialog
-    public void showData(Thuoc t) {
+    public void showData(ThuocDTO t) {
         txtDUMaThuoc.setText(t.getMaThuoc());
         txtDUMaThuoc.setEditable(false);
         txtDUTenThuoc.setText(t.getTenThuoc());
-        cbDUDangDieuChe.setValue(t.getDangDieuChe());
+        cbDUDangDieuChe.setValue(t.getDangDieuCheDTO());
         spDUGiaGoc.getValueFactory().setValue(t.getGiaGoc());
         spDUGiaBan.getValueFactory().setValue(t.getGiaBan());
         spDUThue.getValueFactory().setValue((double) t.getThue());
         txtDUHamLuong.setText(t.getHamLuong());
-        cbDUKe.setValue(t.getMaKe());
+        cbDUKe.setValue(t.getMaKeDTO());
         cbDUDVCS.setValue(t.getMaDVTCoSo());
         txtDUGiaByDV.setText(dvt_dao.getDVTTheoMa(t.getMaDVTCoSo().getMaDVT()).getTenDVT());
     }
@@ -199,16 +196,16 @@ public class CapNhatThuocFormController extends DialogPane{
             }else {
                 String maThuoc = txtDUMaThuoc.getText();
                 String tenThuoc = txtDUTenThuoc.getText();
-                DonViTinh donViCoSo = cbDUDVCS.getValue();
-                DangDieuChe dangDieuChe =  cbDUDangDieuChe.getValue();
+                DonViTinhDTO donViCoSo = cbDUDVCS.getValue();
+                DangDieuCheDTO dangDieuCheDTO =  cbDUDangDieuChe.getValue();
                 String hamLuong = txtDUHamLuong.getText();
                 Double giaGoc = spDUGiaGoc.getValue();
                 Double giaBan = spDUGiaBan.getValue();
                 Double thue = spDUThue.getValue();
-                Ke ke = cbDUKe.getValue();
-                Thuoc thuoc = new Thuoc(maThuoc, tenThuoc, hamLuong, giaBan, giaGoc, thue.floatValue(), false,
-                        dangDieuChe, donViCoSo, ke);
-                boolean success = thuoc_dao.capNhatThuoc(thuoc);
+                KeDTO keDTO = cbDUKe.getValue();
+                ThuocDTO thuocDTO = new ThuocDTO(maThuoc, tenThuoc, hamLuong, giaBan, giaGoc, thue.floatValue(), false,
+                        dangDieuCheDTO, donViCoSo, keDTO);
+                boolean success = thuoc_dao.capNhatThuoc(thuocDTO);
 
             }
 
@@ -361,19 +358,19 @@ public class CapNhatThuocFormController extends DialogPane{
 
     // them value vao combobox ke
     public void addComBoBoxKe() {
-        ArrayList<Ke> arrayKe = ke_dao.getTatCaKeHoatDong();
+        ArrayList<KeDTO> arrayKe = ke_dao.getTatCaKeHoatDong();
         cbDUKe.getItems().clear();
-        for (Ke ke : arrayKe) {
-            cbDUKe.getItems().add(ke);
+        for (KeDTO keDTO : arrayKe) {
+            cbDUKe.getItems().add(keDTO);
         }
         cbDUKe.getSelectionModel().selectFirst();
     }
 
     // Them value vao combobox dang dieu che
     public void addComBoBoxDDC() {
-        ArrayList<DangDieuChe> arrayDDC = ddc_dao.getDangDieuCheHoatDong();
+        ArrayList<DangDieuCheDTO> arrayDDC = ddc_dao.getDangDieuCheHoatDong();
         cbDUDangDieuChe.getItems().clear();
-        for (DangDieuChe ddc : arrayDDC){
+        for (DangDieuCheDTO ddc : arrayDDC){
             cbDUDangDieuChe.getItems().add(ddc);
         }
         cbDUDangDieuChe.getSelectionModel().selectFirst();
@@ -381,7 +378,7 @@ public class CapNhatThuocFormController extends DialogPane{
 
     // Them value vao combobox don vi tinh
     public void addComBoBoxDVCS() {
-        ArrayList<DonViTinh> arrayDVT = dvt_dao.getAllDonViTinh();
+        ArrayList<DonViTinhDTO> arrayDVT = dvt_dao.getAllDonViTinh();
         cbDUDVCS.getItems().clear();
         arrayDVT.forEach(dvt -> cbDUDVCS.getItems().add(dvt));
         cbDUDVCS.getSelectionModel().selectFirst();

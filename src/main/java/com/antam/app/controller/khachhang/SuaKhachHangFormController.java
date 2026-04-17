@@ -5,8 +5,8 @@
  */
 package com.antam.app.controller.khachhang;
 
-import com.antam.app.dao.impl.KhachHang_DAO;
-import com.antam.app.entity.KhachHang;
+import com.antam.app.service.impl.KhachHang_Service;
+import com.antam.app.dto.KhachHangDTO;
 import javafx.geometry.Insets;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
@@ -32,8 +32,8 @@ public class SuaKhachHangFormController extends DialogPane {
     private Button btnLuu;
     private Button btnHuy;
 
-    private KhachHang khachHang;
-    private KhachHang_DAO khachHangDAO;
+    private KhachHangDTO khachHangDTO;
+    private KhachHang_Service khachHangDAO;
 
     // Callback interface để thông báo khi lưu thành công
     public interface OnSaveListener {
@@ -124,7 +124,7 @@ public class SuaKhachHangFormController extends DialogPane {
 
         // Sự kiện
         // Khởi tạo DAO
-        khachHangDAO = new KhachHang_DAO();
+        khachHangDAO = new KhachHang_Service();
 
         // Thiết lập sự kiện cho nút Lưu
         btnLuu.setOnAction(event -> handleLuu());
@@ -143,12 +143,12 @@ public class SuaKhachHangFormController extends DialogPane {
     /**
      * Thiết lập dữ liệu khách hàng để hiển thị trong form
      */
-    public void setKhachHang(KhachHang kh) {
-        this.khachHang = kh;
-        if (khachHang != null) {
-            txtMaKhachHang.setText(khachHang.getMaKH());
-            txtTenKhachHang.setText(khachHang.getTenKH());
-            txtSoDienThoai.setText(khachHang.getSoDienThoai());
+    public void setKhachHang(KhachHangDTO kh) {
+        this.khachHangDTO = kh;
+        if (khachHangDTO != null) {
+            txtMaKhachHang.setText(khachHangDTO.getMaKH());
+            txtTenKhachHang.setText(khachHangDTO.getTenKH());
+            txtSoDienThoai.setText(khachHangDTO.getSoDienThoai());
         }
     }
 
@@ -175,11 +175,11 @@ public class SuaKhachHangFormController extends DialogPane {
 
         try {
             // Cập nhật thông tin khách hàng
-            khachHang.setTenKH(txtTenKhachHang.getText().trim());
-            khachHang.setSoDienThoai(txtSoDienThoai.getText().trim());
+            khachHangDTO.setTenKH(txtTenKhachHang.getText().trim());
+            khachHangDTO.setSoDienThoai(txtSoDienThoai.getText().trim());
 
             // Lưu vào database
-            boolean success = khachHangDAO.updateKhachHang(khachHang);
+            boolean success = khachHangDAO.updateKhachHang(khachHangDTO);
 
             if (success) {
                 showInfo("Thành công", "Cập nhật thông tin khách hàng thành công");

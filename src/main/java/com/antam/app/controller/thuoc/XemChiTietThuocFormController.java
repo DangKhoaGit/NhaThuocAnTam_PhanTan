@@ -1,9 +1,9 @@
 package com.antam.app.controller.thuoc;
 
 import com.antam.app.connect.ConnectDB;
-import com.antam.app.dao.impl.LoThuoc_DAO;
-import com.antam.app.entity.LoThuoc;
-import com.antam.app.entity.Thuoc;
+import com.antam.app.service.impl.LoThuoc_Service;
+import com.antam.app.dto.LoThuocDTO;
+import com.antam.app.dto.ThuocDTO;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
@@ -26,33 +26,33 @@ import java.util.ArrayList;
 public class XemChiTietThuocFormController extends DialogPane {
 
     private Text txtMaThuoc_CTT, txtTenThuoc_CTT;
-    private TableView<LoThuoc> tableChiTietThuoc;
+    private TableView<LoThuocDTO> tableChiTietThuoc;
 
-    private TableColumn<LoThuoc, Integer> colSTT_CTT = new TableColumn<>("STT");
-    private TableColumn<LoThuoc, String> colMaPN_CTT = new TableColumn<>("Mã phiếu nhập");
-    private TableColumn<LoThuoc, String> colSoLuong_CTT = new TableColumn<>("Số lượng");
-    private TableColumn<LoThuoc, String> colNSX_CTT = new TableColumn<>("Ngày sản xuất");
-    private TableColumn<LoThuoc, String> colNHH_CTT = new TableColumn<>("Ngày hết hạn");
+    private TableColumn<LoThuocDTO, Integer> colSTT_CTT = new TableColumn<>("STT");
+    private TableColumn<LoThuocDTO, String> colMaPN_CTT = new TableColumn<>("Mã phiếu nhập");
+    private TableColumn<LoThuocDTO, String> colSoLuong_CTT = new TableColumn<>("Số lượng");
+    private TableColumn<LoThuocDTO, String> colNSX_CTT = new TableColumn<>("Ngày sản xuất");
+    private TableColumn<LoThuocDTO, String> colNHH_CTT = new TableColumn<>("Ngày hết hạn");
 
-    private ObservableList<LoThuoc> listChiTietThuoc = FXCollections.observableArrayList();
+    private ObservableList<LoThuocDTO> listChiTietThuoc = FXCollections.observableArrayList();
 
-    private Thuoc thuoc;
-    private LoThuoc_DAO chiTietThuoc_dao = new LoThuoc_DAO();
+    private ThuocDTO thuocDTO;
+    private LoThuoc_Service chiTietThuoc_dao = new LoThuoc_Service();
 
-    public void setThuoc(Thuoc thuoc) {
-        this.thuoc = thuoc;
+    public void setThuoc(ThuocDTO thuocDTO) {
+        this.thuocDTO = thuocDTO;
     }
 
-    public Thuoc getThuoc() {
-        return thuoc;
+    public ThuocDTO getThuoc() {
+        return thuocDTO;
     }
 
     /** Load dữ liệu */
     public void showData() {
-        txtMaThuoc_CTT.setText("Mã Thuốc: " + thuoc.getMaThuoc());
-        txtTenThuoc_CTT.setText("Tên Thuốc: " + thuoc.getTenThuoc());
+        txtMaThuoc_CTT.setText("Mã Thuốc: " + thuocDTO.getMaThuoc());
+        txtTenThuoc_CTT.setText("Tên Thuốc: " + thuocDTO.getTenThuoc());
 
-        ArrayList<LoThuoc> list = chiTietThuoc_dao.getAllCHiTietThuocTheoMaThuoc(thuoc.getMaThuoc());
+        ArrayList<LoThuocDTO> list = chiTietThuoc_dao.getAllCHiTietThuocTheoMaThuoc(thuocDTO.getMaThuoc());
         listChiTietThuoc.clear();
         listChiTietThuoc.addAll(list);
         tableChiTietThuoc.setItems(listChiTietThuoc);

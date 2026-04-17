@@ -29,9 +29,9 @@ public class KhuyenMai_DAO implements I_KhuyenMai_DAO {
             while (rs.next()) {
                 String maKM = rs.getString("MaKM");
                 String tenKM = rs.getString("TenKM");
-                java.sql.Date sqlNgayBatDau = rs.getDate("NgayBatDau");
+                Date sqlNgayBatDau = rs.getDate("NgayBatDau");
                 LocalDate ngayBatDau = sqlNgayBatDau != null ? sqlNgayBatDau.toLocalDate() : LocalDate.now();
-                java.sql.Date sqlNgayKetThuc = rs.getDate("NgayKetThuc");
+                Date sqlNgayKetThuc = rs.getDate("NgayKetThuc");
                 LocalDate ngayKetThuc = sqlNgayKetThuc != null ? sqlNgayKetThuc.toLocalDate() : LocalDate.now();
                 int maLoaiKM = rs.getInt("LoaiKhuyenMai");
                 String tenLoaiKM = rs.getString("TenLKM");
@@ -65,9 +65,9 @@ public class KhuyenMai_DAO implements I_KhuyenMai_DAO {
             while (rs.next()) {
                 String maKM = rs.getString("MaKM");
                 String tenKM = rs.getString("TenKM");
-                java.sql.Date sqlNgayBatDau = rs.getDate("NgayBatDau");
+                Date sqlNgayBatDau = rs.getDate("NgayBatDau");
                 LocalDate ngayBatDau = sqlNgayBatDau != null ? sqlNgayBatDau.toLocalDate() : LocalDate.now();
-                java.sql.Date sqlNgayKetThuc = rs.getDate("NgayKetThuc");
+                Date sqlNgayKetThuc = rs.getDate("NgayKetThuc");
                 LocalDate ngayKetThuc = sqlNgayKetThuc != null ? sqlNgayKetThuc.toLocalDate() : LocalDate.now();
                 int maLoaiKM = rs.getInt("LoaiKhuyenMai");
                 String tenLoaiKM = rs.getString("TenLKM");
@@ -114,9 +114,9 @@ public class KhuyenMai_DAO implements I_KhuyenMai_DAO {
             while (rs.next()) {
                 String maKM = rs.getString("MaKM");
                 String tenKM = rs.getString("TenKM");
-                java.sql.Date sqlNgayBatDau = rs.getDate("NgayBatDau");
+                Date sqlNgayBatDau = rs.getDate("NgayBatDau");
                 LocalDate ngayBatDau = sqlNgayBatDau != null ? sqlNgayBatDau.toLocalDate() : LocalDate.now();
-                java.sql.Date sqlNgayKetThuc = rs.getDate("NgayKetThuc");
+                Date sqlNgayKetThuc = rs.getDate("NgayKetThuc");
                 LocalDate ngayKetThuc = sqlNgayKetThuc != null ? sqlNgayKetThuc.toLocalDate() : LocalDate.now();
                 int maLoaiKM = rs.getInt("LoaiKhuyenMai");
                 String tenLoaiKM = rs.getString("TenLKM");
@@ -150,9 +150,9 @@ public class KhuyenMai_DAO implements I_KhuyenMai_DAO {
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
                     String tenKM = rs.getString("TenKM");
-                    java.sql.Date sqlNgayBatDau = rs.getDate("NgayBatDau");
+                    Date sqlNgayBatDau = rs.getDate("NgayBatDau");
                     LocalDate ngayBatDau = sqlNgayBatDau != null ? sqlNgayBatDau.toLocalDate() : LocalDate.now();
-                    java.sql.Date sqlNgayKetThuc = rs.getDate("NgayKetThuc");
+                    Date sqlNgayKetThuc = rs.getDate("NgayKetThuc");
                     LocalDate ngayKetThuc = sqlNgayKetThuc != null ? sqlNgayKetThuc.toLocalDate() : LocalDate.now();
                     int maLoaiKM = rs.getInt("LoaiKhuyenMai");
                     String tenLoaiKM = rs.getString("TenLKM");

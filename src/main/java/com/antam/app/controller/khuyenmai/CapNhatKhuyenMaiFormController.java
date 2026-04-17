@@ -7,23 +7,20 @@
 package com.antam.app.controller.khuyenmai;
 
 import com.antam.app.connect.ConnectDB;
-import com.antam.app.dao.impl.KhuyenMai_DAO;
-import com.antam.app.dao.impl.LoaiKhuyenMai_DAO;
-import com.antam.app.entity.KhuyenMai;
-import com.antam.app.entity.LoaiKhuyenMai;
+import com.antam.app.service.impl.KhuyenMai_Service;
+import com.antam.app.service.impl.LoaiKhuyenMai_Service;
+import com.antam.app.dto.KhuyenMaiDTO;
+import com.antam.app.dto.LoaiKhuyenMaiDTO;
 import javafx.event.ActionEvent;
-import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.text.Text;
 
 import java.sql.Connection;
 import java.util.ArrayList;
 import javafx.geometry.Insets;
-import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
-import javafx.scene.text.Text;
 
 /*
  * @description
@@ -34,39 +31,39 @@ import javafx.scene.text.Text;
 public class CapNhatKhuyenMaiFormController extends DialogPane{
 
     private TextField txtMaKhuyenMai, txtTenKhuyenMai;
-    private ComboBox<LoaiKhuyenMai> cbLoaiKhuyenMai;
+    private ComboBox<LoaiKhuyenMaiDTO> cbLoaiKhuyenMai;
     private Spinner<Integer> spSo, spSoLuongToiDa;
     private DatePicker dpNgayBacDau, dpNgayKetThuc;
     
     private Text txtThongBao;
-    private KhuyenMai_DAO khuyenMai_dao = new KhuyenMai_DAO();
-    private LoaiKhuyenMai_DAO loaiKhuyenMai_dao = new LoaiKhuyenMai_DAO();
-    private KhuyenMai khuyenMai;
+    private KhuyenMai_Service khuyenMai_dao = new KhuyenMai_Service();
+    private LoaiKhuyenMai_Service loaiKhuyenMai_dao = new LoaiKhuyenMai_Service();
+    private KhuyenMaiDTO khuyenMaiDTO;
 
-    public void setKhuyenMai(KhuyenMai khuyenMai) {
-        this.khuyenMai = khuyenMai;
+    public void setKhuyenMai(KhuyenMaiDTO khuyenMaiDTO) {
+        this.khuyenMaiDTO = khuyenMaiDTO;
     }
-    public KhuyenMai getKhuyenMai() {
-        return khuyenMai;
+    public KhuyenMaiDTO getKhuyenMai() {
+        return khuyenMaiDTO;
     }
-    public void showdata(KhuyenMai khuyenMai) {
-        if (khuyenMai != null) {
-            txtMaKhuyenMai.setText(khuyenMai.getMaKM());
-            txtTenKhuyenMai.setText(khuyenMai.getTenKM());
-            cbLoaiKhuyenMai.setValue(khuyenMai.getLoaiKhuyenMai());
-            if (khuyenMai.getLoaiKhuyenMai().getMaLKM() == 1) { // Phần trăm
+    public void showdata(KhuyenMaiDTO khuyenMaiDTO) {
+        if (khuyenMaiDTO != null) {
+            txtMaKhuyenMai.setText(khuyenMaiDTO.getMaKM());
+            txtTenKhuyenMai.setText(khuyenMaiDTO.getTenKM());
+            cbLoaiKhuyenMai.setValue(khuyenMaiDTO.getLoaiKhuyenMaiDTO());
+            if (khuyenMaiDTO.getLoaiKhuyenMaiDTO().getMaLKM() == 1) { // Phần trăm
                 SpinnerValueFactory<Integer> valueFactorySo = new SpinnerValueFactory.IntegerSpinnerValueFactory(1, 100, 10, 1);
                 spSo.setValueFactory(valueFactorySo);
-            } else if (khuyenMai.getLoaiKhuyenMai().getMaLKM() == 2) { // Tiền mặt
+            } else if (khuyenMaiDTO.getLoaiKhuyenMaiDTO().getMaLKM() == 2) { // Tiền mặt
                 SpinnerValueFactory<Integer> valueFactorySo = new SpinnerValueFactory.IntegerSpinnerValueFactory(1000, 1000000, 10000, 1000);
                 spSo.setValueFactory(valueFactorySo);
             }
             SpinnerValueFactory<Integer> valueFactorySoLuongToiDa = new SpinnerValueFactory.IntegerSpinnerValueFactory(1, 1000, 10, 1);
             spSoLuongToiDa.setValueFactory(valueFactorySoLuongToiDa);
-            spSo.getValueFactory().setValue((int) khuyenMai.getSo());
-            spSoLuongToiDa.getValueFactory().setValue(khuyenMai.getSoLuongToiDa());
-            dpNgayBacDau.setValue(khuyenMai.getNgayBatDau());
-            dpNgayKetThuc.setValue(khuyenMai.getNgayKetThuc());
+            spSo.getValueFactory().setValue((int) khuyenMaiDTO.getSo());
+            spSoLuongToiDa.getValueFactory().setValue(khuyenMaiDTO.getSoLuongToiDa());
+            dpNgayBacDau.setValue(khuyenMaiDTO.getNgayBatDau());
+            dpNgayKetThuc.setValue(khuyenMaiDTO.getNgayKetThuc());
         }
     }
     public CapNhatKhuyenMaiFormController() {
@@ -209,17 +206,17 @@ public class CapNhatKhuyenMaiFormController extends DialogPane{
             } else {
                 String maKM = txtMaKhuyenMai.getText().trim();
                 String tenKM = txtTenKhuyenMai.getText().trim();
-                LoaiKhuyenMai loaiKM = cbLoaiKhuyenMai.getSelectionModel().getSelectedItem();
+                LoaiKhuyenMaiDTO loaiKM = cbLoaiKhuyenMai.getSelectionModel().getSelectedItem();
                 int so = spSo.getValue();
                 int soLuongToiDa = spSoLuongToiDa.getValue();
                 java.time.LocalDate ngayBatDau = dpNgayBacDau.getValue();
                 java.time.LocalDate ngayKetThuc = dpNgayKetThuc.getValue();
 
-                KhuyenMai updatedKhuyenMai = new KhuyenMai(maKM, tenKM, ngayBatDau, ngayKetThuc, loaiKM, so, soLuongToiDa, false);
-                boolean success = khuyenMai_dao.capNhatKhuyenMai(updatedKhuyenMai);
+                KhuyenMaiDTO updatedKhuyenMaiDTO = new KhuyenMaiDTO(maKM, tenKM, ngayBatDau, ngayKetThuc, loaiKM, so, soLuongToiDa, false);
+                boolean success = khuyenMai_dao.capNhatKhuyenMai(updatedKhuyenMaiDTO);
                 if (success) {
                     txtThongBao.setText("Cập nhật khuyến mãi thành công");
-                    khuyenMai = updatedKhuyenMai;
+                    khuyenMaiDTO = updatedKhuyenMaiDTO;
                 } else {
                     txtThongBao.setText("Cập nhật khuyến mãi thất bại");
                     e.consume();
@@ -252,7 +249,7 @@ public class CapNhatKhuyenMaiFormController extends DialogPane{
         loadLoaiKhuyenMai();
         // set su kien loai khuyen mai
         cbLoaiKhuyenMai.setOnAction(e -> {
-            LoaiKhuyenMai selectedLoai = cbLoaiKhuyenMai.getSelectionModel().getSelectedItem();
+            LoaiKhuyenMaiDTO selectedLoai = cbLoaiKhuyenMai.getSelectionModel().getSelectedItem();
             if (selectedLoai != null) {
                 if (selectedLoai.getMaLKM() == 1) { // Phần trăm
                     SpinnerValueFactory<Integer> value = new SpinnerValueFactory.IntegerSpinnerValueFactory(1, 100, 10, 1);
@@ -279,7 +276,7 @@ public class CapNhatKhuyenMaiFormController extends DialogPane{
     }
 
     public void loadLoaiKhuyenMai(){
-        ArrayList<LoaiKhuyenMai> listLoaiKhuyenMai = loaiKhuyenMai_dao.getAllLoaiKhuyenMai();
+        ArrayList<LoaiKhuyenMaiDTO> listLoaiKhuyenMai = loaiKhuyenMai_dao.getAllLoaiKhuyenMai();
         cbLoaiKhuyenMai.getItems().clear();
         cbLoaiKhuyenMai.getItems().addAll(listLoaiKhuyenMai);
         cbLoaiKhuyenMai.getSelectionModel().selectFirst();

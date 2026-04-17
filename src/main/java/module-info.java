@@ -49,5 +49,7 @@ module com.antam.app {
     // Hibernate cần truy cập entity để ánh xạ, nên phải mở module cho nó
     requires org.hibernate.orm.core;
     requires com.fasterxml.jackson.annotation;
+    requires com.fasterxml.jackson.databind;
+    requires com.fasterxml.jackson.datatype.jsr310;
 
 }

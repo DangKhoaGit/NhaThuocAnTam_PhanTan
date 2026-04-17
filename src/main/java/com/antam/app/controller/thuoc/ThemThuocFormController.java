@@ -6,14 +6,11 @@
 package com.antam.app.controller.thuoc;
 
 import com.antam.app.connect.ConnectDB;
-import com.antam.app.dao.impl.DangDieuChe_DAO;
-import com.antam.app.dao.impl.DonViTinh_DAO;
-import com.antam.app.dao.impl.Ke_DAO;
-import com.antam.app.dao.impl.Thuoc_DAO;
-import com.antam.app.entity.DangDieuChe;
-import com.antam.app.entity.DonViTinh;
-import com.antam.app.entity.Ke;
-import com.antam.app.entity.Thuoc;
+import com.antam.app.service.impl.DangDieuChe_Service;
+import com.antam.app.service.impl.DonViTinh_Service;
+import com.antam.app.service.impl.Ke_Service;
+import com.antam.app.service.impl.Thuoc_Service;
+import com.antam.app.dto.*;
 import javafx.event.ActionEvent;
 import javafx.scene.control.*;
 import javafx.scene.control.ButtonBar.ButtonData;
@@ -33,10 +30,10 @@ import javafx.scene.layout.*;
 import javafx.scene.text.Font;
 
 public class ThemThuocFormController extends DialogPane{
-    private DangDieuChe_DAO ddc_dao;
-    private DonViTinh_DAO dvt_dao;
-    private Thuoc_DAO thuoc_dao;
-    private Ke_DAO ke_dao;
+    private DangDieuChe_Service ddc_dao;
+    private DonViTinh_Service dvt_dao;
+    private Thuoc_Service thuoc_dao;
+    private Ke_Service ke_dao;
 
     private TextField txtAddMaThuoc, txtAddTenThuoc, txtAddHamLuong;
 
@@ -44,11 +41,11 @@ public class ThemThuocFormController extends DialogPane{
 
     private Spinner<Double> spAddGiaGoc, spAddGiaBan, spAddThue;
 
-    private ComboBox<DonViTinh> cbAddDVCS;
+    private ComboBox<DonViTinhDTO> cbAddDVCS;
 
-    private ComboBox<DangDieuChe> cbAddDangDieuChe;
+    private ComboBox<DangDieuCheDTO> cbAddDangDieuChe;
 
-    private ComboBox<Ke> cbAddKe;
+    private ComboBox<KeDTO> cbAddKe;
 
 
     public ThemThuocFormController() {
@@ -189,23 +186,23 @@ public class ThemThuocFormController extends DialogPane{
             }else {
                 String maThuoc = txtAddMaThuoc.getText();
                 String tenThuoc = txtAddTenThuoc.getText();
-                DonViTinh donViCoSo = cbAddDVCS.getValue();
-                DangDieuChe dangDieuChe =  cbAddDangDieuChe.getValue();
+                DonViTinhDTO donViCoSo = cbAddDVCS.getValue();
+                DangDieuCheDTO dangDieuCheDTO =  cbAddDangDieuChe.getValue();
                 String hamLuong = txtAddHamLuong.getText();
                 Double giaGoc = spAddGiaGoc.getValue();
                 Double giaBan = spAddGiaBan.getValue();
                 Double thue = spAddThue.getValue();
-                Ke ke = cbAddKe.getValue();
+                KeDTO keDTO = cbAddKe.getValue();
 
-                Thuoc thuoc = new Thuoc(maThuoc, tenThuoc, hamLuong, giaBan, giaGoc, thue.floatValue(), false,
-                        dangDieuChe, donViCoSo, ke);
-                thuoc_dao = new Thuoc_DAO();
+                ThuocDTO thuocDTO = new ThuocDTO(maThuoc, tenThuoc, hamLuong, giaBan, giaGoc, thue.floatValue(), false,
+                        dangDieuCheDTO, donViCoSo, keDTO);
+                thuoc_dao = new Thuoc_Service();
                 try {
                     ConnectDB.getInstance().connect();
                 } catch (SQLException e) {
                     throw new RuntimeException(e);
                 }
-                boolean check = thuoc_dao.themThuoc(thuoc);
+                boolean check = thuoc_dao.themThuoc(thuocDTO);
                 if (!check) {
                     notification_addThuoc.setText("Thêm thuốc thất bại!");
                     event.consume();
@@ -309,7 +306,7 @@ public class ThemThuocFormController extends DialogPane{
                 } catch (SQLException e) {
                     throw new RuntimeException(e);
                 }
-                thuoc_dao = new Thuoc_DAO();
+                thuoc_dao = new Thuoc_Service();
                 if (thuoc_dao.getThuocTheoMa(maThuoc) != null){
                     notification_addThuoc.setText("Mã thuốc đã tồn tại!");
                     return false;
@@ -375,21 +372,21 @@ public class ThemThuocFormController extends DialogPane{
 
     // them value vao combobox ke
     public void addComBoBoxKe() {
-        ke_dao = new Ke_DAO();
-        ArrayList<Ke> arrayKe = ke_dao.getTatCaKeHoatDong();
+        ke_dao = new Ke_Service();
+        ArrayList<KeDTO> arrayKe = ke_dao.getTatCaKeHoatDong();
         cbAddKe.getItems().clear();
-        for (Ke ke : arrayKe) {
-            cbAddKe.getItems().add(ke);
+        for (KeDTO keDTO : arrayKe) {
+            cbAddKe.getItems().add(keDTO);
         }
         cbAddKe.getSelectionModel().selectFirst();
     }
 
     // Them value vao combobox dang dieu che
     public void addComBoBoxDDC() {
-        ddc_dao = new DangDieuChe_DAO();
-        ArrayList<DangDieuChe> arrayDDC = ddc_dao.getDangDieuCheHoatDong();
+        ddc_dao = new DangDieuChe_Service();
+        ArrayList<DangDieuCheDTO> arrayDDC = ddc_dao.getDangDieuCheHoatDong();
         cbAddDangDieuChe.getItems().clear();
-        for (DangDieuChe ddc : arrayDDC){
+        for (DangDieuCheDTO ddc : arrayDDC){
             cbAddDangDieuChe.getItems().add(ddc);
         }
         cbAddDangDieuChe.getSelectionModel().selectFirst();
@@ -397,8 +394,8 @@ public class ThemThuocFormController extends DialogPane{
 
     // Them value vao combobox don vi tinh
     public void addComBoBoxDVCS() {
-        dvt_dao = new DonViTinh_DAO();
-        ArrayList<DonViTinh> arrayDVT = dvt_dao.getAllDonViTinh();
+        dvt_dao = new DonViTinh_Service();
+        ArrayList<DonViTinhDTO> arrayDVT = dvt_dao.getAllDonViTinh();
         cbAddDVCS.getItems().clear();
         arrayDVT.forEach(dvt -> cbAddDVCS.getItems().add(dvt));
         cbAddDVCS.getSelectionModel().selectFirst();

@@ -6,11 +6,10 @@
 package com.antam.app.controller.khuyenmai;
 
 import com.antam.app.connect.ConnectDB;
-import com.antam.app.dao.impl.KhuyenMai_DAO;
-import com.antam.app.dao.impl.LoaiKhuyenMai_DAO;
-import com.antam.app.entity.LoaiKhuyenMai;
+import com.antam.app.service.impl.KhuyenMai_Service;
+import com.antam.app.service.impl.LoaiKhuyenMai_Service;
+import com.antam.app.dto.LoaiKhuyenMaiDTO;
 import javafx.event.ActionEvent;
-import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.control.ButtonBar.ButtonData;
 import javafx.scene.text.Text;
@@ -20,21 +19,19 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.scene.text.Font;
-import javafx.scene.text.Text;
 
 public class ThemKhuyenMaiFormController extends DialogPane{
 
     private TextField txtMaKhuyenMai, txtTenKhuyenMai;
-    private ComboBox<LoaiKhuyenMai> cbLoaiKhuyenMai;
+    private ComboBox<LoaiKhuyenMaiDTO> cbLoaiKhuyenMai;
     private Spinner<Integer> spSo, spSoLuongToiDa;
     private DatePicker dpNgayBacDau, dpNgayKetThuc;
     
     private Text txtThongBao;
-    private KhuyenMai_DAO khuyenMai_dao = new KhuyenMai_DAO();
-    private LoaiKhuyenMai_DAO loaiKhuyenMai_dao = new LoaiKhuyenMai_DAO();
+    private KhuyenMai_Service khuyenMai_dao = new KhuyenMai_Service();
+    private LoaiKhuyenMai_Service loaiKhuyenMai_dao = new LoaiKhuyenMai_Service();
 
     public ThemKhuyenMaiFormController() {
         this.setPrefSize(800, 600);
@@ -173,7 +170,7 @@ public class ThemKhuyenMaiFormController extends DialogPane{
             } else {
                 String maKM = txtMaKhuyenMai.getText().trim();
                 String tenKM = txtTenKhuyenMai.getText().trim();
-                LoaiKhuyenMai loaiKM = cbLoaiKhuyenMai.getSelectionModel().getSelectedItem();
+                LoaiKhuyenMaiDTO loaiKM = cbLoaiKhuyenMai.getSelectionModel().getSelectedItem();
                 int so = spSo.getValue();
                 LocalDate ngayBatDau = dpNgayBacDau.getValue();
                 LocalDate ngayKetThuc = dpNgayKetThuc.getValue();
@@ -201,7 +198,7 @@ public class ThemKhuyenMaiFormController extends DialogPane{
         spSoLuongToiDa.setValueFactory(valueFactorySoLuongToiDa);
         // set su kien loai khuyen mai
         cbLoaiKhuyenMai.setOnAction(e -> {
-            LoaiKhuyenMai selectedLoai = cbLoaiKhuyenMai.getSelectionModel().getSelectedItem();
+            LoaiKhuyenMaiDTO selectedLoai = cbLoaiKhuyenMai.getSelectionModel().getSelectedItem();
             if (selectedLoai != null) {
                 if (selectedLoai.getMaLKM() == 1) { // Phần trăm
                     SpinnerValueFactory<Integer> value = new SpinnerValueFactory.IntegerSpinnerValueFactory(1, 100, 10, 1);
@@ -215,7 +212,7 @@ public class ThemKhuyenMaiFormController extends DialogPane{
     }
 
     public void loadLoaiKhuyenMai(){
-        ArrayList<LoaiKhuyenMai> listLoaiKhuyenMai = loaiKhuyenMai_dao.getAllLoaiKhuyenMai();
+        ArrayList<LoaiKhuyenMaiDTO> listLoaiKhuyenMai = loaiKhuyenMai_dao.getAllLoaiKhuyenMai();
         cbLoaiKhuyenMai.getItems().clear();
         cbLoaiKhuyenMai.getItems().addAll(listLoaiKhuyenMai);
         cbLoaiKhuyenMai.getSelectionModel().selectFirst();

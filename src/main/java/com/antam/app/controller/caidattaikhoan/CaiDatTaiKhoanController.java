@@ -1,8 +1,7 @@
 package com.antam.app.controller.caidattaikhoan;
 
-import com.antam.app.dao.I_NhanVien_DAO;
-import com.antam.app.dao.impl.NhanVien_DAO;
-import com.antam.app.entity.PhienNguoiDung;
+import com.antam.app.service.I_NhanVien_Service;
+import com.antam.app.dto.PhienNguoiDungDTO;
 import com.antam.app.helper.MaKhoaMatKhau;
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcon;
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcons;
@@ -44,7 +43,7 @@ public class CaiDatTaiKhoanController extends ScrollPane{
         title.setFont(Font.font("System Bold", 30));
         title.setFill(Color.web("#1e3a8a"));
         header.getChildren().addAll(title, new HBox()); // spacer
-        HBox.setHgrow(header.getChildren().get(1), javafx.scene.layout.Priority.ALWAYS);
+        HBox.setHgrow(header.getChildren().get(1), Priority.ALWAYS);
         rootVBox.getChildren().add(header);
 
         FlowPane flowPane = new FlowPane();
@@ -160,12 +159,12 @@ public class CaiDatTaiKhoanController extends ScrollPane{
 
 
     private void checkPassword() {
-        if (PhienNguoiDung.getMaNV() == null) return;
+        if (PhienNguoiDungDTO.getMaNV() == null) return;
 
         String mkNow = txtMKnow.getText();
         boolean isCorrect = MaKhoaMatKhau.verifyPassword(
                 mkNow,
-                PhienNguoiDung.getMaNV().getMatKhau()
+                PhienNguoiDungDTO.getMaNV().getMatKhau()
         );
 
         if (isCorrect) {
@@ -176,7 +175,7 @@ public class CaiDatTaiKhoanController extends ScrollPane{
     }
 
     private void doiMKButtonClick() {
-        if (PhienNguoiDung.getMaNV() == null) {
+        if (PhienNguoiDungDTO.getMaNV() == null) {
             showAlert("Lỗi", "Không xác định được người dùng hiện tại!");
             return;
         }
@@ -185,7 +184,7 @@ public class CaiDatTaiKhoanController extends ScrollPane{
         String mkNew = txtMKnew.getText();
 
         // Kiểm tra mật khẩu cũ
-        if (!MaKhoaMatKhau.verifyPassword(mkNow, PhienNguoiDung.getMaNV().getMatKhau())) {
+        if (!MaKhoaMatKhau.verifyPassword(mkNow, PhienNguoiDungDTO.getMaNV().getMatKhau())) {
             showAlert("Lỗi", "Mật khẩu hiện tại không đúng!");
             return;
         }
@@ -197,9 +196,9 @@ public class CaiDatTaiKhoanController extends ScrollPane{
 
         // Mã hóa và cập nhật
         String hashCode = MaKhoaMatKhau.hashPassword(mkNew, 10);
-        PhienNguoiDung.getMaNV().setMatKhau(hashCode);
+        PhienNguoiDungDTO.getMaNV().setMatKhau(hashCode);
 
-        boolean result = I_NhanVien_DAO.updateNhanVienTrongDBS(PhienNguoiDung.getMaNV());
+        boolean result = I_NhanVien_Service.updateNhanVienTrongDBS(PhienNguoiDungDTO.getMaNV());
         if (result) {
             showAlert("Thành công", "Đổi mật khẩu thành công!");
             txtMKnow.clear();
@@ -210,10 +209,10 @@ public class CaiDatTaiKhoanController extends ScrollPane{
     }
 
     private void loadThongTin() {
-        if (PhienNguoiDung.getMaNV() == null) return;
+        if (PhienNguoiDungDTO.getMaNV() == null) return;
 
-        String tk = PhienNguoiDung.getMaNV().getTaiKhoan();
-        String cv = PhienNguoiDung.getMaNV().isQuanLy() ? "Nhân viên quản lí" : "Nhân viên";
+        String tk = PhienNguoiDungDTO.getMaNV().getTaiKhoan();
+        String cv = PhienNguoiDungDTO.getMaNV().isQuanLy() ? "Nhân viên quản lí" : "Nhân viên";
         txtTK.setText(tk);
         txtVaiTro.setText(cv);
     }

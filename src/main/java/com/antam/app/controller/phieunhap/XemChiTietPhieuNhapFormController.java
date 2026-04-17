@@ -6,10 +6,10 @@
 package com.antam.app.controller.phieunhap;
 
 import com.antam.app.connect.ConnectDB;
-import com.antam.app.dao.impl.ChiTietPhieuNhap_DAO;
-import com.antam.app.dao.impl.PhieuNhap_DAO;
-import com.antam.app.entity.ChiTietPhieuNhap;
-import com.antam.app.entity.PhieuNhap;
+import com.antam.app.service.impl.ChiTietPhieuNhap_Service;
+import com.antam.app.service.impl.PhieuNhap_Service;
+import com.antam.app.dto.ChiTietPhieuNhapDTO;
+import com.antam.app.dto.PhieuNhapDTO;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
@@ -38,10 +38,10 @@ import javafx.scene.paint.Color;
 public class XemChiTietPhieuNhapFormController extends DialogPane{
 
     private Text txtMaPhieuNhap, txtDiaChi, txtLyDo, txtNgayNhap, txtTongTien, txtNhanVien, txtNhaCungCap, txtTrangThai;
-    private TableView<ChiTietPhieuNhap> tbChiTietPhieuNhap;
+    private TableView<ChiTietPhieuNhapDTO> tbChiTietPhieuNhap;
 
-    private PhieuNhap_DAO phieuNhap_DAO = new PhieuNhap_DAO();
-    private ChiTietPhieuNhap_DAO chiTietPhieuNhap_DAO = new ChiTietPhieuNhap_DAO();
+    private PhieuNhap_Service phieuNhap_DAO = new PhieuNhap_Service();
+    private ChiTietPhieuNhap_Service chiTietPhieuNhap_DAO = new ChiTietPhieuNhap_Service();
 
     public XemChiTietPhieuNhapFormController() {
         this.setPrefSize(800, 600);
@@ -157,39 +157,39 @@ public class XemChiTietPhieuNhapFormController extends DialogPane{
     }
 
 
-    public void showChiTietPhieuNhap(PhieuNhap phieuNhap) {
-        txtMaPhieuNhap.setText("Mã phiếu nhập: "+ phieuNhap.getMaPhieuNhap());
-        txtDiaChi.setText("Địa chỉ: " + phieuNhap.getDiaChi());
-        txtLyDo.setText("Lý do nhập: " + phieuNhap.getLyDo());
-        txtNgayNhap.setText("Ngày nhập: " + String.valueOf(phieuNhap.getNgayNhap()));
+    public void showChiTietPhieuNhap(PhieuNhapDTO phieuNhapDTO) {
+        txtMaPhieuNhap.setText("Mã phiếu nhập: "+ phieuNhapDTO.getMaPhieuNhap());
+        txtDiaChi.setText("Địa chỉ: " + phieuNhapDTO.getDiaChi());
+        txtLyDo.setText("Lý do nhập: " + phieuNhapDTO.getLyDo());
+        txtNgayNhap.setText("Ngày nhập: " + String.valueOf(phieuNhapDTO.getNgayNhap()));
         DecimalFormat decimal = new DecimalFormat("#,### đ");
-        txtTongTien.setText(decimal.format(phieuNhap.getTongTien()));
-        txtNhanVien.setText("Nhân viên nhập: " + phieuNhap.getMaNV().getHoTen());
-        txtNhaCungCap.setText("Nhà cung cấp: " + phieuNhap.getNhaCungCap());
-        txtTrangThai.setText("Trạng thái: " + (phieuNhap.isDeleteAt() ? "Đã hủy" : "Hoạt động"));
+        txtTongTien.setText(decimal.format(phieuNhapDTO.getTongTien()));
+        txtNhanVien.setText("Nhân viên nhập: " + phieuNhapDTO.getMaNV().getHoTen());
+        txtNhaCungCap.setText("Nhà cung cấp: " + phieuNhapDTO.getNhaCungCap());
+        txtTrangThai.setText("Trạng thái: " + (phieuNhapDTO.isDeleteAt() ? "Đã hủy" : "Hoạt động"));
 
         //Load chi tiết phiếu nhập
-        ArrayList<ChiTietPhieuNhap> dsChiTietPhieuNhap = chiTietPhieuNhap_DAO.getDanhSachChiTietPhieuNhapTheoMaPN(phieuNhap.getMaPhieuNhap());
-        ObservableList<ChiTietPhieuNhap> data = FXCollections.observableArrayList();
+        ArrayList<ChiTietPhieuNhapDTO> dsChiTietPhieuNhap = chiTietPhieuNhap_DAO.getDanhSachChiTietPhieuNhapTheoMaPN(phieuNhapDTO.getMaPhieuNhap());
+        ObservableList<ChiTietPhieuNhapDTO> data = FXCollections.observableArrayList();
         data.setAll(dsChiTietPhieuNhap);
         tbChiTietPhieuNhap.setItems(data);
-        TableColumn<ChiTietPhieuNhap, Number> colSoThuTu = new TableColumn<>("STT");
+        TableColumn<ChiTietPhieuNhapDTO, Number> colSoThuTu = new TableColumn<>("STT");
         colSoThuTu.setCellValueFactory(cellData ->
                 new ReadOnlyObjectWrapper<>(tbChiTietPhieuNhap.getItems().indexOf(cellData.getValue()) + 1)
         );
 
-        TableColumn<ChiTietPhieuNhap, String> colMaThuoc = new TableColumn<>("Mã thuốc");
-        colMaThuoc.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getLoThuoc().getMaThuoc().getMaThuoc()));
+        TableColumn<ChiTietPhieuNhapDTO, String> colMaThuoc = new TableColumn<>("Mã thuốc");
+        colMaThuoc.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getLoThuocDTO().getMaThuocDTO().getMaThuoc()));
 
-        TableColumn<ChiTietPhieuNhap, String> colDonViTinh = new TableColumn<>("Đơn Vị Tính");
+        TableColumn<ChiTietPhieuNhapDTO, String> colDonViTinh = new TableColumn<>("Đơn Vị Tính");
         colDonViTinh.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getMaDVT().getTenDVT()));
 
-        TableColumn<ChiTietPhieuNhap, Number> colSoLuongNhap = new TableColumn<>("Số Lượng Nhập");
+        TableColumn<ChiTietPhieuNhapDTO, Number> colSoLuongNhap = new TableColumn<>("Số Lượng Nhập");
         colSoLuongNhap.setCellValueFactory(new PropertyValueFactory<>("soLuong"));
 
-        TableColumn<ChiTietPhieuNhap, Double> colGiaNhap = new TableColumn<>("Giá Nhập");
+        TableColumn<ChiTietPhieuNhapDTO, Double> colGiaNhap = new TableColumn<>("Giá Nhập");
         colGiaNhap.setCellValueFactory(new PropertyValueFactory<>("giaNhap"));
-        colGiaNhap.setCellFactory(tc -> new TableCell<ChiTietPhieuNhap, Double>() {
+        colGiaNhap.setCellFactory(tc -> new TableCell<ChiTietPhieuNhapDTO, Double>() {
             @Override
             protected void updateItem(Double giaNhap, boolean empty) {
                 super.updateItem(giaNhap, empty);

@@ -6,12 +6,10 @@
 package com.antam.app.controller.phieunhap;
 
 import com.antam.app.connect.ConnectDB;
-import com.antam.app.dao.*;
-import com.antam.app.dao.impl.*;
-import com.antam.app.dao.impl.Thuoc_DAO;
-import com.antam.app.entity.*;
+import com.antam.app.service.impl.*;
+import com.antam.app.service.impl.Thuoc_Service;
+import com.antam.app.dto.*;
 import javafx.event.ActionEvent;
-import javafx.fxml.FXML;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.*;
@@ -28,10 +26,8 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Locale;
 import javafx.geometry.Insets;
-import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.scene.text.Font;
-import javafx.scene.text.Text;
 
 
 public class ThemPhieuNhapFormController extends DialogPane{
@@ -41,19 +37,19 @@ public class ThemPhieuNhapFormController extends DialogPane{
     private VBox vbDanhSachThuocNhap;
     private Text txtTongTien;
 
-    private Thuoc_DAO thuoc_DAO = new Thuoc_DAO();
-    private DonViTinh_DAO donViTinh_DAO = new DonViTinh_DAO();
-    private PhieuNhap_DAO phieuNhap_DAO = new PhieuNhap_DAO();
-    private ChiTietPhieuNhap_DAO chiTietPhieuNhap_DAO = new ChiTietPhieuNhap_DAO();
-    private LoThuoc_DAO chiTietThuoc_DAO = new LoThuoc_DAO();
+    private Thuoc_Service thuoc_DAO = new Thuoc_Service();
+    private DonViTinh_Service donViTinh_DAO = new DonViTinh_Service();
+    private PhieuNhap_Service phieuNhap_DAO = new PhieuNhap_Service();
+    private ChiTietPhieuNhap_Service chiTietPhieuNhap_DAO = new ChiTietPhieuNhap_Service();
+    private LoThuoc_Service chiTietThuoc_DAO = new LoThuoc_Service();
 
-    private ArrayList<Thuoc> dsThuoc;
-    private ArrayList<DonViTinh> dsDonViTinh;
+    private ArrayList<ThuocDTO> dsThuoc;
+    private ArrayList<DonViTinhDTO> dsDonViTinh;
 
     public ThemPhieuNhapFormController() {
         this.setPrefSize(800, 600);
         FlowPane header = new FlowPane();
-        header.setAlignment(javafx.geometry.Pos.CENTER);
+        header.setAlignment(Pos.CENTER);
         header.setStyle("-fx-background-color: #1e3a8a;");
 
         Text title = new Text("Nhập kho");
@@ -188,7 +184,7 @@ public class ThemPhieuNhapFormController extends DialogPane{
         // 7. TỔNG TIỀN
         // =========================
         VBox boxTongTien = new VBox();
-        boxTongTien.setAlignment(javafx.geometry.Pos.CENTER);
+        boxTongTien.setAlignment(Pos.CENTER);
         boxTongTien.setPrefWidth(100);
         boxTongTien.setStyle("-fx-background-color: #f8fafc; -fx-border-color: #2563eb; -fx-border-radius: 6px; -fx-border-width: 2px;");
         boxTongTien.setPadding(new Insets(10));
@@ -227,7 +223,7 @@ public class ThemPhieuNhapFormController extends DialogPane{
                 event.consume();
             }else{
                 boolean kiemTraThanhCong = true;
-                PhieuNhap pn = new PhieuNhap(tfMaPhieuNhap.getText(), tfNhaCungCap.getText(), LocalDate.now(), tfDiaChi.getText(), tfLyDo.getText(), PhienNguoiDung.getMaNV(), tinhTongTien(), false);
+                PhieuNhapDTO pn = new PhieuNhapDTO(tfMaPhieuNhap.getText(), tfNhaCungCap.getText(), LocalDate.now(), tfDiaChi.getText(), tfLyDo.getText(), PhienNguoiDungDTO.getMaNV(), tinhTongTien(), false);
                 if (phieuNhap_DAO.tonTaiMaPhieuNhap(tfMaPhieuNhap.getText())) {
                     showCanhBao("Trùng mã phiếu nhập", "Mã phiếu nhập này đã tồn tại. Vui lòng nhập mã khác!");
                     event.consume();
@@ -248,18 +244,18 @@ public class ThemPhieuNhapFormController extends DialogPane{
                         VBox vboxGiaNhap = (VBox) hBox.getChildren().get(5);
 
                         // Lấy control trong từng VBox
-                        ComboBox<Thuoc> cbDanhSachThuocNhap = (ComboBox<Thuoc>) vboxThuoc.getChildren().get(1);
-                        ComboBox<DonViTinh> cbDonViTinh = (ComboBox<DonViTinh>) vboxDonVi.getChildren().get(1);
+                        ComboBox<ThuocDTO> cbDanhSachThuocNhap = (ComboBox<ThuocDTO>) vboxThuoc.getChildren().get(1);
+                        ComboBox<DonViTinhDTO> cbDonViTinh = (ComboBox<DonViTinhDTO>) vboxDonVi.getChildren().get(1);
                         DatePicker dpNgaySanXuat = (DatePicker) vboxNgaySX.getChildren().get(1);
                         DatePicker dpHanSuDung = (DatePicker) vboxHanSD.getChildren().get(1);
                         Spinner<Integer> spSoLuong = (Spinner<Integer>) vboxSoLuong.getChildren().get(1);
                         Spinner<Double> spGiaNhap = (Spinner<Double>) vboxGiaNhap.getChildren().get(1);
 
                         // Nếu tất cả các trường đều hợp lệ
-                        ChiTietPhieuNhap ctpt = new ChiTietPhieuNhap(
+                        ChiTietPhieuNhapDTO ctpt = new ChiTietPhieuNhapDTO(
 //                                new PhieuNhap(tfMaPhieuNhap.getText()), cbDanhSachThuocNhap.getValue(), cbDonViTinh.getValue(), spSoLuong.getValue(), spGiaNhap.getValue()
                         );
-                        LoThuoc ctt = new LoThuoc(
+                        LoThuocDTO ctt = new LoThuocDTO(
                                 -1, pn, cbDanhSachThuocNhap.getValue(), spSoLuong.getValue(), dpHanSuDung.getValue(), dpNgaySanXuat.getValue()
                         );
                         if(kiemTraThanhCong){
@@ -287,17 +283,17 @@ public class ThemPhieuNhapFormController extends DialogPane{
         );
 
         //Danh sách thuốc
-        ComboBox<Thuoc> cbDanhSachThuocNhap = new ComboBox<>();
+        ComboBox<ThuocDTO> cbDanhSachThuocNhap = new ComboBox<>();
         cbDanhSachThuocNhap.setPrefWidth(150);
         cbDanhSachThuocNhap.setPromptText("Chọn thuốc");
-        for (Thuoc thuoc : dsThuoc){
-            cbDanhSachThuocNhap.getItems().add(thuoc);
+        for (ThuocDTO thuocDTO : dsThuoc){
+            cbDanhSachThuocNhap.getItems().add(thuocDTO);
         }
         VBox vbChonThuoc = new VBox();
         vbChonThuoc.getChildren().addAll(new Text("Thuốc nhập:"), cbDanhSachThuocNhap);
 
         //Đơn vị tính
-        ComboBox<DonViTinh> cbDonViTinh = new ComboBox<>();
+        ComboBox<DonViTinhDTO> cbDonViTinh = new ComboBox<>();
         cbDonViTinh.setPrefWidth(150);
         cbDonViTinh.setPromptText("Đơn vị tính");
         cbDonViTinh.setDisable(true);
@@ -462,8 +458,8 @@ public class ThemPhieuNhapFormController extends DialogPane{
                 VBox vboxGiaNhap = (VBox) hBox.getChildren().get(5);
 
                 // Lấy control trong từng VBox
-                ComboBox<Thuoc> cbDanhSachThuocNhap = (ComboBox<Thuoc>) vboxThuoc.getChildren().get(1);
-                ComboBox<DonViTinh> cbDonViTinh = (ComboBox<DonViTinh>) vboxDonVi.getChildren().get(1);
+                ComboBox<ThuocDTO> cbDanhSachThuocNhap = (ComboBox<ThuocDTO>) vboxThuoc.getChildren().get(1);
+                ComboBox<DonViTinhDTO> cbDonViTinh = (ComboBox<DonViTinhDTO>) vboxDonVi.getChildren().get(1);
                 DatePicker dpNgaySanXuat = (DatePicker) vboxNgaySX.getChildren().get(1);
                 DatePicker dpHanSuDung = (DatePicker) vboxHanSD.getChildren().get(1);
                 Spinner<Integer> spSoLuong = (Spinner<Integer>) vboxSoLuong.getChildren().get(1);

@@ -5,10 +5,8 @@ package com.antam.app.controller.nhanvien;/*
  * @version: 1.0
  */
 
-import com.antam.app.dao.I_NhanVien_DAO;
-import com.antam.app.dao.impl.NhanVien_DAO;
-import com.antam.app.entity.NhanVien;
-import javafx.fxml.FXML;
+import com.antam.app.service.I_NhanVien_Service;
+import com.antam.app.dto.NhanVienDTO;
 import javafx.geometry.Insets;
 import javafx.scene.control.*;
 import javafx.scene.control.ComboBox;
@@ -24,7 +22,7 @@ import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.scene.layout.FlowPane;
 
-import static com.antam.app.controller.nhanvien.CapNhatNhanVienController.nhanVienSelected;
+import static com.antam.app.controller.nhanvien.CapNhatNhanVienController.nhanVienDTOSelected;
 
 public class CapNhatNhanVienFormController extends DialogPane{
 
@@ -32,7 +30,7 @@ public class CapNhatNhanVienFormController extends DialogPane{
     private ComboBox<String> cbChucVu;
     private Spinner<Double> luong;
 
-    NhanVien select = nhanVienSelected;
+    NhanVienDTO select = nhanVienDTOSelected;
     public CapNhatNhanVienFormController() {
         this.setPrefSize(800, 600);
         Text headerText = new Text("Cập nhật nhân viên");
@@ -169,12 +167,12 @@ public class CapNhatNhanVienFormController extends DialogPane{
             boolean quanLy = "Nhân viên quản lí".equals(cbChucVu.getValue());
             double luongCoBan = luong.getValue();
 
-            NhanVien nvUpdate = new NhanVien(
+            NhanVienDTO nvUpdate = new NhanVienDTO(
                     select.getMaNV(), hoTen, soDienThoai, email,
                     diaChi, luongCoBan, taiKhoan, select.getMatKhau(), quanLy
             );
             System.out.println(nvUpdate);
-            boolean result = I_NhanVien_DAO.updateNhanVienTrongDBS(nvUpdate);
+            boolean result = I_NhanVien_Service.updateNhanVienTrongDBS(nvUpdate);
             showMess(result ? "Cập nhật nhân viên thành công!" : "Cập nhật nhân viên thất bại!");
 //            } catch (Exception ex) {
 //                showMess("Lỗi: " + ex.getMessage());
@@ -184,7 +182,7 @@ public class CapNhatNhanVienFormController extends DialogPane{
         // Xóa nhân viên
         btnXoa.setOnAction(e -> {
             try {
-                boolean result = I_NhanVien_DAO.xoaNhanVienTrongDBS(select.getMaNV());
+                boolean result = I_NhanVien_Service.xoaNhanVienTrongDBS(select.getMaNV());
                 showMess(result ? "Xóa nhân viên thành công!" : "Xóa nhân viên thất bại!");
             } catch (Exception ex) {
                 showMess("Lỗi: " + ex.getMessage());

@@ -5,17 +5,15 @@
  */
 package com.antam.app.controller.khachhang;
 
-import com.antam.app.dao.I_KhachHang_DAO;
-import com.antam.app.dao.impl.HoaDon_DAO;
-import com.antam.app.dao.impl.KhachHang_DAO;
-import com.antam.app.entity.HoaDon;
-import com.antam.app.entity.KhachHang;
+import com.antam.app.service.I_KhachHang_Service;
+import com.antam.app.service.impl.HoaDon_Service;
+import com.antam.app.service.impl.KhachHang_Service;
+import com.antam.app.dto.HoaDonDTO;
+import com.antam.app.dto.KhachHangDTO;
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcon;
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcons;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.fxml.FXML;
-import javafx.fxml.Initializable;
 import javafx.geometry.Insets;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
@@ -49,20 +47,20 @@ public class CapNhatKhachHangController extends ScrollPane {
     private ComboBox<String> cbTrangThai; // Loại khách hàng filter
     private ComboBox<String> cbTongChiTieu; // Tổng chi tiêu filter
 
-    private TableView<KhachHang> tableViewKhachHang;
-    private TableColumn<KhachHang, String> colMaKH = new TableColumn<>("Mã khách hàng");
-    private TableColumn<KhachHang, String> colTenKH = new TableColumn<>("Tên khách hàng");
-    private TableColumn<KhachHang, String> colSoDienThoai = new TableColumn<>("Số điện thoại");
-    private TableColumn<KhachHang, Integer> colSoDonHang = new TableColumn<>("Số đơn hàng");
-    private TableColumn<KhachHang, Double> colTongChiTieu = new TableColumn<>("Tổng chi tiêu");
-    private TableColumn<KhachHang, String> colDonHangGanNhat = new TableColumn<>("Đơn hàng gần nhất");
-    private TableColumn<KhachHang, String> colLoaiKhachHang = new TableColumn<>("Loại khách hàng");
+    private TableView<KhachHangDTO> tableViewKhachHang;
+    private TableColumn<KhachHangDTO, String> colMaKH = new TableColumn<>("Mã khách hàng");
+    private TableColumn<KhachHangDTO, String> colTenKH = new TableColumn<>("Tên khách hàng");
+    private TableColumn<KhachHangDTO, String> colSoDienThoai = new TableColumn<>("Số điện thoại");
+    private TableColumn<KhachHangDTO, Integer> colSoDonHang = new TableColumn<>("Số đơn hàng");
+    private TableColumn<KhachHangDTO, Double> colTongChiTieu = new TableColumn<>("Tổng chi tiêu");
+    private TableColumn<KhachHangDTO, String> colDonHangGanNhat = new TableColumn<>("Đơn hàng gần nhất");
+    private TableColumn<KhachHangDTO, String> colLoaiKhachHang = new TableColumn<>("Loại khách hàng");
 
-    private ObservableList<KhachHang> dsKhachHang;
-    private ObservableList<KhachHang> dsKhachHangGoc; // Để lưu danh sách gốc cho việc lọc
+    private ObservableList<KhachHangDTO> dsKhachHang;
+    private ObservableList<KhachHangDTO> dsKhachHangGoc; // Để lưu danh sách gốc cho việc lọc
 
-    private KhachHang_DAO khachHangDAO;
-    private HoaDon_DAO hoaDonDAO;
+    private KhachHang_Service khachHangDAO;
+    private HoaDon_Service hoaDonDAO;
     private DateTimeFormatter formatter;
 
     // Định dạng tiền tệ kiểu Việt Nam: 1.000đ, 10.000đ
@@ -190,8 +188,8 @@ public class CapNhatKhachHangController extends ScrollPane {
         this.setContent(root);
         /** Sự kiện **/
         // Khởi tạo các đối tượng DAO
-        khachHangDAO = new KhachHang_DAO();
-        hoaDonDAO = new HoaDon_DAO();
+        khachHangDAO = new KhachHang_Service();
+        hoaDonDAO = new HoaDon_Service();
         formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
         // Thiết lập các cột của bảng
@@ -218,7 +216,7 @@ public class CapNhatKhachHangController extends ScrollPane {
 
         // Định dạng cột Tổng chi tiêu theo VND
         colTongChiTieu.setCellValueFactory(new PropertyValueFactory<>("tongChiTieu"));
-        colTongChiTieu.setCellFactory(column -> new TableCell<KhachHang, Double>() {
+        colTongChiTieu.setCellFactory(column -> new TableCell<KhachHangDTO, Double>() {
             @Override
             protected void updateItem(Double item, boolean empty) {
                 super.updateItem(item, empty);
@@ -231,7 +229,7 @@ public class CapNhatKhachHangController extends ScrollPane {
         });
 
         colDonHangGanNhat.setCellValueFactory(cellData -> {
-            KhachHang kh = cellData.getValue();
+            KhachHangDTO kh = cellData.getValue();
             String dateStr = kh.getNgayMuaGanNhat() != null
                     ? kh.getNgayMuaGanNhat().format(formatter)
                     : "N/A";
@@ -246,15 +244,15 @@ public class CapNhatKhachHangController extends ScrollPane {
     private void loadDataFromDB() {
         try {
             // Lấy danh sách khách hàng từ database
-            ArrayList<KhachHang> listKhachHang = I_KhachHang_DAO.loadBanFromDB();
+            ArrayList<KhachHangDTO> listKhachHang = I_KhachHang_Service.loadBanFromDB();
 
             // Lấy danh sách hóa đơn để tính toán thống kê
-            ArrayList<HoaDon> listHoaDon = hoaDonDAO.getAllHoaDon();
+            ArrayList<HoaDonDTO> listHoaDon = hoaDonDAO.getAllHoaDon();
 
             // Tính toán thống kê cho mỗi khách hàng
-            for (KhachHang kh : listKhachHang) {
+            for (KhachHangDTO kh : listKhachHang) {
                 // Lọc các hóa đơn của khách hàng này
-                List<HoaDon> hoaDonCuaKH = listHoaDon.stream()
+                List<HoaDonDTO> hoaDonCuaKH = listHoaDon.stream()
                         .filter(hd -> hd.getMaKH().getMaKH().equals(kh.getMaKH()))
                         .collect(Collectors.toList());
 
@@ -263,14 +261,14 @@ public class CapNhatKhachHangController extends ScrollPane {
 
                 // Tính tổng chi tiêu
                 double tongChiTieu = hoaDonCuaKH.stream()
-                        .mapToDouble(HoaDon::getTongTien)
+                        .mapToDouble(HoaDonDTO::getTongTien)
                         .sum();
                 kh.setTongChiTieu(tongChiTieu);
 
                 // Lấy ngày mua gần nhất
                 if (!hoaDonCuaKH.isEmpty()) {
                     java.time.LocalDate ngayGanNhat = hoaDonCuaKH.stream()
-                            .map(HoaDon::getNgayTao)
+                            .map(HoaDonDTO::getNgayTao)
                             .max(Comparator.naturalOrder())
                             .orElse(null);
                     kh.setNgayMuaGanNhat(ngayGanNhat);
@@ -308,7 +306,7 @@ public class CapNhatKhachHangController extends ScrollPane {
         // Sự kiện double-click trên hàng trong bảng để chuyển sang chi tiết
         tableViewKhachHang.setOnMouseClicked(event -> {
             if (event.getClickCount() == 2) {
-                KhachHang selected = tableViewKhachHang.getSelectionModel().getSelectedItem();
+                KhachHangDTO selected = tableViewKhachHang.getSelectionModel().getSelectedItem();
                 if (selected != null) {
                     openChiTietKhachHangDialog(selected);
                 }
@@ -361,7 +359,7 @@ public class CapNhatKhachHangController extends ScrollPane {
         if (searchText.isEmpty()) {
             dsKhachHang.setAll(dsKhachHangGoc);
         } else {
-            List<KhachHang> searchResult = dsKhachHangGoc.stream()
+            List<KhachHangDTO> searchResult = dsKhachHangGoc.stream()
                     .filter(kh -> kh.getMaKH().toLowerCase().contains(searchText)
                             || kh.getTenKH().toLowerCase().contains(searchText)
                             || kh.getSoDienThoai().contains(searchText))
@@ -375,7 +373,7 @@ public class CapNhatKhachHangController extends ScrollPane {
      * Áp dụng các bộ lọc
      */
     private void applyFilters() {
-        List<KhachHang> filteredList = new ArrayList<>(dsKhachHangGoc);
+        List<KhachHangDTO> filteredList = new ArrayList<>(dsKhachHangGoc);
 
         // Lọc theo số đơn hàng
         String selectedSoDonHang = cbSoDonHang.getValue();
@@ -407,7 +405,7 @@ public class CapNhatKhachHangController extends ScrollPane {
     /**
      * Lọc khách hàng theo số đơn hàng
      */
-    private boolean filterBySoDonHang(KhachHang kh, String range) {
+    private boolean filterBySoDonHang(KhachHangDTO kh, String range) {
         int soDonHang = kh.getSoDonHang();
         switch (range) {
             case "1-5 đơn hàng":
@@ -426,7 +424,7 @@ public class CapNhatKhachHangController extends ScrollPane {
     /**
      * Lọc khách hàng theo tổng chi tiêu
      */
-    private boolean filterByTongChiTieu(KhachHang kh, String range) {
+    private boolean filterByTongChiTieu(KhachHangDTO kh, String range) {
         double tongChiTieu = kh.getTongChiTieu();
         switch (range) {
             case "Dưới 500,000 VNĐ":
@@ -446,7 +444,7 @@ public class CapNhatKhachHangController extends ScrollPane {
      * Xử lý sự kiện double-click trên hàng
      */
     private void handleRowDoubleClick() {
-        KhachHang selected = tableViewKhachHang.getSelectionModel().getSelectedItem();
+        KhachHangDTO selected = tableViewKhachHang.getSelectionModel().getSelectedItem();
         if (selected != null) {
             openChiTietKhachHangDialog(selected);
         }
@@ -455,13 +453,13 @@ public class CapNhatKhachHangController extends ScrollPane {
     /**
      * Mở dialog xem chi tiết khách hàng
      */
-    private void openChiTietKhachHangDialog(KhachHang khachHang) {
+    private void openChiTietKhachHangDialog(KhachHangDTO khachHangDTO) {
         try {
             XemChiTietKhachHangController xemDialog = new XemChiTietKhachHangController();
-            xemDialog.setKhachHang(khachHang);
+            xemDialog.setKhachHang(khachHangDTO);
 
             // Tạo Dialog
-            javafx.scene.control.Dialog<Void> dialog = new javafx.scene.control.Dialog<>();
+            Dialog<Void> dialog = new Dialog<>();
             dialog.setDialogPane(xemDialog);
             dialog.setTitle("Chi tiết khách hàng");
             dialog.showAndWait();
@@ -500,7 +498,7 @@ public class CapNhatKhachHangController extends ScrollPane {
      * Xử lý sự kiện click nút Edit Employee
      */
     private void handleEditEmployee() {
-        KhachHang selected = tableViewKhachHang.getSelectionModel().getSelectedItem();
+        KhachHangDTO selected = tableViewKhachHang.getSelectionModel().getSelectedItem();
 
         // Kiểm tra xem có chọn khách hàng trong bảng không
         if (selected == null) {
@@ -515,16 +513,16 @@ public class CapNhatKhachHangController extends ScrollPane {
     /**
      * Mở dialog cập nhật thông tin khách hàng
      */
-    private void openCapNhatKhachHangDialog(KhachHang khachHang) {
+    private void openCapNhatKhachHangDialog(KhachHangDTO khachHangDTO) {
         try {
             SuaKhachHangFormController suaDialog = new SuaKhachHangFormController();
-            suaDialog.setKhachHang(khachHang);
+            suaDialog.setKhachHang(khachHangDTO);
             suaDialog.setOnSaveListener(() -> {
                 loadDataFromDB();
             });
 
             // Tạo Dialog
-            javafx.scene.control.Dialog<Void> dialog = new javafx.scene.control.Dialog<>();
+            Dialog<Void> dialog = new Dialog<>();
             dialog.setDialogPane(suaDialog);
             dialog.setTitle("Cập nhật khách hàng");
 

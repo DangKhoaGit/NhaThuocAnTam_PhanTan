@@ -1,14 +1,13 @@
 package com.antam.app.controller.hoadon;
 
 
-import com.antam.app.dao.impl.ChiTietHoaDon_DAO;
-import com.antam.app.dao.impl.DonViTinh_DAO;
-import com.antam.app.dao.impl.LoThuoc_DAO;
-import com.antam.app.dao.impl.Thuoc_DAO;
-import com.antam.app.entity.*;
+import com.antam.app.service.impl.ChiTietHoaDon_Service;
+import com.antam.app.service.impl.DonViTinh_Service;
+import com.antam.app.service.impl.LoThuoc_Service;
+import com.antam.app.service.impl.Thuoc_Service;
+import com.antam.app.dto.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
@@ -30,15 +29,15 @@ public class XemChiTietHoaDonFormController extends DialogPane{
     private Text txtTotal;
     private Text txtPromotion;
     private Text txtReturnTotal;
-    private TableView<ChiTietHoaDon> tableListsThuoc;
-    private TableColumn<ChiTietHoaDon, Integer> sttCol = new TableColumn<>("STT");
-    private TableColumn<ChiTietHoaDon, String> tenThuocCol = new TableColumn<>("Tên thuốc");
-    private TableColumn<ChiTietHoaDon, Integer> soLuongCol = new TableColumn<>("Số lượng");
-    private TableColumn<ChiTietHoaDon, Double> donGiaCol = new TableColumn<>("Đơn giá");
-    private TableColumn<ChiTietHoaDon, Double> thanhTienCol = new TableColumn<>("Thành tiền");
-    private TableColumn<ChiTietHoaDon, String> trangThaiCol = new TableColumn<>("Trạng thái");
-    private TableColumn<ChiTietHoaDon, String> dvtCol = new TableColumn<>("Đơn vị tính");
-    private TableColumn<ChiTietHoaDon, Double> thueCol = new TableColumn<>("Thuế");
+    private TableView<ChiTietHoaDonDTO> tableListsThuoc;
+    private TableColumn<ChiTietHoaDonDTO, Integer> sttCol = new TableColumn<>("STT");
+    private TableColumn<ChiTietHoaDonDTO, String> tenThuocCol = new TableColumn<>("Tên thuốc");
+    private TableColumn<ChiTietHoaDonDTO, Integer> soLuongCol = new TableColumn<>("Số lượng");
+    private TableColumn<ChiTietHoaDonDTO, Double> donGiaCol = new TableColumn<>("Đơn giá");
+    private TableColumn<ChiTietHoaDonDTO, Double> thanhTienCol = new TableColumn<>("Thành tiền");
+    private TableColumn<ChiTietHoaDonDTO, String> trangThaiCol = new TableColumn<>("Trạng thái");
+    private TableColumn<ChiTietHoaDonDTO, String> dvtCol = new TableColumn<>("Đơn vị tính");
+    private TableColumn<ChiTietHoaDonDTO, Double> thueCol = new TableColumn<>("Thuế");
 
     // Định dạng tiền tệ kiểu Việt Nam: 1.000đ, 10.000đ
     private static final DecimalFormat VND_FORMAT;
@@ -135,16 +134,16 @@ public class XemChiTietHoaDonFormController extends DialogPane{
         /** Sự kiện **/
         tenThuocCol.setCellValueFactory(cellData ->
                 new javafx.beans.property.SimpleStringProperty(
-                        cellData.getValue().getMaLoThuoc().getMaThuoc().getTenThuoc()
+                        cellData.getValue().getMaLoThuocDTO().getMaThuocDTO().getTenThuoc()
                 )
         );
         soLuongCol.setCellValueFactory(new PropertyValueFactory<>("soLuong"));
         donGiaCol.setCellValueFactory(cellData ->
                 new javafx.beans.property.SimpleDoubleProperty(
-                        cellData.getValue().getMaLoThuoc().getMaThuoc().getGiaBan()
+                        cellData.getValue().getMaLoThuocDTO().getMaThuocDTO().getGiaBan()
                 ).asObject()
         );
-        donGiaCol.setCellFactory(col -> new javafx.scene.control.TableCell<ChiTietHoaDon, Double>() {
+        donGiaCol.setCellFactory(col -> new TableCell<ChiTietHoaDonDTO, Double>() {
             @Override
             protected void updateItem(Double item, boolean empty) {
                 super.updateItem(item, empty);
@@ -158,12 +157,12 @@ public class XemChiTietHoaDonFormController extends DialogPane{
         thanhTienCol.setCellValueFactory(cellData -> {
             double donGia = 0;
             int soLuong = cellData.getValue().getSoLuong();
-            if (cellData.getValue().getMaLoThuoc() != null && cellData.getValue().getMaLoThuoc().getMaThuoc() != null) {
-                donGia = cellData.getValue().getMaLoThuoc().getMaThuoc().getGiaBan();
+            if (cellData.getValue().getMaLoThuocDTO() != null && cellData.getValue().getMaLoThuocDTO().getMaThuocDTO() != null) {
+                donGia = cellData.getValue().getMaLoThuocDTO().getMaThuocDTO().getGiaBan();
             }
             return new javafx.beans.property.SimpleDoubleProperty(donGia * soLuong).asObject();
         });
-        thanhTienCol.setCellFactory(col -> new javafx.scene.control.TableCell<ChiTietHoaDon, Double>() {
+        thanhTienCol.setCellFactory(col -> new TableCell<ChiTietHoaDonDTO, Double>() {
             @Override
             protected void updateItem(Double item, boolean empty) {
                 super.updateItem(item, empty);
@@ -180,12 +179,12 @@ public class XemChiTietHoaDonFormController extends DialogPane{
         // Thuế GTGT
         thueCol.setCellValueFactory(cellData -> {
             double thue = 0;
-            if (cellData.getValue().getMaLoThuoc() != null && cellData.getValue().getMaLoThuoc().getMaThuoc() != null) {
-                thue = cellData.getValue().getMaLoThuoc().getMaThuoc().getThue();
+            if (cellData.getValue().getMaLoThuocDTO() != null && cellData.getValue().getMaLoThuocDTO().getMaThuocDTO() != null) {
+                thue = cellData.getValue().getMaLoThuocDTO().getMaThuocDTO().getThue();
             }
             return new javafx.beans.property.SimpleDoubleProperty(thue).asObject();
         });
-        thueCol.setCellFactory(col -> new javafx.scene.control.TableCell<ChiTietHoaDon, Double>() {
+        thueCol.setCellFactory(col -> new TableCell<ChiTietHoaDonDTO, Double>() {
             @Override
             protected void updateItem(Double item, boolean empty) {
                 super.updateItem(item, empty);
@@ -197,7 +196,7 @@ public class XemChiTietHoaDonFormController extends DialogPane{
             }
         });
         // STT custom
-        sttCol.setCellFactory(col -> new javafx.scene.control.TableCell<>() {
+        sttCol.setCellFactory(col -> new TableCell<>() {
             @Override
             protected void updateItem(Integer item, boolean empty) {
                 super.updateItem(item, empty);
@@ -243,60 +242,60 @@ public class XemChiTietHoaDonFormController extends DialogPane{
         grid.add(value, 1, row);
     }
 
-    public void setInvoice(HoaDon hoaDon) {
-        if (hoaDon == null) return;
-        txtInvoiceId.setText("Hóa đơn: " + hoaDon.getMaHD());
-        txtDate.setText("Ngày: " + hoaDon.getNgayTao().toString());
-        txtCustomer.setText("Khách hàng: " + hoaDon.getMaKH().getTenKH());
-        txtEmployee.setText("Nhân viên: " + hoaDon.getMaNV().getHoTen());
+    public void setInvoice(HoaDonDTO hoaDonDTO) {
+        if (hoaDonDTO == null) return;
+        txtInvoiceId.setText("Hóa đơn: " + hoaDonDTO.getMaHD());
+        txtDate.setText("Ngày: " + hoaDonDTO.getNgayTao().toString());
+        txtCustomer.setText("Khách hàng: " + hoaDonDTO.getMaKH().getTenKH());
+        txtEmployee.setText("Nhân viên: " + hoaDonDTO.getMaNV().getHoTen());
         // Lấy danh sách chi tiết hóa đơn từ DAO
-        ChiTietHoaDon_DAO cthdDAO = new ChiTietHoaDon_DAO();
-        LoThuoc_DAO chiTietThuoc_dao = new LoThuoc_DAO();
-        Thuoc_DAO thuoc_dao = new Thuoc_DAO();
-        DonViTinh_DAO donViTinh_dao = new DonViTinh_DAO();
-        java.util.List<ChiTietHoaDon> list = cthdDAO.getAllChiTietHoaDonTheoMaHD(hoaDon.getMaHD());
+        ChiTietHoaDon_Service cthdDAO = new ChiTietHoaDon_Service();
+        LoThuoc_Service chiTietThuoc_dao = new LoThuoc_Service();
+        Thuoc_Service thuoc_dao = new Thuoc_Service();
+        DonViTinh_Service donViTinh_dao = new DonViTinh_Service();
+        java.util.List<ChiTietHoaDonDTO> list = cthdDAO.getAllChiTietHoaDonTheoMaHD(hoaDonDTO.getMaHD());
         double subTotal = 0;
         double returnTotal = 0;
         double soldItemsTotal = 0; // Tổng tiền của hàng bán
         double vatTotal = 0; // Tổng thuế VAT của hàng bán
-        for (ChiTietHoaDon chiTietHoaDon : list) {
-            LoThuoc ctt = chiTietThuoc_dao.getChiTietThuoc(chiTietHoaDon.getMaLoThuoc().getMaLoThuoc());
+        for (ChiTietHoaDonDTO chiTietHoaDonDTO : list) {
+            LoThuocDTO ctt = chiTietThuoc_dao.getChiTietThuoc(chiTietHoaDonDTO.getMaLoThuocDTO().getMaLoThuoc());
             if (ctt != null) {
-                Thuoc t = thuoc_dao.getThuocTheoMa(ctt.getMaThuoc().getMaThuoc());
+                ThuocDTO t = thuoc_dao.getThuocTheoMa(ctt.getMaThuocDTO().getMaThuoc());
                 if (t != null) {
-                    ctt.setMaThuoc(t);
+                    ctt.setMaThuocDTO(t);
                 }
-                chiTietHoaDon.setMaLoThuoc(ctt);
+                chiTietHoaDonDTO.setMaLoThuocDTO(ctt);
             }
             // Lấy lại thông tin đơn vị tính
-            DonViTinh dvt = donViTinh_dao.getDVTTheoMa(chiTietHoaDon.getMaDVT().getMaDVT());
+            DonViTinhDTO dvt = donViTinh_dao.getDVTTheoMa(chiTietHoaDonDTO.getMaDVT().getMaDVT());
             if (dvt != null) {
-                chiTietHoaDon.setMaDVT(dvt);
+                chiTietHoaDonDTO.setMaDVT(dvt);
             }
-            subTotal += chiTietHoaDon.getThanhTien();
+            subTotal += chiTietHoaDonDTO.getThanhTien();
 
             // Tính tiền hàng trả
-            if ("Trả".equalsIgnoreCase(chiTietHoaDon.getTinhTrang()) || "Đổi".equalsIgnoreCase(chiTietHoaDon.getTinhTrang())) {
-                returnTotal += chiTietHoaDon.getThanhTien();
+            if ("Trả".equalsIgnoreCase(chiTietHoaDonDTO.getTinhTrang()) || "Đổi".equalsIgnoreCase(chiTietHoaDonDTO.getTinhTrang())) {
+                returnTotal += chiTietHoaDonDTO.getThanhTien();
             } else {
                 // Chỉ tính thuế VAT cho hàng bán (không phải trả hoặc đổi)
-                soldItemsTotal += chiTietHoaDon.getThanhTien();
-                if (chiTietHoaDon.getMaLoThuoc() != null && chiTietHoaDon.getMaLoThuoc().getMaThuoc() != null) {
-                    double thue = chiTietHoaDon.getMaLoThuoc().getMaThuoc().getThue(); // 0.1 = 10%
-                    double thanhTien = chiTietHoaDon.getThanhTien();
+                soldItemsTotal += chiTietHoaDonDTO.getThanhTien();
+                if (chiTietHoaDonDTO.getMaLoThuocDTO() != null && chiTietHoaDonDTO.getMaLoThuocDTO().getMaThuocDTO() != null) {
+                    double thue = chiTietHoaDonDTO.getMaLoThuocDTO().getMaThuocDTO().getThue(); // 0.1 = 10%
+                    double thanhTien = chiTietHoaDonDTO.getThanhTien();
                     // Tính thuế VAT: nếu giá chưa bao gồm thuế thì nhân trực tiếp
                     vatTotal += thanhTien * thue;
                 }
             }
         }
-        ObservableList<ChiTietHoaDon> data = FXCollections.observableArrayList(list);
+        ObservableList<ChiTietHoaDonDTO> data = FXCollections.observableArrayList(list);
         tableListsThuoc.setItems(data);
         // Tính toán các giá trị tiền
-        double tongTien = hoaDon.getTongTien();
+        double tongTien = hoaDonDTO.getTongTien();
         txtTotal.setText(VND_FORMAT.format(tongTien) + "đ");
         txtVAT.setText(VND_FORMAT.format(vatTotal) + "đ");
         txtSubTotal.setText(VND_FORMAT.format(subTotal) + "đ");
         txtReturnTotal.setText(VND_FORMAT.format(returnTotal) + "đ");
-        txtPromotion.setText(hoaDon.getMaKM() != null ? hoaDon.getMaKM().getTenKM() : "Không có khuyến mãi");
+        txtPromotion.setText(hoaDonDTO.getMaKM() != null ? hoaDonDTO.getMaKM().getTenKM() : "Không có khuyến mãi");
     }
 }

@@ -6,8 +6,8 @@
 package com.antam.app.controller.dangdieuche;
 
 import com.antam.app.connect.ConnectDB;
-import com.antam.app.dao.impl.DangDieuChe_DAO;
-import com.antam.app.entity.DangDieuChe;
+import com.antam.app.service.impl.DangDieuChe_Service;
+import com.antam.app.dto.DangDieuCheDTO;
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcon;
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcons;
 import javafx.collections.FXCollections;
@@ -28,14 +28,14 @@ import javafx.scene.text.Text;
 
 public class ThemDangDieuCheController extends ScrollPane{
 
-    private TableView<DangDieuChe> tbDangDieuChe;
+    private TableView<DangDieuCheDTO> tbDangDieuChe;
     private TextField tfMaDangDieuChe, tfTenDangDieuChe;
     private Button btnThem;
-    private DangDieuChe_DAO dangDieuChe_DAO = new DangDieuChe_DAO();
+    private DangDieuChe_Service dangDieuChe_DAO = new DangDieuChe_Service();
 
     /* Lấy dữ liệu từ DAO */
-    private ArrayList<DangDieuChe> dsDangDieuChe;
-    private ObservableList<DangDieuChe> data = FXCollections.observableArrayList();
+    private ArrayList<DangDieuCheDTO> dsDangDieuChe;
+    private ObservableList<DangDieuCheDTO> data = FXCollections.observableArrayList();
 
     public ThemDangDieuCheController() {
         /** Giao diện **/
@@ -155,7 +155,7 @@ public class ThemDangDieuCheController extends ScrollPane{
         //Sự kiện click thêm
         btnThem.setOnAction(e ->{
             if (kiemTraHopLe()){
-                dangDieuChe_DAO.themDDC(new DangDieuChe(Integer.parseInt(tfMaDangDieuChe.getText()), tfTenDangDieuChe.getText(), false));
+                dangDieuChe_DAO.themDDC(new DangDieuCheDTO(Integer.parseInt(tfMaDangDieuChe.getText()), tfTenDangDieuChe.getText(), false));
                 showCanhBao("Thêm dạng điều chế","Thêm dạng điều chế thành công!");
                 //Cập nhật lại bảng
                 dsDangDieuChe =  dangDieuChe_DAO.getTatCaDangDieuChe();
@@ -173,13 +173,13 @@ public class ThemDangDieuCheController extends ScrollPane{
     public void loadDanhSachDangDieuChe(){
 
         /* Tên cột */
-        TableColumn<DangDieuChe, String> colMaDangDieuChe = new TableColumn<>("Mã Dạng Điều Chế");
+        TableColumn<DangDieuCheDTO, String> colMaDangDieuChe = new TableColumn<>("Mã Dạng Điều Chế");
         colMaDangDieuChe.setCellValueFactory(new PropertyValueFactory<>("MaDDC"));
 
-        TableColumn<DangDieuChe, String> colTenDangDieuChe = new TableColumn<>("Tên Dạng Điều Chế");
+        TableColumn<DangDieuCheDTO, String> colTenDangDieuChe = new TableColumn<>("Tên Dạng Điều Chế");
         colTenDangDieuChe.setCellValueFactory(new PropertyValueFactory<>("TenDDC"));
 
-        TableColumn<DangDieuChe, Boolean> colTrangThai = new TableColumn<>("Trạng Thái");
+        TableColumn<DangDieuCheDTO, Boolean> colTrangThai = new TableColumn<>("Trạng Thái");
         colTrangThai.setCellValueFactory(new PropertyValueFactory<>("deleteAt"));
         colTrangThai.setCellFactory(column -> new TableCell<>() {
             @Override

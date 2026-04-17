@@ -19,7 +19,7 @@ import java.util.List;
  * @date: 1/10/25
  * @version: 1.0
  */
-public class KhachHang_DAO implements com.antam.app.dao.I_KhachHang_DAO {
+public class KhachHang_DAO implements I_KhachHang_DAO {
 
     /**
      * Thêm khách hàng mới vào CSDL

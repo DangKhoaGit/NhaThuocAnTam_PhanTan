@@ -5,13 +5,12 @@
 
 package com.antam.app.controller.donvitinh;
 
-import com.antam.app.dao.I_DonViTinh_DAO;
-import com.antam.app.dao.impl.DonViTinh_DAO;
-import com.antam.app.entity.DonViTinh;
+import com.antam.app.service.I_DonViTinh_Service;
+import com.antam.app.service.impl.DonViTinh_Service;
+import com.antam.app.dto.DonViTinhDTO;
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcon;
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcons;
 import javafx.beans.property.SimpleStringProperty;
-import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import java.util.ArrayList;
 import java.util.Optional;
@@ -26,12 +25,12 @@ import javafx.scene.text.Text;
 
 public class CapNhatDonViTinhController extends ScrollPane {
     private TextField txtMa,txtTen;
-    private TableView<DonViTinh> tableThuoc;
-    private TableColumn<DonViTinh, String> colMaThuoc, colTenThuoc,colTrangThai;
+    private TableView<DonViTinhDTO> tableThuoc;
+    private TableColumn<DonViTinhDTO, String> colMaThuoc, colTenThuoc,colTrangThai;
     private Button btnXoa,btnCapNhat, btnKhoiPhuc;
 
-    DonViTinh_DAO donViTinh_dao = new DonViTinh_DAO();
-    ArrayList<DonViTinh> listDVT ;
+    DonViTinh_Service donViTinh_dao = new DonViTinh_Service();
+    ArrayList<DonViTinhDTO> listDVT ;
 
     public CapNhatDonViTinhController() {
         /** Giao diện **/
@@ -162,8 +161,8 @@ public class CapNhatDonViTinhController extends ScrollPane {
                 String ma = txtMa.getText();
                 int maInt = Integer.parseInt(ma);
                 String ten = txtTen.getText();
-                DonViTinh donViTinh = new DonViTinh(maInt, ten, false);
-                donViTinh_dao.updateDonViTinh(donViTinh);
+                DonViTinhDTO donViTinhDTO = new DonViTinhDTO(maInt, ten, false);
+                donViTinh_dao.updateDonViTinh(donViTinhDTO);
                 loadTable();
             }catch (Exception ex) {
                 // Hiển thị thông báo lỗi nếu có
@@ -175,8 +174,8 @@ public class CapNhatDonViTinhController extends ScrollPane {
                 String ma = txtMa.getText();
                 int maInt = Integer.parseInt(ma);
                 String ten = txtTen.getText();
-                DonViTinh donViTinh = new DonViTinh(maInt, ten,false);
-                donViTinh_dao.xoaDonViTinh(donViTinh);
+                DonViTinhDTO donViTinhDTO = new DonViTinhDTO(maInt, ten,false);
+                donViTinh_dao.xoaDonViTinh(donViTinhDTO);
                 loadTable();
             }catch (Exception ex) {
                 // Hiển thị thông báo lỗi nếu có
@@ -184,7 +183,7 @@ public class CapNhatDonViTinhController extends ScrollPane {
         });
         txtMa.setEditable(false);
         try {
-            int maxMa = Integer.parseInt(I_DonViTinh_DAO.getHashDVT());
+            int maxMa = Integer.parseInt(I_DonViTinh_Service.getHashDVT());
             txtMa.setText(String.valueOf(++maxMa));
         } catch (Exception e) {
             e.printStackTrace();
@@ -193,7 +192,7 @@ public class CapNhatDonViTinhController extends ScrollPane {
         loadTable();
         setupTable();
         tableThuoc.setOnMouseClicked( e-> {
-            DonViTinh selected = tableThuoc.getSelectionModel().getSelectedItem();
+            DonViTinhDTO selected = tableThuoc.getSelectionModel().getSelectedItem();
             if (selected != null) {
                 txtMa.setText(String.valueOf(selected.getMaDVT()));
                 txtTen.setText(selected.getTenDVT());
@@ -201,7 +200,7 @@ public class CapNhatDonViTinhController extends ScrollPane {
         });
 
         btnKhoiPhuc.setOnAction(e->{
-            DonViTinh selected = tableThuoc.getSelectionModel().getSelectedItem();
+            DonViTinhDTO selected = tableThuoc.getSelectionModel().getSelectedItem();
             if (selected == null) return;
 
             if (selected.isDelete()){
@@ -209,8 +208,8 @@ public class CapNhatDonViTinhController extends ScrollPane {
                     String ma = txtMa.getText();
                     int maInt = Integer.parseInt(ma);
                     String ten = txtTen.getText();
-                    DonViTinh donViTinh = new DonViTinh(maInt, ten,false);
-                    donViTinh_dao.khoiPhucDonViTinh(donViTinh);
+                    DonViTinhDTO donViTinhDTO = new DonViTinhDTO(maInt, ten,false);
+                    donViTinh_dao.khoiPhucDonViTinh(donViTinhDTO);
                     loadTable();
                 }
             }else{

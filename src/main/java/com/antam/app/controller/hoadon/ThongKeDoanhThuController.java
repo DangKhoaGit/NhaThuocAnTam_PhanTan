@@ -1,14 +1,13 @@
 package com.antam.app.controller.hoadon;
 
 
-import com.antam.app.dao.impl.ThongKeDoanhThu_DAO;
-import com.antam.app.dao.impl.ThongKeTrangChinh_DAO;
-import com.antam.app.entity.NhanVien;
-import com.antam.app.entity.ThongKeDoanhThu;
+import com.antam.app.service.impl.ThongKeDoanhThu_Service;
+import com.antam.app.service.impl.ThongKeTrangChinh_Service;
+import com.antam.app.dto.NhanVienDTO;
+import com.antam.app.dto.ThongKeDoanhThuDTO;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
-import javafx.fxml.Initializable;
 import javafx.scene.Node;
 import javafx.scene.chart.BarChart;
 import javafx.scene.chart.LineChart;
@@ -60,18 +59,18 @@ public class ThongKeDoanhThuController extends ScrollPane {
     private LineChart<String, Number> chartDoanhThu;
     private BarChart<String, Number> chartTopSanPham;
 
-    private TableView<ThongKeDoanhThu> tableChiTiet;
-    private TableColumn<ThongKeDoanhThu, LocalDate> colNgay;
-    private TableColumn<ThongKeDoanhThu, Integer> colSoDonHang;
-    private TableColumn<ThongKeDoanhThu, Double> colDoanhThu;
-    private TableColumn<ThongKeDoanhThu, Double> colDonHangTB;
-    private TableColumn<ThongKeDoanhThu, Integer> colKhachHangMoi;
-    private TableColumn<ThongKeDoanhThu, String> colNhanVienBan;
+    private TableView<ThongKeDoanhThuDTO> tableChiTiet;
+    private TableColumn<ThongKeDoanhThuDTO, LocalDate> colNgay;
+    private TableColumn<ThongKeDoanhThuDTO, Integer> colSoDonHang;
+    private TableColumn<ThongKeDoanhThuDTO, Double> colDoanhThu;
+    private TableColumn<ThongKeDoanhThuDTO, Double> colDonHangTB;
+    private TableColumn<ThongKeDoanhThuDTO, Integer> colKhachHangMoi;
+    private TableColumn<ThongKeDoanhThuDTO, String> colNhanVienBan;
 
     private Button btnRefresh;
 
-    private ThongKeDoanhThu_DAO thongKeDAO;
-    private ThongKeTrangChinh_DAO thongKeTrangChinhDAO;
+    private ThongKeDoanhThu_Service thongKeDAO;
+    private ThongKeTrangChinh_Service thongKeTrangChinhDAO;
     private LocalDate tuNgay;
     private LocalDate denNgay;
     private String selectedNhanVien = null;
@@ -255,8 +254,8 @@ public class ThongKeDoanhThuController extends ScrollPane {
         this.getChildren().add(root);
 
         /** Sự kiện **/
-        thongKeDAO = new ThongKeDoanhThu_DAO();
-        thongKeTrangChinhDAO = new ThongKeTrangChinh_DAO();
+        thongKeDAO = new ThongKeDoanhThu_Service();
+        thongKeTrangChinhDAO = new ThongKeTrangChinh_Service();
 
         // Khởi tạo ComboBox thời gian
         cmbThoiGian.setItems(FXCollections.observableArrayList(
@@ -348,7 +347,7 @@ public class ThongKeDoanhThuController extends ScrollPane {
         tableChiTiet.setPlaceholder(placeholderLabel);
 
         colNgay.setCellValueFactory(new PropertyValueFactory<>("ngay"));
-        colNgay.setCellFactory(column -> new TableCell<ThongKeDoanhThu, LocalDate>() {
+        colNgay.setCellFactory(column -> new TableCell<ThongKeDoanhThuDTO, LocalDate>() {
             @Override
             protected void updateItem(LocalDate item, boolean empty) {
                 super.updateItem(item, empty);
@@ -363,7 +362,7 @@ public class ThongKeDoanhThuController extends ScrollPane {
         colSoDonHang.setCellValueFactory(new PropertyValueFactory<>("soDonHang"));
 
         colDoanhThu.setCellValueFactory(new PropertyValueFactory<>("doanhThu"));
-        colDoanhThu.setCellFactory(column -> new TableCell<ThongKeDoanhThu, Double>() {
+        colDoanhThu.setCellFactory(column -> new TableCell<ThongKeDoanhThuDTO, Double>() {
             @Override
             protected void updateItem(Double item, boolean empty) {
                 super.updateItem(item, empty);
@@ -376,7 +375,7 @@ public class ThongKeDoanhThuController extends ScrollPane {
         });
 
         colDonHangTB.setCellValueFactory(new PropertyValueFactory<>("donHangTB"));
-        colDonHangTB.setCellFactory(column -> new TableCell<ThongKeDoanhThu, Double>() {
+        colDonHangTB.setCellFactory(column -> new TableCell<ThongKeDoanhThuDTO, Double>() {
             @Override
             protected void updateItem(Double item, boolean empty) {
                 super.updateItem(item, empty);
@@ -393,9 +392,9 @@ public class ThongKeDoanhThuController extends ScrollPane {
     }
 
     private void loadDanhSachNhanVien() {
-        ArrayList<NhanVien> dsNhanVien = thongKeDAO.getDanhSachNhanVien();
+        ArrayList<NhanVienDTO> dsNhanVien = thongKeDAO.getDanhSachNhanVien();
         ObservableList<String> items = FXCollections.observableArrayList("Tất cả");
-        for (NhanVien nv : dsNhanVien) {
+        for (NhanVienDTO nv : dsNhanVien) {
             items.add(nv.getMaNV() + " - " + nv.getHoTen());
         }
         cmbNhanVien.setItems(items);
@@ -535,7 +534,7 @@ public class ThongKeDoanhThuController extends ScrollPane {
         String thoiGian = cmbThoiGian.getValue();
         boolean hienThiTheoThang = "Năm nay".equals(thoiGian);
 
-        ArrayList<ThongKeDoanhThu> dsThongKe;
+        ArrayList<ThongKeDoanhThuDTO> dsThongKe;
         if (hienThiTheoThang) {
             // Lấy dữ liệu theo tháng
             dsThongKe = thongKeDAO.getDoanhThuTheoThang(tuNgay, denNgay, selectedNhanVien);
@@ -556,13 +555,13 @@ public class ThongKeDoanhThuController extends ScrollPane {
 
         if (hienThiTheoThang) {
             // Hiển thị theo tháng - tạo đầy đủ các tháng trong khoảng thời gian
-            Map<String, ThongKeDoanhThu> dataMap = new java.util.HashMap<>();
-            for (ThongKeDoanhThu tk : dsThongKe) {
+            Map<String, ThongKeDoanhThuDTO> dataMap = new java.util.HashMap<>();
+            for (ThongKeDoanhThuDTO tk : dsThongKe) {
                 String monthKey = tk.getNgay().format(dateFormatter);
                 dataMap.put(monthKey, tk);
             }
 
-            Map<String, ThongKeDoanhThu> displayMap = new java.util.LinkedHashMap<>();
+            Map<String, ThongKeDoanhThuDTO> displayMap = new java.util.LinkedHashMap<>();
 
             // Tạo đầy đủ các tháng từ tuNgay đến denNgay
             LocalDate currentMonth = tuNgay.withDayOfMonth(1);
@@ -570,11 +569,11 @@ public class ThongKeDoanhThuController extends ScrollPane {
 
             while (!currentMonth.isAfter(endMonth)) {
                 String monthKey = currentMonth.format(dateFormatter);
-                ThongKeDoanhThu tk = dataMap.get(monthKey);
+                ThongKeDoanhThuDTO tk = dataMap.get(monthKey);
 
                 if (tk == null) {
                     // Tạo dữ liệu rỗng cho tháng không có data
-                    tk = new ThongKeDoanhThu(currentMonth, 0, 0.0, 0.0, 0, "");
+                    tk = new ThongKeDoanhThuDTO(currentMonth, 0, 0.0, 0.0, 0, "");
                 }
 
                 displayMap.put(monthKey, tk);
@@ -587,7 +586,7 @@ public class ThongKeDoanhThuController extends ScrollPane {
 
             // Thêm tooltip cho từng điểm dữ liệu
             for (XYChart.Data<String, Number> data : series.getData()) {
-                ThongKeDoanhThu tk = displayMap.get(data.getXValue());
+                ThongKeDoanhThuDTO tk = displayMap.get(data.getXValue());
                 if (tk != null) {
                     Tooltip tooltip = new Tooltip(
                             tk.getNgay().format(fullDateFormatter) + "\n" +
@@ -606,7 +605,7 @@ public class ThongKeDoanhThuController extends ScrollPane {
                                     "-fx-background-radius: 6px;"
                     );
 
-                    javafx.scene.Node node = data.getNode();
+                    Node node = data.getNode();
                     if (node != null) {
                         Tooltip.install(node, tooltip);
 
@@ -629,19 +628,19 @@ public class ThongKeDoanhThuController extends ScrollPane {
             }
         } else {
             // Hiển thị theo ngày - tạo đầy đủ các ngày
-            Map<LocalDate, ThongKeDoanhThu> dataMap = new java.util.HashMap<>();
-            for (ThongKeDoanhThu tk : dsThongKe) {
+            Map<LocalDate, ThongKeDoanhThuDTO> dataMap = new java.util.HashMap<>();
+            for (ThongKeDoanhThuDTO tk : dsThongKe) {
                 dataMap.put(tk.getNgay(), tk);
             }
 
-            Map<String, ThongKeDoanhThu> displayMap = new java.util.LinkedHashMap<>();
+            Map<String, ThongKeDoanhThuDTO> displayMap = new java.util.LinkedHashMap<>();
 
             LocalDate currentDate = tuNgay;
             while (!currentDate.isAfter(denNgay)) {
-                ThongKeDoanhThu tk = dataMap.get(currentDate);
+                ThongKeDoanhThuDTO tk = dataMap.get(currentDate);
 
                 if (tk == null) {
-                    tk = new ThongKeDoanhThu(currentDate, 0, 0.0, 0.0, 0, "");
+                    tk = new ThongKeDoanhThuDTO(currentDate, 0, 0.0, 0.0, 0, "");
                 }
 
                 String shortDate = currentDate.format(dateFormatter);
@@ -655,7 +654,7 @@ public class ThongKeDoanhThuController extends ScrollPane {
 
             // Thêm tooltip cho từng điểm dữ liệu
             for (XYChart.Data<String, Number> data : series.getData()) {
-                ThongKeDoanhThu tk = displayMap.get(data.getXValue());
+                ThongKeDoanhThuDTO tk = displayMap.get(data.getXValue());
                 if (tk != null) {
                     Tooltip tooltip = new Tooltip(
                             "Ngày: " + tk.getNgay().format(fullDateFormatter) + "\n" +
@@ -674,7 +673,7 @@ public class ThongKeDoanhThuController extends ScrollPane {
                                     "-fx-background-radius: 6px;"
                     );
 
-                    javafx.scene.Node node = data.getNode();
+                    Node node = data.getNode();
                     if (node != null) {
                         Tooltip.install(node, tooltip);
 
@@ -745,7 +744,7 @@ public class ThongKeDoanhThuController extends ScrollPane {
                 String tenThuocDayDu = fullNamesMap.getOrDefault(tenThuocHienThi, tenThuocHienThi);
                 int soLuong = data.getYValue().intValue();
 
-                javafx.scene.control.Tooltip tooltip = new javafx.scene.control.Tooltip(
+                Tooltip tooltip = new Tooltip(
                         "Thuốc: " + tenThuocDayDu + "\n" +
                                 "Số lượng bán: " + formatter.format(soLuong)
                 );
@@ -759,9 +758,9 @@ public class ThongKeDoanhThuController extends ScrollPane {
                 );
 
                 // Gắn tooltip vào node của data point (thanh)
-                javafx.scene.Node node = data.getNode();
+                Node node = data.getNode();
                 if (node != null) {
-                    javafx.scene.control.Tooltip.install(node, tooltip);
+                    Tooltip.install(node, tooltip);
 
                     // *** CHỈNH HIỆU ỨNG HOVER: Thay đổi độ mờ khi rê chuột ***
                     node.setOnMouseEntered(e -> {
@@ -782,8 +781,8 @@ public class ThongKeDoanhThuController extends ScrollPane {
     }
 
     private void loadTableData() {
-        ArrayList<ThongKeDoanhThu> dsThongKe = thongKeDAO.getDoanhThuTheoThoiGian(tuNgay, denNgay, selectedNhanVien);
-        ObservableList<ThongKeDoanhThu> data = FXCollections.observableArrayList(dsThongKe);
+        ArrayList<ThongKeDoanhThuDTO> dsThongKe = thongKeDAO.getDoanhThuTheoThoiGian(tuNgay, denNgay, selectedNhanVien);
+        ObservableList<ThongKeDoanhThuDTO> data = FXCollections.observableArrayList(dsThongKe);
         tableChiTiet.setItems(data);
     }
 
@@ -832,7 +831,7 @@ public class ThongKeDoanhThuController extends ScrollPane {
         boolean hienThiTheoThang = "Năm nay".equals(thoiGian);
 
         // Lấy dữ liệu
-        ArrayList<ThongKeDoanhThu> dsThongKe;
+        ArrayList<ThongKeDoanhThuDTO> dsThongKe;
         if (hienThiTheoThang) {
             dsThongKe = thongKeDAO.getDoanhThuTheoThang(tuNgay, denNgay, selectedNhanVien);
         } else {
@@ -880,7 +879,7 @@ public class ThongKeDoanhThuController extends ScrollPane {
                     ? DateTimeFormatter.ofPattern("MM/yyyy")
                     : DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
-            for (ThongKeDoanhThu tk : dsThongKe) {
+            for (ThongKeDoanhThuDTO tk : dsThongKe) {
                 writer.append(tk.getNgay().format(dateFormatter)).append(",");
                 writer.append(String.valueOf(tk.getSoDonHang())).append(",");
                 writer.append(String.format("%.2f", tk.getDoanhThu())).append(",");

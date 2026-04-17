@@ -37,8 +37,7 @@ import com.antam.app.controller.thuoc.KhoiPhucThuocController;
 import com.antam.app.controller.thuoc.ThemThuocController;
 import com.antam.app.controller.thuoc.TimThuocController;
 import com.antam.app.controller.trangchinh.ThongKeTrangChinhController;
-import com.antam.app.entity.NhanVien;
-import com.antam.app.entity.PhienNguoiDung;
+import com.antam.app.dto.PhienNguoiDungDTO;
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcon;
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcons;
 import javafx.geometry.Insets;
@@ -56,7 +55,6 @@ import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
-import javafx.stage.StageStyle;
 
 
 public class KhungChinhController extends BorderPane {
@@ -204,7 +202,7 @@ public class KhungChinhController extends BorderPane {
         btnDangXuat.setOnAction(e -> {
             // Xử lý đăng xuất. Nhảy ra màn hình đăng nhập
             if (canhBaoDangXuat()){
-                PhienNguoiDung.setMaNV(null);
+                PhienNguoiDungDTO.setMaNV(null);
 
                 Scene scene = new Scene(new DangNhapController());
                 Stage stage = (Stage) this.getScene().getWindow();
@@ -220,7 +218,7 @@ public class KhungChinhController extends BorderPane {
         });
 
         // Phân quyền người dùng
-        boolean isAdmin = PhienNguoiDung.getMaNV().isQuanLy();
+        boolean isAdmin = PhienNguoiDungDTO.getMaNV().isQuanLy();
         System.out.println(isAdmin);
         if (isAdmin){
             batFullQuyenNguoiDung();

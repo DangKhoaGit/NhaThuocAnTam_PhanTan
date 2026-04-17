@@ -1,8 +1,7 @@
 package com.antam.app.controller.nhanvien;
 
-import com.antam.app.dao.I_NhanVien_DAO;
-import com.antam.app.dao.impl.NhanVien_DAO;
-import com.antam.app.entity.NhanVien;
+import com.antam.app.service.I_NhanVien_Service;
+import com.antam.app.dto.NhanVienDTO;
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcon;
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcons;
 import javafx.beans.property.SimpleStringProperty;
@@ -21,16 +20,16 @@ import java.util.ArrayList;
 
 public class ThemNhanVienController extends ScrollPane{
     
-    private TableView<NhanVien> tbNhanVien;
+    private TableView<NhanVienDTO> tbNhanVien;
     private Button btnFindNV,btnXoaTrang,btnAddEmployee;
     private TextField txtFindNV;
-    private TableColumn<NhanVien, String> colMaNV, colHoTen, colChucVu, colSDT, colDiaChi, colEmail;
-    private TableColumn<NhanVien, String> colLuong;
+    private TableColumn<NhanVienDTO, String> colMaNV, colHoTen, colChucVu, colSDT, colDiaChi, colEmail;
+    private TableColumn<NhanVienDTO, String> colLuong;
     private ComboBox<String> cbChucVu, cbLuongCB;
-    ArrayList<NhanVien> listNV = I_NhanVien_DAO.getDsNhanVienformDBS();
+    ArrayList<NhanVienDTO> listNV = I_NhanVien_Service.getDsNhanVienformDBS();
 
-    private ObservableList<NhanVien> TVNhanVien;
-    private final ObservableList<NhanVien> filteredList = FXCollections.observableArrayList();
+    private ObservableList<NhanVienDTO> TVNhanVien;
+    private final ObservableList<NhanVienDTO> filteredList = FXCollections.observableArrayList();
 
     public ThemNhanVienController(){
         /** Giao diện **/
@@ -53,7 +52,7 @@ public class ThemNhanVienController extends ScrollPane{
         title.setFont(Font.font("System Bold", 30));
         title.setFill(Color.web("#1e3a8a"));
         Pane spacer = new Pane();
-        HBox.setHgrow(spacer, javafx.scene.layout.Priority.ALWAYS);
+        HBox.setHgrow(spacer, Priority.ALWAYS);
         btnAddEmployee = new Button("Thêm nhân viên");
         btnAddEmployee.getStyleClass().add("btn-them");
         titleBox.getChildren().addAll(title, spacer, btnAddEmployee);
@@ -139,11 +138,11 @@ public class ThemNhanVienController extends ScrollPane{
         /** Sự kiện **/
         this.btnAddEmployee.setOnAction((e) -> {
             ThemNhanVienFormController themDialog = new ThemNhanVienFormController();
-            Dialog<Void> dialog = new javafx.scene.control.Dialog<>();
+            Dialog<Void> dialog = new Dialog<>();
             dialog.setDialogPane(themDialog);
             dialog.setTitle("Thêm khách hàng");
             dialog.showAndWait();
-            listNV = I_NhanVien_DAO.getDsNhanVienformDBS();
+            listNV = I_NhanVien_Service.getDsNhanVienformDBS();
             loadNhanVien();
         });
         setupTableNhanVien();
@@ -165,7 +164,7 @@ public class ThemNhanVienController extends ScrollPane{
 
 
     private void loadNhanVien() {
-        listNV = I_NhanVien_DAO.getDsNhanVienformDBS();
+        listNV = I_NhanVien_Service.getDsNhanVienformDBS();
         TVNhanVien = FXCollections.observableArrayList(
                 listNV.stream()
                         .filter(nv -> !nv.isDeleteAt())
@@ -216,7 +215,7 @@ public class ThemNhanVienController extends ScrollPane{
         String chucVu = cbChucVu.getSelectionModel().getSelectedItem();
         String luongCB = cbLuongCB.getSelectionModel().getSelectedItem();
 
-        for (NhanVien nv : TVNhanVien) {
+        for (NhanVienDTO nv : TVNhanVien) {
             boolean matchKeyword = keyword.isBlank() ||
                     nv.getMaNV().toLowerCase().contains(keyword) ||
                     nv.getHoTen().toLowerCase().contains(keyword);
@@ -249,7 +248,7 @@ public class ThemNhanVienController extends ScrollPane{
         String x = txtFindNV.getText().trim().toLowerCase();
         if (x.isEmpty()) return;
 
-        for (NhanVien a : tbNhanVien.getItems()) {
+        for (NhanVienDTO a : tbNhanVien.getItems()) {
             if (a.getMaNV().toLowerCase().contains(x) ||
                     a.getHoTen().toLowerCase().contains(x)) {
                 tbNhanVien.getSelectionModel().select(a);

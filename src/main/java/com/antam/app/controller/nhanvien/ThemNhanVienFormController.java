@@ -6,17 +6,15 @@ package com.antam.app.controller.nhanvien;
  * @date: 29/10/2025
  * @version: 1.0
  */
-import com.antam.app.dao.I_NhanVien_DAO;
-import com.antam.app.dao.impl.NhanVien_DAO;
-import com.antam.app.entity.NhanVien;
+import com.antam.app.service.I_NhanVien_Service;
+import com.antam.app.dto.NhanVienDTO;
 import com.antam.app.helper.MaKhoaMatKhau;
-import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 import javafx.scene.control.*;
 import javafx.scene.control.ButtonBar.ButtonData;
 
 import java.text.DecimalFormat;
-import javafx.scene.control.*;
+
 import javafx.scene.layout.*;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
@@ -51,12 +49,12 @@ public class ThemNhanVienFormController extends DialogPane{
 
         // Column constraints
         ColumnConstraints col1 = new ColumnConstraints();
-        col1.setHgrow(javafx.scene.layout.Priority.SOMETIMES);
+        col1.setHgrow(Priority.SOMETIMES);
         col1.setMinWidth(10);
         col1.setPrefWidth(100);
 
         ColumnConstraints col2 = new ColumnConstraints();
-        col2.setHgrow(javafx.scene.layout.Priority.SOMETIMES);
+        col2.setHgrow(Priority.SOMETIMES);
         col2.setMinWidth(10);
         col2.setPrefWidth(100);
 
@@ -67,7 +65,7 @@ public class ThemNhanVienFormController extends DialogPane{
             RowConstraints row = new RowConstraints();
             row.setMinHeight(10);
             row.setPrefHeight(i % 2 == 0 ? 30 : 40);
-            row.setVgrow(javafx.scene.layout.Priority.SOMETIMES);
+            row.setVgrow(Priority.SOMETIMES);
             grid.getRowConstraints().add(row);
         }
 
@@ -161,7 +159,7 @@ public class ThemNhanVienFormController extends DialogPane{
         //sự kiện thêm nhân viên
         btnThem.setOnAction(e -> {
             if (setupThemNhanVien() != null){
-                I_NhanVien_DAO.themNhanVien(setupThemNhanVien());
+                I_NhanVien_Service.themNhanVien(setupThemNhanVien());
                 showAlert("Thêm nhân viên thành công!");
             }else{
 
@@ -196,7 +194,7 @@ public class ThemNhanVienFormController extends DialogPane{
      * Chuẩn bị nhân viên trước khi đưa vào database
      * @return NhanVien
      */
-    private NhanVien setupThemNhanVien() {
+    private NhanVienDTO setupThemNhanVien() {
         // Kiểm tra nếu ValueFactory chưa được gán
         if (luong.getValueFactory() == null) {
             System.out.println("ValueFactory chưa được gán");
@@ -227,7 +225,7 @@ public class ThemNhanVienFormController extends DialogPane{
         // độ khó là 10 phù hợp với các dự án nhỏ và làm tăng hiệu suất
         String pass = MaKhoaMatKhau.hashPassword(txtPass.getText(), 10);
 
-        return new NhanVien(
+        return new NhanVienDTO(
                 txtMaNV.getText(),
                 txtHoTen.getText(),
                 txtSDT.getText(),
@@ -251,7 +249,7 @@ public class ThemNhanVienFormController extends DialogPane{
      * @return String(Chuỗi mã nhân viên được tạo tự động)
      */
     public String getHashMaNV(){
-        String hash = I_NhanVien_DAO.getMaxHashNhanVien();
+        String hash = I_NhanVien_Service.getMaxHashNhanVien();
         int maxHash = Integer.parseInt(hash);
         DecimalFormat deFomat = new DecimalFormat("00000");
         return String.format("NV%s",deFomat.format(++maxHash));

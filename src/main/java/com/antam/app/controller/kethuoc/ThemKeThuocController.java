@@ -6,8 +6,8 @@
 package com.antam.app.controller.kethuoc;
 
 import com.antam.app.connect.ConnectDB;
-import com.antam.app.dao.impl.Ke_DAO;
-import com.antam.app.entity.Ke;
+import com.antam.app.service.impl.Ke_Service;
+import com.antam.app.dto.KeDTO;
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcon;
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcons;
 import javafx.beans.property.SimpleStringProperty;
@@ -29,14 +29,14 @@ import javafx.scene.text.Text;
 
 public class ThemKeThuocController extends ScrollPane{
 
-    private TableView<Ke> tbKeThuoc;
+    private TableView<KeDTO> tbKeThuoc;
     private TextField tfMaKe, tfTenKe, tfLoaiKe;
     private Button btnThemKe;
-    private Ke_DAO ke_DAO = new Ke_DAO();
+    private Ke_Service ke_DAO = new Ke_Service();
 
     /* Lấy dữ liệu từ DAO */
-    private ArrayList<Ke> dsKeThuoc = new ArrayList<>();
-    private ObservableList<Ke> data = FXCollections.observableArrayList();
+    private ArrayList<KeDTO> dsKeThuoc = new ArrayList<>();
+    private ObservableList<KeDTO> data = FXCollections.observableArrayList();
 
     public ThemKeThuocController() {
         /** Giao diện **/
@@ -174,7 +174,7 @@ public class ThemKeThuocController extends ScrollPane{
         //Sự kiện click thêm
         btnThemKe.setOnAction(e ->{
             if (kiemTraHopLe()){
-                ke_DAO.themKe(new Ke(tfMaKe.getText(), tfTenKe.getText(), tfLoaiKe.getText(), false));
+                ke_DAO.themKe(new KeDTO(tfMaKe.getText(), tfTenKe.getText(), tfLoaiKe.getText(), false));
                 showCanhBao("Thêm kệ thành công","Bạn đã thêm kệ thuốc thành công!");
                 //Cập nhật lại bảng
                 dsKeThuoc =  ke_DAO.getTatCaKeThuoc();
@@ -192,19 +192,19 @@ public class ThemKeThuocController extends ScrollPane{
     public void loadDanhSachKeThuoc(){
 
         /* Tên cột */
-        TableColumn<Ke, String> colMaKe = new TableColumn<>("Mã Kệ");
+        TableColumn<KeDTO, String> colMaKe = new TableColumn<>("Mã Kệ");
         colMaKe.setCellValueFactory(new PropertyValueFactory<>("MaKe"));
 
-        TableColumn<Ke, String> colTenKe = new TableColumn<>("Tên Kệ");
+        TableColumn<KeDTO, String> colTenKe = new TableColumn<>("Tên Kệ");
         colTenKe.setCellValueFactory(new PropertyValueFactory<>("tenKe"));
 
-        TableColumn<Ke, Date> colLoaiKe = new TableColumn<>("Loại Kệ");
+        TableColumn<KeDTO, Date> colLoaiKe = new TableColumn<>("Loại Kệ");
         colLoaiKe.setCellValueFactory(new PropertyValueFactory<>("LoaiKe"));
 
-        TableColumn<Ke, String> colTrangThai = new TableColumn<>("Trạng Thái");
+        TableColumn<KeDTO, String> colTrangThai = new TableColumn<>("Trạng Thái");
         colTrangThai.setCellValueFactory(cellData -> {
-            Ke ke = cellData.getValue();
-            return new SimpleStringProperty(ke.isDeleteAt() ? "Đã xoá" : "Hoạt động");
+            KeDTO keDTO = cellData.getValue();
+            return new SimpleStringProperty(keDTO.isDeleteAt() ? "Đã xoá" : "Hoạt động");
         });
 
         tbKeThuoc.getColumns().addAll(colMaKe, colTenKe, colLoaiKe, colTrangThai);

@@ -10,7 +10,7 @@ import com.antam.app.entity.*;
 
 import java.util.ArrayList;
 
-public class PhieuDat_DAO implements com.antam.app.dao.I_PhieuDat_DAO {
+public class PhieuDat_DAO implements I_PhieuDat_DAO {
     public static ArrayList<PhieuDatThuoc> list = I_PhieuDat_DAO.getAllPhieuDatThuocFromDBS();
 
     public static Thuoc_DAO thuoc_dao = new Thuoc_DAO();

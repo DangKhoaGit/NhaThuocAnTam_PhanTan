@@ -5,11 +5,9 @@
 
 package com.antam.app.controller.phieudat;
 
-import com.antam.app.dao.I_ChiTietPhieuDat_DAO;
-import com.antam.app.dao.impl.ChiTietPhieuDat_DAO;
-import com.antam.app.dao.impl.PhieuDat_DAO;
-import com.antam.app.entity.ChiTietPhieuDatThuoc;
-import com.antam.app.entity.PhieuDatThuoc;
+import com.antam.app.service.I_ChiTietPhieuDat_Service;
+import com.antam.app.dto.ChiTietPhieuDatThuocDTO;
+import com.antam.app.dto.PhieuDatThuocDTO;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
@@ -24,7 +22,7 @@ import javafx.scene.text.Text;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 
-import static com.antam.app.controller.phieudat.TimPhieuDatController.selectedPhieuDatThuoc;
+import static com.antam.app.controller.phieudat.TimPhieuDatController.selectedPhieuDatThuocDTO;
 
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -36,16 +34,16 @@ import javafx.scene.text.FontWeight;
 public class XemChiTietPhieuDatFormController extends DialogPane{
     private Text txtMa,txtNgay,txtSDT,txtStatus,txtTongTien,txtKM;
     
-    private TableColumn<ChiTietPhieuDatThuoc,Integer> colSTT;
+    private TableColumn<ChiTietPhieuDatThuocDTO,Integer> colSTT;
     
-    private TableColumn<ChiTietPhieuDatThuoc,String> colTenThuoc,colThanhTien,colDonGia;
+    private TableColumn<ChiTietPhieuDatThuocDTO,String> colTenThuoc,colThanhTien,colDonGia;
     
-    private TableColumn<ChiTietPhieuDatThuoc,Integer> colSoLuong;
+    private TableColumn<ChiTietPhieuDatThuocDTO,Integer> colSoLuong;
     
-    private TableView<ChiTietPhieuDatThuoc> tbThuoc;
+    private TableView<ChiTietPhieuDatThuocDTO> tbThuoc;
 
-    private PhieuDatThuoc select = selectedPhieuDatThuoc;
-    private ArrayList<ChiTietPhieuDatThuoc> listChiTiet = I_ChiTietPhieuDat_DAO.getChiTietTheoPhieu(select.getMaPhieu());
+    private PhieuDatThuocDTO select = selectedPhieuDatThuocDTO;
+    private ArrayList<ChiTietPhieuDatThuocDTO> listChiTiet = I_ChiTietPhieuDat_Service.getChiTietTheoPhieu(select.getMaPhieu());
 
     public XemChiTietPhieuDatFormController() {
         this.setPrefSize(800, 662);
@@ -186,8 +184,8 @@ public class XemChiTietPhieuDatFormController extends DialogPane{
             trangThai = "Chưa thanh toán";
         }
         txtStatus.setText("Trạng thái: "+ trangThai);
-        if (select.getKhuyenMai() != null) {
-            txtKM.setText(select.getKhuyenMai().getTenKM());
+        if (select.getKhuyenMaiDTO() != null) {
+            txtKM.setText(select.getKhuyenMaiDTO().getTenKM());
         } else {
             txtKM.setText("Không áp dụng");
         }
@@ -196,14 +194,14 @@ public class XemChiTietPhieuDatFormController extends DialogPane{
 
     private void setupTable() {
         colSTT.setCellValueFactory(cellData -> new SimpleIntegerProperty(listChiTiet.indexOf(cellData.getValue()) + 1).asObject());
-        colTenThuoc.setCellValueFactory(cellData ->new SimpleStringProperty(cellData.getValue().getMaThuoc().getMaThuoc().getTenThuoc()));
+        colTenThuoc.setCellValueFactory(cellData ->new SimpleStringProperty(cellData.getValue().getMaThuoc().getMaThuocDTO().getTenThuoc()));
         colSoLuong.setCellValueFactory(cellData -> new SimpleIntegerProperty(cellData.getValue().getSoLuong()).asObject());
-        colDonGia.setCellValueFactory(cellData -> new SimpleStringProperty(dinhDangTien(cellData.getValue().getMaThuoc().getMaThuoc().getGiaBan())));
+        colDonGia.setCellValueFactory(cellData -> new SimpleStringProperty(dinhDangTien(cellData.getValue().getMaThuoc().getMaThuocDTO().getGiaBan())));
         colThanhTien.setCellValueFactory(cellData -> new SimpleStringProperty(dinhDangTien(cellData.getValue().getThanhTien())));
     }
 
     private void loadBangChiTiet() {
-        ObservableList<ChiTietPhieuDatThuoc> load = FXCollections.observableArrayList(listChiTiet);
+        ObservableList<ChiTietPhieuDatThuocDTO> load = FXCollections.observableArrayList(listChiTiet);
         tbThuoc.setItems(load);
     }
 

@@ -6,9 +6,9 @@
 package com.antam.app.controller.phieudat;
 
 import com.antam.app.connect.ConnectDB;
-import com.antam.app.dao.*;
-import com.antam.app.dao.impl.*;
-import com.antam.app.entity.*;
+import com.antam.app.service.*;
+import com.antam.app.service.impl.*;
+import com.antam.app.dto.*;
 import com.antam.app.helper.TuDongGoiY;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
@@ -43,39 +43,39 @@ public class ThemPhieuDatFormController extends DialogPane{
     private TextField txtTenKhach;
     private TextField txtSoDienThoai;
     private VBox vbThuoc;
-    private ComboBox<Thuoc> cbTenThuoc;
-    private ComboBox<DonViTinh> cbDonVi;
+    private ComboBox<ThuocDTO> cbTenThuoc;
+    private ComboBox<DonViTinhDTO> cbDonVi;
     private Spinner<Integer> spSoLuong;
     private TextField txtDonGia;
     private Button btnThem;
-    private ComboBox<KhuyenMai> cbKhuyenMai;
-    private TableView<ChiTietPhieuDatThuoc> tbChonThuoc;
-    private TableColumn<ChiTietPhieuDatThuoc,String> colTenThuoc;
-    private TableColumn<ChiTietPhieuDatThuoc,String> colDonVi;
-    private TableColumn<ChiTietPhieuDatThuoc,String> colSoLuong;
-    private TableColumn<ChiTietPhieuDatThuoc,String> colDonGia;
-    private TableColumn<ChiTietPhieuDatThuoc,String> colThanhTien;
+    private ComboBox<KhuyenMaiDTO> cbKhuyenMai;
+    private TableView<ChiTietPhieuDatThuocDTO> tbChonThuoc;
+    private TableColumn<ChiTietPhieuDatThuocDTO,String> colTenThuoc;
+    private TableColumn<ChiTietPhieuDatThuocDTO,String> colDonVi;
+    private TableColumn<ChiTietPhieuDatThuocDTO,String> colSoLuong;
+    private TableColumn<ChiTietPhieuDatThuocDTO,String> colDonGia;
+    private TableColumn<ChiTietPhieuDatThuocDTO,String> colThanhTien;
     private Text txtTotal;
     private Text txtCanhBaoSDT = new Text();
     private Text txtCanhBaoKM = new Text();
     private Text txtThue = new Text();
 
-    private Thuoc_DAO thuoc_dao = new Thuoc_DAO();
-    private DonViTinh_DAO donViTinh_dao = new DonViTinh_DAO();
-    private ArrayList<Thuoc> dsThuoc;
-    private ArrayList<DonViTinh> dsDonViTinh;
+    private Thuoc_Service thuoc_dao = new Thuoc_Service();
+    private DonViTinh_Service donViTinh_dao = new DonViTinh_Service();
+    private ArrayList<ThuocDTO> dsThuoc;
+    private ArrayList<DonViTinhDTO> dsDonViTinh;
     private DecimalFormat decimalFormat = new DecimalFormat("#,### đ");
-    private ArrayList<ChiTietPhieuDatThuoc> list = new ArrayList<>();
-    private ObservableList<ChiTietPhieuDatThuoc> obsThuoc = FXCollections.observableArrayList();
+    private ArrayList<ChiTietPhieuDatThuocDTO> list = new ArrayList<>();
+    private ObservableList<ChiTietPhieuDatThuocDTO> obsThuoc = FXCollections.observableArrayList();
 
 
-    private KhachHang_DAO khachHangDAO = new KhachHang_DAO();
-    private ArrayList<KhachHang> dsKhach = khachHangDAO.getAllKhachHang();
-    private KhuyenMai_DAO KhuyenMai_DAO = new KhuyenMai_DAO();
-    private ArrayList<KhuyenMai> dsKhuyenMai = (ArrayList<KhuyenMai>) I_KhuyenMai_DAO.getAllKhuyenMaiConHieuLuc();
-    private LoThuoc_DAO chiTietThuoc_dao = new LoThuoc_DAO();
-    private HoaDon_DAO hoaDon_DAO = new HoaDon_DAO();
-    private ObservableList<KhachHang> autoKhach = FXCollections.observableArrayList(dsKhach);
+    private KhachHang_Service khachHangDAO = new KhachHang_Service();
+    private ArrayList<KhachHangDTO> dsKhach = khachHangDAO.getAllKhachHang();
+    private KhuyenMai_Service KhuyenMai_DAO = new KhuyenMai_Service();
+    private ArrayList<KhuyenMaiDTO> dsKhuyenMai = (ArrayList<KhuyenMaiDTO>) I_KhuyenMai_Service.getAllKhuyenMaiConHieuLuc();
+    private LoThuoc_Service chiTietThuoc_dao = new LoThuoc_Service();
+    private HoaDon_Service hoaDon_DAO = new HoaDon_Service();
+    private ObservableList<KhachHangDTO> autoKhach = FXCollections.observableArrayList(dsKhach);
 
     public ThemPhieuDatFormController() {
         FlowPane header = new FlowPane();
@@ -84,7 +84,7 @@ public class ThemPhieuDatFormController extends DialogPane{
         header.setStyle("-fx-background-color: #1e3a8a;");
 
         Text headerTitle = new Text("Tạo phiếu đặt mới");
-        headerTitle.setFill(javafx.scene.paint.Color.WHITE);
+        headerTitle.setFill(Color.WHITE);
         headerTitle.setFont(Font.font("System Bold", 15));
         FlowPane.setMargin(headerTitle, new Insets(10, 0, 10, 0));
         header.getChildren().add(headerTitle);
@@ -113,7 +113,7 @@ public class ThemPhieuDatFormController extends DialogPane{
         );
 
         Text lblMa = new Text("Mã phiếu đặt:");
-        lblMa.setFill(javafx.scene.paint.Color.web("#374151"));
+        lblMa.setFill(Color.web("#374151"));
 
         txtMa = new TextField();
         txtMa.getStyleClass().add("text-field");
@@ -121,7 +121,7 @@ public class ThemPhieuDatFormController extends DialogPane{
         GridPane.setRowIndex(txtMa, 1);
 
         Text lblTenKhach = new Text("Tên khách hàng:");
-        lblTenKhach.setFill(javafx.scene.paint.Color.web("#374151"));
+        lblTenKhach.setFill(Color.web("#374151"));
         GridPane.setColumnIndex(lblTenKhach, 1);
 
         txtTenKhach = new TextField();
@@ -156,7 +156,7 @@ public class ThemPhieuDatFormController extends DialogPane{
 
 
         Text lblThuocDat = new Text("Thuốc đặt:");
-        lblThuocDat.setFill(javafx.scene.paint.Color.web("#374151"));
+        lblThuocDat.setFill(Color.web("#374151"));
         GridPane.setRowIndex(lblThuocDat, 4);
 
         gridTop.getChildren().addAll(lblMa, txtMa, lblTenKhach, txtTenKhach, hbSDT, txtSoDienThoai, lblThuocDat);
@@ -317,7 +317,7 @@ public class ThemPhieuDatFormController extends DialogPane{
 
 
         // load ComboBox Khuyến mãi.
-        KhuyenMai nothing = new KhuyenMai("None","Không áp dụng");
+        KhuyenMaiDTO nothing = new KhuyenMaiDTO("None","Không áp dụng");
         cbKhuyenMai.getItems().add(nothing);
         cbKhuyenMai.getItems().addAll(FXCollections.observableArrayList(dsKhuyenMai));
 
@@ -353,7 +353,7 @@ public class ThemPhieuDatFormController extends DialogPane{
 
         //sự kiện khi thay đổi comboBox khuyến mãi
         cbKhuyenMai.setOnAction(e -> {
-            KhuyenMai km = cbKhuyenMai.getSelectionModel().getSelectedItem();
+            KhuyenMaiDTO km = cbKhuyenMai.getSelectionModel().getSelectedItem();
             // Không áp dụng hoặc chọn null
             if (km == null || km.getTenKM().equals("Không áp dụng")) {
                 txtCanhBaoKM.setText("");
@@ -392,7 +392,7 @@ public class ThemPhieuDatFormController extends DialogPane{
                 return;
             }
 
-            for (DonViTinh dvt : cbDonVi.getItems()) {
+            for (DonViTinhDTO dvt : cbDonVi.getItems()) {
                 if (dvt.getMaDVT() == cbTenThuoc.getSelectionModel().getSelectedItem().getMaDVTCoSo().getMaDVT() ) {
                     cbDonVi.getSelectionModel().select(dvt);
                     break;
@@ -422,11 +422,11 @@ public class ThemPhieuDatFormController extends DialogPane{
 
         //sự kiện xóa thuốc khỏi bảng
         tbChonThuoc.setRowFactory( tv -> {
-            TableRow<ChiTietPhieuDatThuoc> row = new TableRow<>();
+            TableRow<ChiTietPhieuDatThuocDTO> row = new TableRow<>();
             ContextMenu contextMenu = new ContextMenu();
             MenuItem deleteItem = new MenuItem("Xóa thuốc khỏi bảng");
             deleteItem.setOnAction( event -> {
-                ChiTietPhieuDatThuoc selectedItem = row.getItem();
+                ChiTietPhieuDatThuocDTO selectedItem = row.getItem();
                 list.remove(selectedItem);
                 loadTable();
                 loadTongTien();
@@ -449,12 +449,12 @@ public class ThemPhieuDatFormController extends DialogPane{
      */
     private boolean approveThuoc() {
 
-        Thuoc selectedThuoc = cbTenThuoc.getSelectionModel().getSelectedItem();
+        ThuocDTO selectedThuocDTO = cbTenThuoc.getSelectionModel().getSelectedItem();
         //gọi integer để có thể sử dụng null trong điều kiện
         Integer soLuongNhap = spSoLuong.getValue();
 
         // Nếu người dùng chưa chọn thuốc hoặc chọn rỗng
-        if (selectedThuoc == null) {
+        if (selectedThuocDTO == null) {
             showMess("Thiếu thông tin", "Vui lòng chọn thuốc.");
             return false;
         }
@@ -465,29 +465,29 @@ public class ThemPhieuDatFormController extends DialogPane{
         }
 
         // Lấy chi tiết thuốc trong kho
-        ArrayList<LoThuoc> dsChiTiet =
-                chiTietThuoc_dao.getAllCHiTietThuocTheoMaThuoc(selectedThuoc.getMaThuoc());
+        ArrayList<LoThuocDTO> dsChiTiet =
+                chiTietThuoc_dao.getAllCHiTietThuocTheoMaThuoc(selectedThuocDTO.getMaThuoc());
         if (dsChiTiet.isEmpty()) {
-            showMess("Hết hàng", "Thuốc \"" + selectedThuoc.getTenThuoc() + "\" hiện không có trong kho.");
+            showMess("Hết hàng", "Thuốc \"" + selectedThuocDTO.getTenThuoc() + "\" hiện không có trong kho.");
             return false;
         }
 
         int tongSoLuongTrongKho = dsChiTiet.stream()
                 .filter(ctt -> ctt.getHanSuDung().isAfter(LocalDate.now()))
-                .mapToInt(LoThuoc::getSoLuong)
+                .mapToInt(LoThuocDTO::getSoLuong)
                 .sum();
         // So sánh tồn kho với số lượng nhập
 
         int soLuongdaChon = 0;
-        for (ChiTietPhieuDatThuoc ct : tbChonThuoc.getItems()) {
-            if (ct.getMaThuoc().getMaThuoc().equals(selectedThuoc.getMaThuoc())) {
+        for (ChiTietPhieuDatThuocDTO ct : tbChonThuoc.getItems()) {
+            if (ct.getMaThuoc().getMaThuocDTO().equals(selectedThuocDTO.getMaThuoc())) {
                 soLuongdaChon += ct.getSoLuong();
             }
         }
 
         if ( (soLuongNhap + soLuongdaChon) > tongSoLuongTrongKho) {
             showMess("Không đủ số lượng",
-                    "đơn vị của thuốc " + selectedThuoc.getTenThuoc() +
+                    "đơn vị của thuốc " + selectedThuocDTO.getTenThuoc() +
                             " Kho chỉ còn \"" + (tongSoLuongTrongKho )+ "\".");
             return false;
         }
@@ -506,42 +506,42 @@ public class ThemPhieuDatFormController extends DialogPane{
      */
     private void addThuocVaoTable() {
 
-        Thuoc thuoc = cbTenThuoc.getSelectionModel().getSelectedItem();
+        ThuocDTO thuocDTO = cbTenThuoc.getSelectionModel().getSelectedItem();
         int soLuongCan = spSoLuong.getValue();
-        DonViTinh dvt = cbDonVi.getSelectionModel().getSelectedItem();
+        DonViTinhDTO dvt = cbDonVi.getSelectionModel().getSelectedItem();
 
-        if (thuoc == null || soLuongCan <= 0) return;
+        if (thuocDTO == null || soLuongCan <= 0) return;
 
         // 1. Lấy các lô còn hạn, sắp theo hạn tăng dần
-        ArrayList<LoThuoc> dsLo = chiTietThuoc_dao
-                .getAllChiTietThuocVoiMaChoCTPD(thuoc.getMaThuoc())
+        ArrayList<LoThuocDTO> dsLo = chiTietThuoc_dao
+                .getAllChiTietThuocVoiMaChoCTPD(thuocDTO.getMaThuoc())
                 .stream()
                 .filter(ct -> ct.getHanSuDung().isAfter(LocalDate.now()))
-                .sorted(Comparator.comparing(LoThuoc::getHanSuDung))
+                .sorted(Comparator.comparing(LoThuocDTO::getHanSuDung))
                 .collect(Collectors.toCollection(ArrayList::new));
 
-        int tongTon = dsLo.stream().mapToInt(LoThuoc::getSoLuong).sum();
+        int tongTon = dsLo.stream().mapToInt(LoThuocDTO::getSoLuong).sum();
         if (tongTon < soLuongCan) {
             showMess("Không đủ tồn", "Kho chỉ còn " + tongTon);
             return;
         }
 
         // 2. Chia số lượng cho từng lô
-        for (LoThuoc lo : dsLo) {
+        for (LoThuocDTO lo : dsLo) {
             if (soLuongCan <= 0) break;
 
             int lay = Math.min(lo.getSoLuong(), soLuongCan);
             soLuongCan -= lay;
 
-            ChiTietPhieuDatThuoc ct = new ChiTietPhieuDatThuoc(lo, lay, dvt);
+            ChiTietPhieuDatThuocDTO ct = new ChiTietPhieuDatThuocDTO(lo, lay, dvt);
 
             // 3. Nếu đã tồn tại cùng lô → cộng dồn
-            Optional<ChiTietPhieuDatThuoc> existing = list.stream()
+            Optional<ChiTietPhieuDatThuocDTO> existing = list.stream()
                     .filter(x -> x.getMaThuoc().getMaLoThuoc() == lo.getMaLoThuoc())
                     .findFirst();
 
             if (existing.isPresent()) {
-                ChiTietPhieuDatThuoc old = existing.get();
+                ChiTietPhieuDatThuocDTO old = existing.get();
                 old.setSoLuong(old.getSoLuong() + lay);
             } else {
                 list.add(ct);
@@ -552,13 +552,13 @@ public class ThemPhieuDatFormController extends DialogPane{
         loadTable();
         loadTongTien();
 
-        txtDonGia.setText(dinhDangTien(thuoc.getGiaBan()));
+        txtDonGia.setText(dinhDangTien(thuocDTO.getGiaBan()));
     }
 
     private void themPhieuDat() {
 
         // ===== 1. NHÂN VIÊN =====
-        NhanVien nguoiDat = PhienNguoiDung.getMaNV();
+        NhanVienDTO nguoiDat = PhienNguoiDungDTO.getMaNV();
         if (nguoiDat == null) {
             showMess("Lỗi", "Không xác định được nhân viên.");
             return;
@@ -573,9 +573,9 @@ public class ThemPhieuDatFormController extends DialogPane{
             return;
         }
 
-        KhachHang khach;
+        KhachHangDTO khach;
         if (isKhachHangMoi()) {
-            khach = new KhachHang(getMaKhachMoi(), ten, sdt, false);
+            khach = new KhachHangDTO(getMaKhachMoi(), ten, sdt, false);
             khachHangDAO.insertKhachHang(khach);
         } else {
             khach = dsKhach.stream()
@@ -596,13 +596,13 @@ public class ThemPhieuDatFormController extends DialogPane{
         }
 
         // ===== 4. KHUYẾN MÃI =====
-        KhuyenMai km = cbKhuyenMai.getSelectionModel().getSelectedItem();
+        KhuyenMaiDTO km = cbKhuyenMai.getSelectionModel().getSelectedItem();
         if (km != null && "Không áp dụng".equals(km.getTenKM())) {
             km = null;
         }
 
         // ===== 5. TẠO PHIẾU =====
-        PhieuDatThuoc phieu = new PhieuDatThuoc(
+        PhieuDatThuocDTO phieu = new PhieuDatThuocDTO(
                 getHashPD(),
                 LocalDate.now(),
                 false,
@@ -619,12 +619,12 @@ public class ThemPhieuDatFormController extends DialogPane{
             con.setAutoCommit(false); // TRANSACTION
 
             // 6.1 Thêm phiếu
-            I_PhieuDat_DAO.themPhieuDatThuocVaoDBS(phieu);
+            I_PhieuDat_Service.themPhieuDatThuocVaoDBS(phieu);
 
             // 6.2 Thêm chi tiết + trừ kho
-            for (ChiTietPhieuDatThuoc ct : tbChonThuoc.getItems()) {
+            for (ChiTietPhieuDatThuocDTO ct : tbChonThuoc.getItems()) {
 
-                LoThuoc lo = ct.getMaThuoc();
+                LoThuocDTO lo = ct.getMaThuoc();
                 int soLuongDat = ct.getSoLuong();
 
                 if (lo.getSoLuong() < soLuongDat) {
@@ -632,12 +632,12 @@ public class ThemPhieuDatFormController extends DialogPane{
                 }
 
                 // Thêm chi tiết phiếu
-                I_ChiTietPhieuDat_DAO.themChiTietPhieuDatVaoDBS(
-                        new ChiTietPhieuDatThuoc(
+                I_ChiTietPhieuDat_Service.themChiTietPhieuDatVaoDBS(
+                        new ChiTietPhieuDatThuocDTO(
                                 phieu,
                                 lo,
                                 soLuongDat,
-                                ct.getDonViTinh()
+                                ct.getDonViTinhDTO()
                         )
                 );
 
@@ -681,7 +681,7 @@ public class ThemPhieuDatFormController extends DialogPane{
         String sdt = txtSoDienThoai.getText().trim();
         if (sdt == null || sdt.isEmpty()) return true;
 
-        for (KhachHang kh : dsKhach) {
+        for (KhachHangDTO kh : dsKhach) {
             if (kh.getSoDienThoai().equals(sdt)) {
                 return false;
             }
@@ -695,7 +695,7 @@ public class ThemPhieuDatFormController extends DialogPane{
      * @return String - mã phiếu đặt mới
      */
     private String getHashPD() {
-        String hash = I_PhieuDat_DAO.getMaxHash();
+        String hash = I_PhieuDat_Service.getMaxHash();
         if (hash == null){
             return "";
         }else{
@@ -710,10 +710,10 @@ public class ThemPhieuDatFormController extends DialogPane{
      */
     public double tinhTongTien(){
         double tongTien = 0.0;
-        for (ChiTietPhieuDatThuoc e : tbChonThuoc.getItems()){
+        for (ChiTietPhieuDatThuocDTO e : tbChonThuoc.getItems()){
             tongTien += e.getSoLuong()
-                    * e.getMaThuoc().getMaThuoc().getGiaBan()
-                    * (1 - e.getMaThuoc().getMaThuoc().getThue());
+                    * e.getMaThuoc().getMaThuocDTO().getGiaBan()
+                    * (1 - e.getMaThuoc().getMaThuocDTO().getThue());
         }
         // Áp dụng khuyến mãi nếu có
         if (cbKhuyenMai.getSelectionModel().getSelectedItem() != null &&
@@ -721,16 +721,16 @@ public class ThemPhieuDatFormController extends DialogPane{
             if (!txtCanhBaoKM.getText().isEmpty()) {
                 return tongTien;
             }
-            KhuyenMai khuyenMai = cbKhuyenMai.getSelectionModel().getSelectedItem();
-            LoaiKhuyenMai loaiKM = khuyenMai.getLoaiKhuyenMai();
-            int soDaSuDung = hoaDon_DAO.soHoaDonDaCoKhuyenMaiVoiMa(khuyenMai.getMaKM());
-            if (soDaSuDung >= khuyenMai.getSoLuongToiDa()) {
+            KhuyenMaiDTO khuyenMaiDTO = cbKhuyenMai.getSelectionModel().getSelectedItem();
+            LoaiKhuyenMaiDTO loaiKM = khuyenMaiDTO.getLoaiKhuyenMaiDTO();
+            int soDaSuDung = hoaDon_DAO.soHoaDonDaCoKhuyenMaiVoiMa(khuyenMaiDTO.getMaKM());
+            if (soDaSuDung >= khuyenMaiDTO.getSoLuongToiDa()) {
                 return tongTien > 0? tongTien : 0;
             }else{
                 if(loaiKM.getMaLKM() == 1){
-                    tongTien = tongTien * (1 - khuyenMai.getSo()/100);
+                    tongTien = tongTien * (1 - khuyenMaiDTO.getSo()/100);
                 }else {
-                    tongTien = tongTien - khuyenMai.getSo();
+                    tongTien = tongTien - khuyenMaiDTO.getSo();
                 }
             }
         }
@@ -760,8 +760,8 @@ public class ThemPhieuDatFormController extends DialogPane{
         if (tbChonThuoc.getItems().isEmpty()) {
             return thue;
         }
-        for (ChiTietPhieuDatThuoc e : tbChonThuoc.getItems()){
-            thue += e.getSoLuong() * e.getMaThuoc().getMaThuoc().getGiaBan()* e.getMaThuoc().getMaThuoc().getThue();
+        for (ChiTietPhieuDatThuocDTO e : tbChonThuoc.getItems()){
+            thue += e.getSoLuong() * e.getMaThuoc().getMaThuocDTO().getGiaBan()* e.getMaThuoc().getMaThuocDTO().getThue();
         }
         return thue;
     }
@@ -808,12 +808,12 @@ public class ThemPhieuDatFormController extends DialogPane{
      * Cài đặt các cột trong bảng
      */
     private void setupTable(){
-        colTenThuoc.setCellValueFactory( cellData -> new SimpleStringProperty(cellData.getValue().getMaThuoc().getMaThuoc().getTenThuoc()));
-        colDonVi.setCellValueFactory( cellData -> new SimpleStringProperty(cellData.getValue().getMaThuoc().getMaThuoc().getMaDVTCoSo().getTenDVT()));
+        colTenThuoc.setCellValueFactory( cellData -> new SimpleStringProperty(cellData.getValue().getMaThuoc().getMaThuocDTO().getTenThuoc()));
+        colDonVi.setCellValueFactory( cellData -> new SimpleStringProperty(cellData.getValue().getMaThuoc().getMaThuocDTO().getMaDVTCoSo().getTenDVT()));
         colSoLuong.setCellValueFactory( cellData -> new SimpleStringProperty(String.valueOf(cellData.getValue().getSoLuong())));
-        colDonGia.setCellValueFactory( cellData -> new SimpleStringProperty(dinhDangTien(cellData.getValue().getMaThuoc().getMaThuoc().getGiaBan())));
+        colDonGia.setCellValueFactory( cellData -> new SimpleStringProperty(dinhDangTien(cellData.getValue().getMaThuoc().getMaThuocDTO().getGiaBan())));
         colThanhTien.setCellValueFactory( cellData -> {
-            double thanhTien = cellData.getValue().getSoLuong() * cellData.getValue().getMaThuoc().getMaThuoc().getGiaBan();
+            double thanhTien = cellData.getValue().getSoLuong() * cellData.getValue().getMaThuoc().getMaThuocDTO().getGiaBan();
             return new SimpleStringProperty(dinhDangTien(thanhTien));
         } );
     }

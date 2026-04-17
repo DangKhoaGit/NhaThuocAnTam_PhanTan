@@ -6,11 +6,11 @@
 package com.antam.app.controller.phieunhap;
 
 import com.antam.app.connect.ConnectDB;
-import com.antam.app.dao.I_NhanVien_DAO;
-import com.antam.app.dao.impl.NhanVien_DAO;
-import com.antam.app.dao.impl.PhieuNhap_DAO;
-import com.antam.app.entity.NhanVien;
-import com.antam.app.entity.PhieuNhap;
+import com.antam.app.service.I_NhanVien_Service;
+import com.antam.app.service.impl.NhanVien_Service;
+import com.antam.app.service.impl.PhieuNhap_Service;
+import com.antam.app.dto.NhanVienDTO;
+import com.antam.app.dto.PhieuNhapDTO;
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcon;
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcons;
 import javafx.beans.property.SimpleStringProperty;
@@ -37,20 +37,20 @@ import java.util.Locale;
 public class KhoiPhucPhieuNhapController extends ScrollPane{
 
     private Button btnKhoiPhuc, btnXoaRong;
-    private TableView<PhieuNhap> tbPhieuNhap;
-    private ComboBox<NhanVien> cbNhanVienNhap;
+    private TableView<PhieuNhapDTO> tbPhieuNhap;
+    private ComboBox<NhanVienDTO> cbNhanVienNhap;
     private DatePicker dpTuNgay, dpDenNgay;
     private ComboBox<String> cbKhoangGia;
     private TextField tfTimPhieuNhap;
 
-    private PhieuNhap_DAO phieuNhap_DAO = new PhieuNhap_DAO();
-    private NhanVien_DAO nhanVien_DAO = new NhanVien_DAO();
+    private PhieuNhap_Service phieuNhap_DAO = new PhieuNhap_Service();
+    private NhanVien_Service nhanVien_DAO = new NhanVien_Service();
 
     /* Lấy dữ liệu từ DAO */
-    private ArrayList<PhieuNhap> dsPhieuNhap = new ArrayList<>();
-    private ObservableList<PhieuNhap> data = FXCollections.observableArrayList();
+    private ArrayList<PhieuNhapDTO> dsPhieuNhap = new ArrayList<>();
+    private ObservableList<PhieuNhapDTO> data = FXCollections.observableArrayList();
 
-    private PhieuNhap phieuNhapDuocChon;
+    private PhieuNhapDTO phieuNhapDTODuocChon;
 
     public KhoiPhucPhieuNhapController() {
         /** Giao diện **/
@@ -203,23 +203,23 @@ public class KhoiPhucPhieuNhapController extends ScrollPane{
         }
 
         this.btnKhoiPhuc.setOnAction((e) -> {
-            if (phieuNhapDuocChon == null){
+            if (phieuNhapDTODuocChon == null){
                 Alert alert = new Alert(Alert.AlertType.WARNING);
                 alert.setTitle("Chưa chọn phiếu nhập");
                 alert.setHeaderText(null);
                 alert.setContentText("Vui lòng chọn phiếu nhập để thực hiện khôi phục!");
                 alert.showAndWait();
             } else {
-                if (phieuNhap_DAO.suaTrangThaiPhieuNhap(phieuNhapDuocChon.getMaPhieuNhap())){
+                if (phieuNhap_DAO.suaTrangThaiPhieuNhap(phieuNhapDTODuocChon.getMaPhieuNhap())){
                     Alert alert = new Alert(Alert.AlertType.INFORMATION);
                     alert.setTitle("Khôi phục thành công");
                     alert.setHeaderText(null);
                     alert.setContentText("Phiếu nhập đã được khôi phục!");
                     alert.showAndWait();
                 }
-                phieuNhapDuocChon = null;
+                phieuNhapDTODuocChon = null;
                 tbPhieuNhap.refresh();
-                ObservableList<PhieuNhap> phieuNhapList = FXCollections.observableArrayList(phieuNhap_DAO.getDanhSachPhieuNhapTheoTrangThai(true));
+                ObservableList<PhieuNhapDTO> phieuNhapList = FXCollections.observableArrayList(phieuNhap_DAO.getDanhSachPhieuNhapTheoTrangThai(true));
                 tbPhieuNhap.setItems(phieuNhapList);
             }
         });
@@ -257,9 +257,9 @@ public class KhoiPhucPhieuNhapController extends ScrollPane{
         //Sự kiện khi click table
         tbPhieuNhap.getSelectionModel().setSelectionMode(SelectionMode.SINGLE);
         tbPhieuNhap.setOnMouseReleased(e -> {
-           PhieuNhap selected = tbPhieuNhap.getSelectionModel().getSelectedItem();
+           PhieuNhapDTO selected = tbPhieuNhap.getSelectionModel().getSelectedItem();
            if (selected != null){
-               phieuNhapDuocChon = new PhieuNhap(
+               phieuNhapDTODuocChon = new PhieuNhapDTO(
                        selected.getMaPhieuNhap(),
                        selected.getNhaCungCap(),
                        selected.getNgayNhap(),
@@ -273,8 +273,8 @@ public class KhoiPhucPhieuNhapController extends ScrollPane{
            if (e.getClickCount() == 2){
                if (selected != null) {
                    XemChiTietPhieuNhapFormController xemDialog = new XemChiTietPhieuNhapFormController();
-                   xemDialog.showChiTietPhieuNhap(phieuNhapDuocChon);
-                   Dialog<Void> dialog = new javafx.scene.control.Dialog<>();
+                   xemDialog.showChiTietPhieuNhap(phieuNhapDTODuocChon);
+                   Dialog<Void> dialog = new Dialog<>();
                    dialog.setDialogPane(xemDialog);
                    dialog.setTitle("Chi tiết phiếu nhập");
                    dialog.showAndWait();
@@ -304,9 +304,9 @@ public class KhoiPhucPhieuNhapController extends ScrollPane{
     }
 
     public void loadDanhSachNhanVien(){
-        ArrayList<NhanVien> dsNhanVien = I_NhanVien_DAO.getDsNhanVienformDBS();
-        for (NhanVien nhanVien : dsNhanVien){
-            cbNhanVienNhap.getItems().add(nhanVien);
+        ArrayList<NhanVienDTO> dsNhanVien = I_NhanVien_Service.getDsNhanVienformDBS();
+        for (NhanVienDTO nhanVienDTO : dsNhanVien){
+            cbNhanVienNhap.getItems().add(nhanVienDTO);
         }
     }
 
@@ -318,27 +318,27 @@ public class KhoiPhucPhieuNhapController extends ScrollPane{
     public void loadDanhSachPhieuNhap(){
 
         /* Tên cột */
-        TableColumn<PhieuNhap, String> colMaPhieuNhap = new TableColumn<>("Mã Phiếu Nhập");
+        TableColumn<PhieuNhapDTO, String> colMaPhieuNhap = new TableColumn<>("Mã Phiếu Nhập");
         colMaPhieuNhap.setCellValueFactory(new PropertyValueFactory<>("maPhieuNhap"));
 
-        TableColumn<PhieuNhap, String> colNhaCungCap = new TableColumn<>("Nhà Cung Cấp");
+        TableColumn<PhieuNhapDTO, String> colNhaCungCap = new TableColumn<>("Nhà Cung Cấp");
         colNhaCungCap.setCellValueFactory(new PropertyValueFactory<>("nhaCungCap"));
 
-        TableColumn<PhieuNhap, Date> colNgayNhap = new TableColumn<>("Ngày Nhập");
+        TableColumn<PhieuNhapDTO, Date> colNgayNhap = new TableColumn<>("Ngày Nhập");
         colNgayNhap.setCellValueFactory(new PropertyValueFactory<>("ngayNhap"));
 
-        TableColumn<PhieuNhap, String> colDiaChi = new TableColumn<>("Địa Chỉ");
+        TableColumn<PhieuNhapDTO, String> colDiaChi = new TableColumn<>("Địa Chỉ");
         colDiaChi.setCellValueFactory(new PropertyValueFactory<>("diaChi"));
 
-        TableColumn<PhieuNhap, String> colLyDo = new TableColumn<>("Lý Do");
+        TableColumn<PhieuNhapDTO, String> colLyDo = new TableColumn<>("Lý Do");
         colLyDo.setCellValueFactory(new PropertyValueFactory<>("lyDo"));
 
-        TableColumn<PhieuNhap, String> colHoTenNhanVien = new TableColumn<>("Nhân Viên");
+        TableColumn<PhieuNhapDTO, String> colHoTenNhanVien = new TableColumn<>("Nhân Viên");
         colHoTenNhanVien.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getMaNV().getHoTen()));
 
-        TableColumn<PhieuNhap, Double> colTongTien = new TableColumn<>("Tổng tiền");
+        TableColumn<PhieuNhapDTO, Double> colTongTien = new TableColumn<>("Tổng tiền");
         colTongTien.setCellValueFactory(new PropertyValueFactory<>("tongTien"));
-        colTongTien.setCellFactory(column -> new TableCell<PhieuNhap, Double>() {
+        colTongTien.setCellFactory(column -> new TableCell<PhieuNhapDTO, Double>() {
             private final NumberFormat currencyFormat = NumberFormat.getCurrencyInstance(new Locale("vi", "VN"));
             @Override
             protected void updateItem(Double value, boolean empty) {
@@ -351,9 +351,9 @@ public class KhoiPhucPhieuNhapController extends ScrollPane{
             }
         });
 
-        TableColumn<PhieuNhap, Boolean> colTrangThai = new TableColumn<>("Trạng Thái");
+        TableColumn<PhieuNhapDTO, Boolean> colTrangThai = new TableColumn<>("Trạng Thái");
         colTrangThai.setCellValueFactory(new PropertyValueFactory<>("deleteAt"));
-        colTrangThai.setCellFactory(column -> new TableCell<PhieuNhap, Boolean>() {
+        colTrangThai.setCellFactory(column -> new TableCell<PhieuNhapDTO, Boolean>() {
             @Override
             protected void updateItem(Boolean isDeleted, boolean empty) {
                 super.updateItem(isDeleted, empty);
@@ -370,7 +370,7 @@ public class KhoiPhucPhieuNhapController extends ScrollPane{
     }
 
     public void filterAndSearch(){
-        NhanVien selectedNV = cbNhanVienNhap.getValue();
+        NhanVienDTO selectedNV = cbNhanVienNhap.getValue();
         String maNV = selectedNV != null ? selectedNV.getMaNV() : null;
 
         LocalDate tuNgay = dpTuNgay.getValue();
@@ -378,8 +378,8 @@ public class KhoiPhucPhieuNhapController extends ScrollPane{
         String khoangGia = cbKhoangGia.getValue();
         String maPhieuNhap = tfTimPhieuNhap.getText().trim();
 
-        ArrayList<PhieuNhap> phieuNhap = new ArrayList<>();
-        for (PhieuNhap ds : dsPhieuNhap) {
+        ArrayList<PhieuNhapDTO> phieuNhap = new ArrayList<>();
+        for (PhieuNhapDTO ds : dsPhieuNhap) {
             boolean check = true;
 
             // lọc theo nhân viên

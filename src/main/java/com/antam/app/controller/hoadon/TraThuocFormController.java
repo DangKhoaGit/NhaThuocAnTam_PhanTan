@@ -6,13 +6,11 @@
 package com.antam.app.controller.hoadon;
 
 import com.antam.app.connect.ConnectDB;
-import com.antam.app.dao.*;
-import com.antam.app.dao.impl.*;
-import com.antam.app.entity.*;
+import com.antam.app.service.impl.*;
+import com.antam.app.dto.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
-import javafx.fxml.FXML;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.control.ButtonBar.ButtonData;
@@ -40,30 +38,30 @@ public class TraThuocFormController extends DialogPane{
     private ComboBox<String> cbLyDoTra;
 
 
-    private Thuoc_DAO thuoc_dao = new Thuoc_DAO();
-    private HoaDon_DAO hoaDon_dao = new HoaDon_DAO();
-    private KhachHang_DAO khachHang_dao = new KhachHang_DAO();
-    private ChiTietHoaDon_DAO chiTietHoaDon_dao = new ChiTietHoaDon_DAO();
-    private LoThuoc_DAO chiTietThuoc_dao = new LoThuoc_DAO();
-    private KhuyenMai_DAO khuyenMai_dao = new KhuyenMai_DAO();
-    private HoaDon hoaDon;
-    private ArrayList<ChiTietHoaDon> selectedItems = new ArrayList<>();
+    private Thuoc_Service thuoc_dao = new Thuoc_Service();
+    private HoaDon_Service hoaDon_dao = new HoaDon_Service();
+    private KhachHang_Service khachHang_dao = new KhachHang_Service();
+    private ChiTietHoaDon_Service chiTietHoaDon_dao = new ChiTietHoaDon_Service();
+    private LoThuoc_Service chiTietThuoc_dao = new LoThuoc_Service();
+    private KhuyenMai_Service khuyenMai_dao = new KhuyenMai_Service();
+    private HoaDonDTO hoaDonDTO;
+    private ArrayList<ChiTietHoaDonDTO> selectedItems = new ArrayList<>();
 
-    public void setHoaDon(HoaDon hoaDon) {
-        this.hoaDon = hoaDon;
+    public void setHoaDon(HoaDonDTO hoaDonDTO) {
+        this.hoaDonDTO = hoaDonDTO;
     }
 
-    public HoaDon getHoaDOn() {
-        return hoaDon;
+    public HoaDonDTO getHoaDOn() {
+        return hoaDonDTO;
     }
 
     // Hiển thị thông tin hóa đơn và chi tiết hóa đơn
-    public void showData(HoaDon hoaDon) {
-        HoaDon hd = hoaDon_dao.getHoaDonTheoMa(hoaDon.getMaHD());
-        ArrayList<ChiTietHoaDon> chiTietHoaDons = chiTietHoaDon_dao.getAllChiTietHoaDonTheoMaHD(hoaDon.getMaHD());
-        txtMaHoaDonTra.setText(hoaDon.getMaHD());
+    public void showData(HoaDonDTO hoaDonDTO) {
+        HoaDonDTO hd = hoaDon_dao.getHoaDonTheoMa(hoaDonDTO.getMaHD());
+        ArrayList<ChiTietHoaDonDTO> chiTietHoaDons = chiTietHoaDon_dao.getAllChiTietHoaDonTheoMaHD(hoaDonDTO.getMaHD());
+        txtMaHoaDonTra.setText(hoaDonDTO.getMaHD());
         txtKhachHangTra.setText(khachHang_dao.getKhachHangTheoMa(hd.getMaKH().getMaKH()).getTenKH());
-        for (ChiTietHoaDon ct : chiTietHoaDons) {
+        for (ChiTietHoaDonDTO ct : chiTietHoaDons) {
             HBox hBox = renderChiTietHoaDon(ct);
             vbListChiTietHoaDon.getChildren().add(hBox);
         }
@@ -227,8 +225,8 @@ public class TraThuocFormController extends DialogPane{
                     return;
                 }
 
-                for (ChiTietHoaDon ct : selectedItems) {
-                    chiTietHoaDon_dao.xoaMemChiTietHoaDon(ct.getMaHD().getMaHD(), ct.getMaLoThuoc().getMaLoThuoc(), "Trả");
+                for (ChiTietHoaDonDTO ct : selectedItems) {
+                    chiTietHoaDon_dao.xoaMemChiTietHoaDon(ct.getMaHD().getMaHD(), ct.getMaLoThuocDTO().getMaLoThuoc(), "Trả");
 
                     switch (lyDoTra) {
                         // Các lý do KHÔNG cộng lại vào kho
@@ -243,14 +241,14 @@ public class TraThuocFormController extends DialogPane{
                         case "Khách hàng đổi ý":
                         case "Nhập nhầm lô / dư":
                         case "Sai thông tin đơn / bảo hiểm":
-                            Thuoc t = thuoc_dao.getThuocTheoMa(
+                            ThuocDTO t = thuoc_dao.getThuocTheoMa(
                                     chiTietThuoc_dao
-                                            .getChiTietThuoc(ct.getMaLoThuoc().getMaLoThuoc())
-                                            .getMaThuoc()
+                                            .getChiTietThuoc(ct.getMaLoThuocDTO().getMaLoThuoc())
+                                            .getMaThuocDTO()
                                             .getMaThuoc()
                             );
                             chiTietThuoc_dao.CapNhatSoLuongChiTietThuoc(
-                                    ct.getMaLoThuoc().getMaLoThuoc(),
+                                    ct.getMaLoThuocDTO().getMaLoThuoc(),
                                     ct.getSoLuong()
                             );
                             break;
@@ -262,26 +260,26 @@ public class TraThuocFormController extends DialogPane{
                     }
 
                 }
-                if (chiTietHoaDon_dao.getAllChiTietHoaDonTheoMaHDConBan(hoaDon.getMaHD()).isEmpty()) {
-                    hoaDon_dao.xoaMemHoaDon(hoaDon.getMaHD());
-                    hoaDon_dao.CapNhatTongTienHoaDon(hoaDon.getMaHD(), 0);
+                if (chiTietHoaDon_dao.getAllChiTietHoaDonTheoMaHDConBan(hoaDonDTO.getMaHD()).isEmpty()) {
+                    hoaDon_dao.xoaMemHoaDon(hoaDonDTO.getMaHD());
+                    hoaDon_dao.CapNhatTongTienHoaDon(hoaDonDTO.getMaHD(), 0);
                 } else {
-                    double tongTienCu = hoaDon.getTongTien();
+                    double tongTienCu = hoaDonDTO.getTongTien();
                     double tongTienTra = 0;
                     double tongTienCoKM = 0;
-                    for (ChiTietHoaDon ct : selectedItems) {
-                        LoThuoc ctt = ct.getMaLoThuoc();
-                        Thuoc t = thuoc_dao.getThuocTheoMa(ctt.getMaThuoc().getMaThuoc());
+                    for (ChiTietHoaDonDTO ct : selectedItems) {
+                        LoThuocDTO ctt = ct.getMaLoThuocDTO();
+                        ThuocDTO t = thuoc_dao.getThuocTheoMa(ctt.getMaThuocDTO().getMaThuoc());
                         if (ct.getTinhTrang().equals("Thuốc Mới Khi Đổi")){
                             tongTienTra += ct.getThanhTien() * (1 + t.getThue());
                         } else {
                             tongTienCoKM += ct.getThanhTien() * (1 + t.getThue());
                         }
                     }
-                    KhuyenMai km = null;
+                    KhuyenMaiDTO km = null;
 
-                    if (hoaDon.getMaKM() != null) {
-                        km = khuyenMai_dao.getKhuyenMaiTheoMa(hoaDon.getMaKM().getMaKM());
+                    if (hoaDonDTO.getMaKM() != null) {
+                        km = khuyenMai_dao.getKhuyenMaiTheoMa(hoaDonDTO.getMaKM().getMaKM());
                     }
 
                     if (km != null) {
@@ -289,8 +287,8 @@ public class TraThuocFormController extends DialogPane{
                     }
 
                     double tongMoi = tongTienCu - tongTienTra - tongTienCoKM;
-                    hoaDon.setTongTien(tongMoi);
-                    hoaDon_dao.CapNhatTongTienHoaDon(hoaDon.getMaHD(), tongMoi);
+                    hoaDonDTO.setTongTien(tongMoi);
+                    hoaDon_dao.CapNhatTongTienHoaDon(hoaDonDTO.getMaHD(), tongMoi);
 
                 }
             }
@@ -303,9 +301,9 @@ public class TraThuocFormController extends DialogPane{
     public void tinhTongTienTra(){
         double tongTien = 0;
         double tongTienKhiTra = 0;
-        for (ChiTietHoaDon ct : selectedItems){
-            LoThuoc ctt = ct.getMaLoThuoc();
-            Thuoc t = thuoc_dao.getThuocTheoMa(ctt.getMaThuoc().getMaThuoc());
+        for (ChiTietHoaDonDTO ct : selectedItems){
+            LoThuocDTO ctt = ct.getMaLoThuocDTO();
+            ThuocDTO t = thuoc_dao.getThuocTheoMa(ctt.getMaThuocDTO().getMaThuoc());
             if (ct.getTinhTrang().equals("Thuốc Mới Khi Đổi")){
                 tongTienKhiTra += ct.getThanhTien() * (1 + t.getThue());
             } else {
@@ -313,10 +311,10 @@ public class TraThuocFormController extends DialogPane{
             }
         }
         DecimalFormat df = new DecimalFormat("#,### đ");
-        if (hoaDon.getMaKM() != null) {
+        if (hoaDonDTO.getMaKM() != null) {
 
-            String maKM = hoaDon.getMaKM().getMaKM();
-            KhuyenMai km = khuyenMai_dao.getKhuyenMaiTheoMa(maKM);
+            String maKM = hoaDonDTO.getMaKM().getMaKM();
+            KhuyenMaiDTO km = khuyenMai_dao.getKhuyenMaiTheoMa(maKM);
 
             if (km != null) {
                 tongTien = TinhTienKhuyenMai(tongTien, km.getSo());
@@ -344,14 +342,14 @@ public class TraThuocFormController extends DialogPane{
         cbLyDoTra.setItems(lyDoList);
     }
     // Render chi tiết hóa đơn
-    public HBox renderChiTietHoaDon(ChiTietHoaDon chiTietHoaDon) {
-        if (chiTietHoaDon.getTinhTrang() == null) {
+    public HBox renderChiTietHoaDon(ChiTietHoaDonDTO chiTietHoaDonDTO) {
+        if (chiTietHoaDonDTO.getTinhTrang() == null) {
             HBox h = new HBox();
             h.setVisible(false);
             h.setManaged(false);
             return h;
         }
-        if (chiTietHoaDon.getTinhTrang().equals("Trả") || chiTietHoaDon.getTinhTrang().equals("Trả Khi Đổi")) {
+        if (chiTietHoaDonDTO.getTinhTrang().equals("Trả") || chiTietHoaDonDTO.getTinhTrang().equals("Trả Khi Đổi")) {
             HBox h = new HBox();
             h.setVisible(false);
             h.setManaged(false);
@@ -367,11 +365,11 @@ public class TraThuocFormController extends DialogPane{
         CheckBox checkBox = new CheckBox();
         checkBox.setOnAction(event -> {
             if (checkBox.isSelected()) {
-                if (!selectedItems.contains(chiTietHoaDon)) {
-                    selectedItems.add(chiTietHoaDon);
+                if (!selectedItems.contains(chiTietHoaDonDTO)) {
+                    selectedItems.add(chiTietHoaDonDTO);
                 }
             } else {
-                selectedItems.remove(chiTietHoaDon);
+                selectedItems.remove(chiTietHoaDonDTO);
             }
             tinhTongTienTra();
         });
@@ -380,17 +378,17 @@ public class TraThuocFormController extends DialogPane{
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
-        LoThuoc ctt = chiTietThuoc_dao.getChiTietThuoc(chiTietHoaDon.getMaLoThuoc().getMaLoThuoc());
-        Thuoc t = thuoc_dao.getThuocTheoMa(ctt.getMaThuoc().getMaThuoc());
+        LoThuocDTO ctt = chiTietThuoc_dao.getChiTietThuoc(chiTietHoaDonDTO.getMaLoThuocDTO().getMaLoThuoc());
+        ThuocDTO t = thuoc_dao.getThuocTheoMa(ctt.getMaThuocDTO().getMaThuoc());
         Text txtMaThuoc = new Text(t.getTenThuoc());
         txtMaThuoc.setStyle("-fx-font-size: 15px;");
-        Text txtSoLuong = new Text("SL " + chiTietHoaDon.getSoLuong());
+        Text txtSoLuong = new Text("SL " + chiTietHoaDonDTO.getSoLuong());
         txtSoLuong.setStyle("-fx-font-size: 15px;");
         DecimalFormat df = new DecimalFormat("#,### đ");
-        Text txtDonGia = new Text(df.format(chiTietHoaDon.getThanhTien()));
+        Text txtDonGia = new Text(df.format(chiTietHoaDonDTO.getThanhTien()));
         txtDonGia.setStyle("-fx-font-size: 15px;");
         String valueBtn = "Bình thường";
-        if (chiTietHoaDon.getTinhTrang().equals("Thuốc Mới Khi Đổi")){
+        if (chiTietHoaDonDTO.getTinhTrang().equals("Thuốc Mới Khi Đổi")){
             valueBtn = "Thuốc đổi";
         }
         Button btn = new Button(valueBtn);

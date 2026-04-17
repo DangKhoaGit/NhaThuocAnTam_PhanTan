@@ -6,9 +6,8 @@
 package com.antam.app.controller.phieunhap;
 
 import com.antam.app.connect.ConnectDB;
-import com.antam.app.dao.*;
-import com.antam.app.dao.impl.PhieuNhap_DAO;
-import com.antam.app.entity.*;
+import com.antam.app.service.impl.PhieuNhap_Service;
+import com.antam.app.dto.*;
 import javafx.event.ActionEvent;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -29,7 +28,7 @@ public class CapNhatPhieuNhapFormController extends DialogPane{
 
     private TextField tfMaPhieuNhap, tfNhaCungCap, tfDiaChi, tfLyDo;
 
-    private PhieuNhap_DAO phieuNhap_DAO = new PhieuNhap_DAO();
+    private PhieuNhap_Service phieuNhap_DAO = new PhieuNhap_Service();
 
     public CapNhatPhieuNhapFormController() {
         this.setPrefSize(800, 600);
@@ -170,7 +169,7 @@ public class CapNhatPhieuNhapFormController extends DialogPane{
             if (!checkTruongDuLieu()){
                 event.consume();
             }else{
-                if (phieuNhap_DAO.suaPhieuNhap(new PhieuNhap(tfMaPhieuNhap.getText(), tfNhaCungCap.getText(), LocalDate.now(), tfDiaChi.getText(), tfLyDo.getText(), null, 0.0, false))){
+                if (phieuNhap_DAO.suaPhieuNhap(new PhieuNhapDTO(tfMaPhieuNhap.getText(), tfNhaCungCap.getText(), LocalDate.now(), tfDiaChi.getText(), tfLyDo.getText(), null, 0.0, false))){
                     showCanhBao("Thành công", "Cập nhật phiếu nhập thành công");
                 }else{
                     showCanhBao("Thất bại", "Cập nhật phiếu nhập thất bại");
@@ -181,13 +180,13 @@ public class CapNhatPhieuNhapFormController extends DialogPane{
     }
 
     // Hiển thị thông tin phiếu nhập lên form
-    public void showPhieuNhap(PhieuNhap phieuNhap){
-        tfMaPhieuNhap.setText(phieuNhap.getMaPhieuNhap());
+    public void showPhieuNhap(PhieuNhapDTO phieuNhapDTO){
+        tfMaPhieuNhap.setText(phieuNhapDTO.getMaPhieuNhap());
         tfMaPhieuNhap.setEditable(false);
-        tfNhaCungCap.setText(phieuNhap.getNhaCungCap());
-        tfDiaChi.setText(phieuNhap.getDiaChi());
-        tfLyDo.setText(phieuNhap.getLyDo());
-        System.out.println(phieuNhap.getMaPhieuNhap());
+        tfNhaCungCap.setText(phieuNhapDTO.getNhaCungCap());
+        tfDiaChi.setText(phieuNhapDTO.getDiaChi());
+        tfLyDo.setText(phieuNhapDTO.getLyDo());
+        System.out.println(phieuNhapDTO.getMaPhieuNhap());
     }
 
     /**

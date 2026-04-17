@@ -7,8 +7,8 @@ package com.antam.app.controller.dangnhap;
 
 import com.antam.app.connect.ConnectDB;
 import com.antam.app.controller.khungchinh.KhungChinhController;
-import com.antam.app.dao.impl.NhanVien_DAO;
-import com.antam.app.entity.PhienNguoiDung;
+import com.antam.app.service.impl.NhanVien_Service;
+import com.antam.app.dto.PhienNguoiDungDTO;
 import com.antam.app.helper.MaKhoaMatKhau;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -29,7 +29,7 @@ import java.sql.Connection;
 import java.sql.SQLException;
 
 public class DangNhapController extends StackPane {
-    private NhanVien_DAO nv_dao = new NhanVien_DAO();
+    private NhanVien_Service nv_dao = new NhanVien_Service();
     private Button btnLogin = new Button("Đăng nhập");
     private TextField txtname_login = new TextField();
     private PasswordField txtpass_login = new PasswordField();
@@ -127,9 +127,9 @@ public class DangNhapController extends StackPane {
     protected void onLoginButtonClick() {
         if (checklogin()) {
             if (checktnhanvien()) {
-                PhienNguoiDung.setMaNV(nv_dao.getNhanVienTaiKhoan(txtname_login.getText()));
+                PhienNguoiDungDTO.setMaNV(nv_dao.getNhanVienTaiKhoan(txtname_login.getText()));
                 // rào cho trường hợp đăng xuất xong đăng nhập lại
-                if (PhienNguoiDung.getMaNV() == null){
+                if (PhienNguoiDungDTO.getMaNV() == null){
                     notification_login.setText("Tài khoản không hợp lệ");
                     return;
                 }
@@ -198,7 +198,7 @@ public class DangNhapController extends StackPane {
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
-        nv_dao = new NhanVien_DAO();
+        nv_dao = new NhanVien_Service();
         String id = txtname_login.getText();
         String pass = txtpass_login.getText();
         if (nv_dao.getNhanVienTaiKhoan(id) == null){

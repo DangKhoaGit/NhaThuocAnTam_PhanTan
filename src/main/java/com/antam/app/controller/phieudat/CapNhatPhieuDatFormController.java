@@ -5,13 +5,11 @@
 
 package com.antam.app.controller.phieudat;
 
-import com.antam.app.dao.I_ChiTietPhieuDat_DAO;
-import com.antam.app.dao.I_PhieuDat_DAO;
-import com.antam.app.dao.impl.ChiTietHoaDon_DAO;
-import com.antam.app.dao.impl.ChiTietPhieuDat_DAO;
-import com.antam.app.dao.impl.HoaDon_DAO;
-import com.antam.app.dao.impl.PhieuDat_DAO;
-import com.antam.app.entity.*;
+import com.antam.app.service.I_ChiTietPhieuDat_Service;
+import com.antam.app.service.I_PhieuDat_Service;
+import com.antam.app.service.impl.ChiTietHoaDon_Service;
+import com.antam.app.service.impl.HoaDon_Service;
+import com.antam.app.dto.*;
 import com.antam.app.helper.XuatHoaDonPDF;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
@@ -43,17 +41,17 @@ public class CapNhatPhieuDatFormController extends DialogPane{
 
     private Text txtMa,txtNgay,txtSDT,txtStatus,txtTongTien,txtKM;
     
-    private TableColumn<ChiTietPhieuDatThuoc,Integer> colSTT;
+    private TableColumn<ChiTietPhieuDatThuocDTO,Integer> colSTT;
     
-    private TableColumn<ChiTietPhieuDatThuoc,String> colTenThuoc,colThanhTien,colDonGia;
+    private TableColumn<ChiTietPhieuDatThuocDTO,String> colTenThuoc,colThanhTien,colDonGia;
     
-    private TableColumn<ChiTietPhieuDatThuoc,Integer> colSoLuong;
+    private TableColumn<ChiTietPhieuDatThuocDTO,Integer> colSoLuong;
     
-    private TableView<ChiTietPhieuDatThuoc> tbThuoc;
+    private TableView<ChiTietPhieuDatThuocDTO> tbThuoc;
 
-    private PhieuDatThuoc select = selectedPDT;
-    private ArrayList<ChiTietPhieuDatThuoc> listChiTiet = I_ChiTietPhieuDat_DAO.getChiTietTheoPhieu(select.getMaPhieu());
-    private HoaDon_DAO hoaDon_dao = new HoaDon_DAO();
+    private PhieuDatThuocDTO select = selectedPDT;
+    private ArrayList<ChiTietPhieuDatThuocDTO> listChiTiet = I_ChiTietPhieuDat_Service.getChiTietTheoPhieu(select.getMaPhieu());
+    private HoaDon_Service hoaDon_dao = new HoaDon_Service();
 
     public CapNhatPhieuDatFormController() {
         FlowPane header = new FlowPane();
@@ -174,10 +172,10 @@ public class CapNhatPhieuDatFormController extends DialogPane{
         this.setContent(anchor);
         /** Sự kiện **/
 
-        if (select.getKhuyenMai()==null || select.getKhuyenMai().getTenKM().equals("") ){
+        if (select.getKhuyenMaiDTO()==null || select.getKhuyenMaiDTO().getTenKM().equals("") ){
             txtKM.setText("Phiếu đặt thuốc không áp dụng khuyến mãi");
         }else{
-            txtKM.setText("Áp dụng khuyến mãi: "+select.getKhuyenMai().getTenKM());
+            txtKM.setText("Áp dụng khuyến mãi: "+select.getKhuyenMaiDTO().getTenKM());
         }
 
 
@@ -214,7 +212,7 @@ public class CapNhatPhieuDatFormController extends DialogPane{
     }
 
     private void thanhToanPhieuDat() {
-        boolean capNhatOK = I_PhieuDat_DAO.capNhatThanhToanPhieuDat(select.getMaPhieu());
+        boolean capNhatOK = I_PhieuDat_Service.capNhatThanhToanPhieuDat(select.getMaPhieu());
         if (!capNhatOK) {
             showMess("Lỗi", "Không thể cập nhật trạng thái phiếu đặt!");
             return;
@@ -222,29 +220,29 @@ public class CapNhatPhieuDatFormController extends DialogPane{
 
         // Đồng bộ lại object trong RAM
         select.setThanhToan(true);
-        HoaDon hoaDon = new HoaDon(getMaxHashHoaDon(),
+        HoaDonDTO hoaDonDTO = new HoaDonDTO(getMaxHashHoaDon(),
                 LocalDate.now()
-                , PhienNguoiDung.getMaNV()
+                , PhienNguoiDungDTO.getMaNV()
                 , select.getKhachHang()
-                , select.getKhuyenMai()
+                , select.getKhuyenMaiDTO()
                 ,select.getTongTien()
                 , false);
-        if (hoaDon_dao.insertHoaDon(hoaDon)) {
-            ChiTietHoaDon_DAO chiTietHoaDonDao = new ChiTietHoaDon_DAO();
-            ArrayList<ChiTietHoaDon> list = new ArrayList<>();
-            for (ChiTietPhieuDatThuoc e : tbThuoc.getItems()){
-                ChiTietHoaDon i = new ChiTietHoaDon();
-                i.setMaHD(hoaDon);
-                i.setMaLoThuoc(e.getMaThuoc());
+        if (hoaDon_dao.insertHoaDon(hoaDonDTO)) {
+            ChiTietHoaDon_Service chiTietHoaDonDao = new ChiTietHoaDon_Service();
+            ArrayList<ChiTietHoaDonDTO> list = new ArrayList<>();
+            for (ChiTietPhieuDatThuocDTO e : tbThuoc.getItems()){
+                ChiTietHoaDonDTO i = new ChiTietHoaDonDTO();
+                i.setMaHD(hoaDonDTO);
+                i.setMaLoThuocDTO(e.getMaThuoc());
                 i.setThanhTien(e.getThanhTien());
-                i.setMaDVT(e.getDonViTinh());
+                i.setMaDVT(e.getDonViTinhDTO());
                 i.setSoLuong(e.getSoLuong());
                 i.setTinhTrang("Bán");
                 chiTietHoaDonDao.themChiTietHoaDon(i);
                 list.add(i);
             }
             //xuất pdf phiếu dặt
-            thongBaoVaXuatHoaDon(hoaDon,list);
+            thongBaoVaXuatHoaDon(hoaDonDTO,list);
         }else {
             showMess("Lỗi","Thanh toán phiếu đặt thuốc thất bại");
         }
@@ -290,8 +288,8 @@ public class CapNhatPhieuDatFormController extends DialogPane{
             trangThai = "Chưa thanh toán";
         }
         txtStatus.setText("Trạng thái: "+ trangThai);
-        if (select.getKhuyenMai() != null) {
-            txtKM.setText(select.getKhuyenMai().getTenKM());
+        if (select.getKhuyenMaiDTO() != null) {
+            txtKM.setText(select.getKhuyenMaiDTO().getTenKM());
         } else {
             txtKM.setText("Không áp dụng");
         }
@@ -300,14 +298,14 @@ public class CapNhatPhieuDatFormController extends DialogPane{
 
     private void setupTable() {
         colSTT.setCellValueFactory(cellData -> new SimpleIntegerProperty(listChiTiet.indexOf(cellData.getValue()) + 1).asObject());
-        colTenThuoc.setCellValueFactory(cellData ->new SimpleStringProperty(cellData.getValue().getMaThuoc().getMaThuoc().getTenThuoc()));
+        colTenThuoc.setCellValueFactory(cellData ->new SimpleStringProperty(cellData.getValue().getMaThuoc().getMaThuocDTO().getTenThuoc()));
         colSoLuong.setCellValueFactory(cellData -> new SimpleIntegerProperty(cellData.getValue().getSoLuong()).asObject());
-        colDonGia.setCellValueFactory(cellData -> new SimpleStringProperty(dinhDangTien(cellData.getValue().getMaThuoc().getMaThuoc().getGiaBan())));
+        colDonGia.setCellValueFactory(cellData -> new SimpleStringProperty(dinhDangTien(cellData.getValue().getMaThuoc().getMaThuocDTO().getGiaBan())));
         colThanhTien.setCellValueFactory(cellData -> new SimpleStringProperty(dinhDangTien(cellData.getValue().getThanhTien())));
     }
 
     private void loadBangChiTiet() {
-        ObservableList<ChiTietPhieuDatThuoc> load = FXCollections.observableArrayList(listChiTiet);
+        ObservableList<ChiTietPhieuDatThuocDTO> load = FXCollections.observableArrayList(listChiTiet);
         tbThuoc.setItems(load);
     }
 
@@ -316,7 +314,7 @@ public class CapNhatPhieuDatFormController extends DialogPane{
         return df.format(tien);
     }
 
-    private void thongBaoVaXuatHoaDon(HoaDon hoaDon,ArrayList<ChiTietHoaDon> listCTHD) {
+    private void thongBaoVaXuatHoaDon(HoaDonDTO hoaDonDTO, ArrayList<ChiTietHoaDonDTO> listCTHD) {
         Platform.runLater(() -> {
             Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
             // Try to set owner for the alert
@@ -338,7 +336,7 @@ public class CapNhatPhieuDatFormController extends DialogPane{
                     chooser.setTitle("Lưu hóa đơn PDF");
                     // Gợi ý tên file mặc định
                     String fileName = "HoaDon_"
-                            + hoaDon.getMaHD() + "_"
+                            + hoaDonDTO.getMaHD() + "_"
                             + LocalDate.now() + ".pdf";
                     chooser.setInitialFileName(fileName);
 
@@ -355,7 +353,7 @@ public class CapNhatPhieuDatFormController extends DialogPane{
 
                     XuatHoaDonPDF.xuatFilePDF(
                             file,
-                            hoaDon,
+                            hoaDonDTO,
                             listCTHD,
                             tinhThue(),
                             selectedPDT.getTongTien()
@@ -376,8 +374,8 @@ public class CapNhatPhieuDatFormController extends DialogPane{
         if (listChiTiet==null || listChiTiet.isEmpty()) {
             return thue;
         }
-        for (ChiTietPhieuDatThuoc e : listChiTiet){
-            thue += e.getSoLuong() * e.getMaThuoc().getMaThuoc().getGiaBan()* e.getMaThuoc().getMaThuoc().getThue();
+        for (ChiTietPhieuDatThuocDTO e : listChiTiet){
+            thue += e.getSoLuong() * e.getMaThuoc().getMaThuocDTO().getGiaBan()* e.getMaThuoc().getMaThuocDTO().getThue();
         }
         return thue;
     }}
