@@ -1,15 +1,23 @@
 package com.antam.app.service;
 
-import com.antam.app.connect.ConnectDB;
-import com.antam.app.service.impl.PhieuDat_Service;
-import com.antam.app.dto.*;
-
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.Date;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+
+import com.antam.app.connect.ConnectDB;
+import com.antam.app.dto.ChiTietPhieuDatThuocDTO;
+import com.antam.app.dto.KhachHangDTO;
+import com.antam.app.dto.KhuyenMaiDTO;
+import com.antam.app.dto.NhanVienDTO;
+import com.antam.app.dto.PhieuDatThuocDTO;
+import com.antam.app.service.impl.PhieuDat_Service;
 
 /*
  * @description:
@@ -43,7 +51,7 @@ public interface I_PhieuDat_Service {
                 ResultSet kq = state.executeQuery()
         ) {
             ArrayList<NhanVienDTO> nvList = I_NhanVien_Service.getDsNhanVienformDBS();
-            ArrayList<KhachHangDTO> khList = I_KhachHang_Service.loadBanFromDB();
+            ArrayList<KhachHangDTO> khList = new PhieuDat_Service().getAllKhachHangFromService();
             List<KhuyenMaiDTO> kmList = I_KhuyenMai_Service.getAllKhuyenMaiConHieuLuc();
 
             Map<String, NhanVienDTO> mapNV = nvList.stream()
@@ -102,7 +110,7 @@ public interface I_PhieuDat_Service {
                 ResultSet kq = state.executeQuery()
         ) {
             ArrayList<NhanVienDTO> nvList = I_NhanVien_Service.getDsNhanVienformDBS();
-            ArrayList<KhachHangDTO> khList = I_KhachHang_Service.loadBanFromDB();
+            ArrayList<KhachHangDTO> khList = new PhieuDat_Service().getAllKhachHangFromService();
             List<KhuyenMaiDTO> kmList = I_KhuyenMai_Service.getAllKhuyenMaiConHieuLuc();
 
             Map<String, NhanVienDTO> mapNV = nvList.stream()

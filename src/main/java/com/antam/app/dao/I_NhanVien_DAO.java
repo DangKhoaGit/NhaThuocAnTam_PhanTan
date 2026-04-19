@@ -1,13 +1,13 @@
 package com.antam.app.dao;
 
-import com.antam.app.connect.ConnectDB;
-import com.antam.app.entity.NhanVien;
-
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+
+import com.antam.app.connect.ConnectDB;
+import com.antam.app.entity.NhanVien;
 
 /*
  * @description:
@@ -226,7 +226,7 @@ public interface I_NhanVien_DAO {
         }
         Connection con = ConnectDB.getConnection();
         try {
-            String sql = "select top 1 MaNV from NhanVien order by MaNV desc";
+            String sql = "SELECT MaNV FROM NhanVien ORDER BY MaNV DESC LIMIT 1";
             PreparedStatement state = con.prepareStatement(sql);
             ResultSet kq = state.executeQuery();
             while (kq.next()) {

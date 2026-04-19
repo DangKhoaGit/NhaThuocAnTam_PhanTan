@@ -1,149 +1,253 @@
 /*
- * @ (#) KhachHang_DAO.java   1.0 1/10/25
+ * @ (#) KhachHang_Service.java   1.0 1/10/25
  *
  * Copyright (c) 2025 IUH. All rights reserved.
  */
 package com.antam.app.service.impl;
 
-import com.antam.app.connect.ConnectDB;
-import com.antam.app.service.I_KhachHang_Service;
-import com.antam.app.dto.KhachHangDTO;
-
-import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.antam.app.connect.ConnectDB;
+import com.antam.app.dao.I_KhachHang_DAO;
+import com.antam.app.dao.impl.KhachHang_DAO;
+import com.antam.app.dto.KhachHangDTO;
+import com.antam.app.entity.KhachHang;
+import com.antam.app.service.I_KhachHang_Service;
+
 /*
- * @description
+ * @description: Service layer for KhachHang - handles business logic and DTO/Entity conversion
  * @author: Tran Tuan Hung
  * @date: 1/10/25
- * @version: 1.0
+ * @version: 2.0 (refactored according to n-layer architecture)
  */
 public class KhachHang_Service implements I_KhachHang_Service {
+    private final I_KhachHang_DAO khachHangDAO = new KhachHang_DAO();
+
+    // ========== CONVERTER METHODS ==========
+    /**
+     * Chuyển đổi Entity → DTO
+     */
+    private KhachHangDTO mapEntityToDTO(KhachHang entity) {
+        if (entity == null) return null;
+
+        return KhachHangDTO.builder()
+                .MaKH(entity.getMaKH())
+                .tenKH(entity.getTenKH())
+                .soDienThoai(entity.getSoDienThoai())
+                .deleteAt(entity.isDeleteAt())
+                .tongChiTieu(entity.getTongChiTieu())
+                .soDonHang(entity.getSoDonHang())
+                .ngayMuaGanNhat(entity.getNgayMuaGanNhat())
+                .build();
+    }
 
     /**
-     * Thêm khách hàng mới vào CSDL
-     * @param kh KhachHang
-     * @return true nếu thành công, false nếu thất bại
+     * Chuyển đổi DTO → Entity
+     */
+    private KhachHang mapDTOToEntity(KhachHangDTO dto) {
+        if (dto == null) return null;
+
+        return KhachHang.builder()
+                .MaKH(dto.getMaKH())
+                .tenKH(dto.getTenKH())
+                .soDienThoai(dto.getSoDienThoai())
+                .deleteAt(dto.isDeleteAt())
+                .tongChiTieu(dto.getTongChiTieu())
+                .soDonHang(dto.getSoDonHang())
+                .ngayMuaGanNhat(dto.getNgayMuaGanNhat())
+                .build();
+    }
+
+    // ========== DATA ACCESS METHODS ==========
+    /**
+     * Lấy tất cả khách hàng (không có thống kê)
+     */
+    @Override
+    public ArrayList<KhachHangDTO> getAllKhachHang() {
+        try {
+            ConnectDB.getInstance().connect();
+            ArrayList<KhachHang> entities = khachHangDAO.getAllKhachHang();
+            ArrayList<KhachHangDTO> dtos = new ArrayList<>();
+
+            for (KhachHang entity : entities) {
+                dtos.add(mapEntityToDTO(entity));
+            }
+            return dtos;
+        } catch (Exception e) {
+            throw new RuntimeException("Lỗi lấy danh sách khách hàng", e);
+        }
+    }
+
+    /**
+     * Lấy tất cả khách hàng với thông tin thống kê từ DAO
+     */
+    @Override
+    public List<KhachHangDTO> loadKhachHangWithStats() {
+        try {
+            ConnectDB.getInstance().connect();
+            List<KhachHang> entities = khachHangDAO.getAllKhachHangWithStats();
+            List<KhachHangDTO> dtos = new ArrayList<>();
+
+            for (KhachHang entity : entities) {
+                dtos.add(mapEntityToDTO(entity));
+            }
+            return dtos;
+        } catch (Exception e) {
+            throw new RuntimeException("Lỗi lấy danh sách khách hàng với thống kê", e);
+        }
+    }
+
+    /**
+     * Tìm khách hàng theo mã
+     */
+    @Override
+    public KhachHangDTO getKhachHangTheoMa(String maKH) {
+        try {
+            ConnectDB.getInstance().connect();
+            KhachHang entity = khachHangDAO.getKhachHangTheoMa(maKH);
+            return mapEntityToDTO(entity);
+        } catch (Exception e) {
+            throw new RuntimeException("Lỗi lấy khách hàng theo mã: " + maKH, e);
+        }
+    }
+
+    /**
+     * Tìm khách hàng theo số điện thoại
+     */
+    @Override
+    public KhachHangDTO getKhachHangTheoSoDienThoai(String soDienThoai) {
+        try {
+            ConnectDB.getInstance().connect();
+            KhachHang entity = khachHangDAO.getKhachHangTheoSoDienThoai(soDienThoai);
+            return mapEntityToDTO(entity);
+        } catch (Exception e) {
+            throw new RuntimeException("Lỗi lấy khách hàng theo số điện thoại: " + soDienThoai, e);
+        }
+    }
+
+    /**
+     * Tìm khách hàng theo tên (LIKE search)
+     */
+    @Override
+    public List<KhachHangDTO> searchKhachHangByName(String tenKH) {
+        try {
+            ConnectDB.getInstance().connect();
+            List<KhachHang> entities = khachHangDAO.searchKhachHangByName(tenKH);
+            List<KhachHangDTO> dtos = new ArrayList<>();
+
+            for (KhachHang entity : entities) {
+                dtos.add(mapEntityToDTO(entity));
+            }
+            return dtos;
+        } catch (Exception e) {
+            throw new RuntimeException("Lỗi tìm kiếm khách hàng theo tên: " + tenKH, e);
+        }
+    }
+
+    // ========== MUTATION METHODS ==========
+    /**
+     * Thêm khách hàng mới
      */
     @Override
     public boolean insertKhachHang(KhachHangDTO kh) {
         try {
             ConnectDB.getInstance().connect();
-            Connection con = ConnectDB.getConnection();
-            String sql = "INSERT INTO KhachHang (MaKH, TenKH, SoDienThoai, DeleteAt) VALUES (?, ?, ?, ?)";
-            PreparedStatement ps = con.prepareStatement(sql);
-            ps.setString(1, kh.getMaKH());
-            ps.setString(2, kh.getTenKH());
-            ps.setString(3, kh.getSoDienThoai());
-            ps.setBoolean(4, kh.isDeleteAt());
-            int rows = ps.executeUpdate();
-            return rows > 0;
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return false;
+            // Validate DTO
+            if (kh == null || kh.getMaKH() == null || kh.getMaKH().isEmpty()) {
+                throw new IllegalArgumentException("Mã khách hàng không được để trống");
+            }
+
+            // Convert DTO → Entity
+            KhachHang entity = mapDTOToEntity(kh);
+
+            // Call DAO
+            return khachHangDAO.insertKhachHang(entity);
+        } catch (Exception e) {
+            throw new RuntimeException("Lỗi thêm khách hàng", e);
         }
     }
 
     /**
-     * Cập nhật thông tin khách hàng trong CSDL
-     * @param kh KhachHang
-     * @return true nếu thành công, false nếu thất bại
+     * Cập nhật khách hàng
      */
     @Override
     public boolean updateKhachHang(KhachHangDTO kh) {
         try {
             ConnectDB.getInstance().connect();
-            Connection con = ConnectDB.getConnection();
-            String sql = "UPDATE KhachHang SET TenKH = ?, SoDienThoai = ? WHERE MaKH = ? AND DeleteAt = 0";
-            PreparedStatement ps = con.prepareStatement(sql);
-            ps.setString(1, kh.getTenKH());
-            ps.setString(2, kh.getSoDienThoai());
-            ps.setString(3, kh.getMaKH());
-            int rows = ps.executeUpdate();
-            return rows > 0;
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return false;
-        }
-    }
+            // Validate DTO
+            if (kh == null || kh.getMaKH() == null || kh.getMaKH().isEmpty()) {
+                throw new IllegalArgumentException("Mã khách hàng không được để trống");
+            }
 
-    @Override
-    public KhachHangDTO getKhachHangTheoMa(String maKH){
-        KhachHangDTO kh = new KhachHangDTO(maKH);
-        String sql = "SELECT * FROM KhachHang WHERE MaKH = ? AND DeleteAt = 0";
-        try{
-            Connection con = ConnectDB.getConnection();
-            if (con == null || con.isClosed()) {
-                ConnectDB.getInstance().connect();
-                con = ConnectDB.getConnection();
-            }
-            PreparedStatement statement = con.prepareStatement(sql);
-            statement.setString(1, maKH);
-            ResultSet rs = statement.executeQuery();
-            if(rs.next()){
-                kh.setTenKH(rs.getString("TenKH"));
-                kh.setSoDienThoai(rs.getString("SoDienThoai"));
-                kh.setDeleteAt(rs.getBoolean("DeleteAt"));
-            }
+            // Convert DTO → Entity
+            KhachHang entity = mapDTOToEntity(kh);
+
+            // Call DAO
+            return khachHangDAO.updateKhachHang(entity);
         } catch (Exception e) {
-            e.printStackTrace();
+            throw new RuntimeException("Lỗi cập nhật khách hàng", e);
         }
-        return kh;
     }
 
+    // ========== STATISTICS METHODS ==========
     /**
-     * Tìm khách hàng theo số điện thoại
-     * @param soDienThoai Số điện thoại khách hàng
-     * @return KhachHang nếu tìm thấy, null nếu không tìm thấy
+     * Lấy tổng số khách hàng
      */
     @Override
-    public KhachHangDTO getKhachHangTheoSoDienThoai(String soDienThoai) {
-        String sql = "SELECT * FROM KhachHang WHERE SoDienThoai = ? AND DeleteAt = 0";
+    public int getTongKhachHang() {
         try {
-            Connection con = ConnectDB.getConnection();
-            if (con == null || con.isClosed()) {
-                ConnectDB.getInstance().connect();
-                con = ConnectDB.getConnection();
-            }
-            PreparedStatement statement = con.prepareStatement(sql);
-            statement.setString(1, soDienThoai);
-            ResultSet rs = statement.executeQuery();
-            if (rs.next()) {
-                KhachHangDTO kh = new KhachHangDTO(rs.getString("MaKH"));
-                kh.setTenKH(rs.getString("TenKH"));
-                kh.setSoDienThoai(rs.getString("SoDienThoai"));
-                kh.setDeleteAt(rs.getBoolean("DeleteAt"));
-                return kh;
-            }
+            ConnectDB.getInstance().connect();
+            return khachHangDAO.getTongKhachHang();
         } catch (Exception e) {
-            e.printStackTrace();
+            throw new RuntimeException("Lỗi lấy tổng số khách hàng", e);
         }
-        return null;
     }
 
     /**
-     * Trả về danh sách tất cả khách hàng trong CSDL
+     * Lấy tổng số khách hàng VIP
      */
     @Override
-    public ArrayList<KhachHangDTO> getAllKhachHang() {
-        return I_KhachHang_Service.loadBanFromDB();
+    public int getTongKhachHangVIP() {
+        try {
+            ConnectDB.getInstance().connect();
+            return khachHangDAO.getTongKhachHangVIP();
+        } catch (Exception e) {
+            throw new RuntimeException("Lỗi lấy tổng số khách hàng VIP", e);
+        }
     }
 
+    /**
+     * Lấy tổng số đơn hàng
+     */
+    @Override
+    public int getTongDonHang() {
+        try {
+            ConnectDB.getInstance().connect();
+            return khachHangDAO.getTongDonHang();
+        } catch (Exception e) {
+            throw new RuntimeException("Lỗi lấy tổng số đơn hàng", e);
+        }
+    }
+
+    /**
+     * Lấy tổng doanh thu
+     */
+    @Override
+    public double getTongDoanhThu() {
+        try {
+            ConnectDB.getInstance().connect();
+            return khachHangDAO.getTongDoanhThu();
+        } catch (Exception e) {
+            throw new RuntimeException("Lỗi lấy tổng doanh thu", e);
+        }
+    }
+
+    /**
+     * Lấy mã khách hàng tiếp theo
+     */
     @Override
     public int getMaxHash() {
-        int hash = 0;
-        Connection connection = ConnectDB.getConnection();
-        String sql = "select top 1 MaKH from KhachHang order by MaKH desc";
-        try {
-            PreparedStatement state = connection.prepareStatement(sql);
-            ResultSet result = state.executeQuery();
-            if (result.next()){
-                hash = Integer.parseInt(result.getString(1).replace("KH",""));
-            }
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
-        return hash;
+        return khachHangDAO.getMaxHash();
     }
 }

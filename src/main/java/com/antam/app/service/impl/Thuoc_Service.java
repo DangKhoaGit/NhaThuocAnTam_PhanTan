@@ -6,12 +6,19 @@
 
 package com.antam.app.service.impl;
 
-import com.antam.app.connect.ConnectDB;
-import com.antam.app.service.I_Thuoc_Service;
-import com.antam.app.dto.*;
-
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
+
+import com.antam.app.connect.ConnectDB;
+import com.antam.app.dto.DangDieuCheDTO;
+import com.antam.app.dto.DonViTinhDTO;
+import com.antam.app.dto.KeDTO;
+import com.antam.app.dto.ThuocDTO;
+import com.antam.app.service.I_Thuoc_Service;
 
 /*
  * @description
@@ -33,7 +40,7 @@ public class Thuoc_Service implements I_Thuoc_Service {
                    ddc.MaDDC, ddc.TenDDC,
                    k.MaKe, k.TenKe, k.LoaiKe
             FROM Thuoc t
-            JOIN DangDieuCheDTO ddc ON t.DangDieuCheDTO = ddc.MaDDC
+            JOIN DangDieuChe ddc ON t.DangDieuChe = ddc.MaDDC
             JOIN KeThuoc k ON t.MaKe = k.MaKe
             WHERE t.deleteAt = 0
         """;

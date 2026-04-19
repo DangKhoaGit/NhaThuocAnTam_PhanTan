@@ -5,24 +5,30 @@
  */
 package com.antam.app.controller.khachhang;
 
-import com.antam.app.service.impl.KhachHang_Service;
 import com.antam.app.dto.KhachHangDTO;
+import com.antam.app.service.impl.KhachHang_Service;
+
 import javafx.geometry.Insets;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.DialogPane;
-import javafx.scene.control.TextField;
 import javafx.scene.control.Label;
+import javafx.scene.control.TextField;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 
 /*
- * @description Controller for updating customer information
+ * @description Controller for updating customer information (Dialog Form)
  * @author: Tran Tuan Hung
  * @date: 28/10/25
- * @version: 1.0
+ * @version: 2.0 (refactored according to n-layer architecture)
+ * 
+ * Architecture Compliance:
+ * - Dialog Controller calls Service methods to update data
+ * - Service.updateKhachHang(dto) handles DAO access
+ * - Notifies parent Controller via OnSaveListener callback
  */
 public class SuaKhachHangFormController extends DialogPane {
 
@@ -33,7 +39,7 @@ public class SuaKhachHangFormController extends DialogPane {
     private Button btnHuy;
 
     private KhachHangDTO khachHangDTO;
-    private KhachHang_Service khachHangDAO;
+    private KhachHang_Service khachHangService;
 
     // Callback interface để thông báo khi lưu thành công
     public interface OnSaveListener {
@@ -123,8 +129,8 @@ public class SuaKhachHangFormController extends DialogPane {
         });
 
         // Sự kiện
-        // Khởi tạo DAO
-        khachHangDAO = new KhachHang_Service();
+        // Initialize Service instance for business logic
+        khachHangService = new KhachHang_Service();
 
         // Thiết lập sự kiện cho nút Lưu
         btnLuu.setOnAction(event -> handleLuu());
@@ -178,8 +184,8 @@ public class SuaKhachHangFormController extends DialogPane {
             khachHangDTO.setTenKH(txtTenKhachHang.getText().trim());
             khachHangDTO.setSoDienThoai(txtSoDienThoai.getText().trim());
 
-            // Lưu vào database
-            boolean success = khachHangDAO.updateKhachHang(khachHangDTO);
+            // Call Service to update customer information
+            boolean success = khachHangService.updateKhachHang(khachHangDTO);
 
             if (success) {
                 showInfo("Thành công", "Cập nhật thông tin khách hàng thành công");

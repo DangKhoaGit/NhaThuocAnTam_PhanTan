@@ -1,15 +1,15 @@
 package com.antam.app.dao.impl;
 
-import com.antam.app.connect.ConnectDB;
-import com.antam.app.entity.NhanVien;
-import com.antam.app.entity.PhieuNhap;
-
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.ArrayList;
+
+import com.antam.app.connect.ConnectDB;
+import com.antam.app.entity.NhanVien;
+import com.antam.app.entity.PhieuNhap;
 
 public class PhieuNhap_DAO implements com.antam.app.dao.I_PhieuNhap_DAO {
     /* Duy- Huỷ phiếu nhập */
@@ -66,7 +66,7 @@ public class PhieuNhap_DAO implements com.antam.app.dao.I_PhieuNhap_DAO {
     /* Duy - Tạo mã phiêu nhập tự động */
     @Override
     public String taoMaPhieuNhapTuDong(){
-        String sql = "SELECT TOP 1 MaPhieuNhap FROM PhieuNhap ORDER BY MaPhieuNhap DESC";
+        String sql = "SELECT MaPhieuNhap FROM PhieuNhap ORDER BY MaPhieuNhap DESC LIMIT 1";
         String maPhieuNhapMoi = "";
         try {
             Connection con = ConnectDB.getConnection();

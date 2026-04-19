@@ -5,28 +5,39 @@
  */
 package com.antam.app.controller.khachhang;
 
-import com.antam.app.service.I_KhachHang_Service;
-import com.antam.app.service.impl.HoaDon_Service;
-import com.antam.app.service.impl.KhachHang_Service;
-import com.antam.app.dto.HoaDonDTO;
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+
 import com.antam.app.dto.KhachHangDTO;
+import com.antam.app.service.impl.KhachHang_Service;
+
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcon;
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcons;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.scene.control.*;
-import javafx.scene.control.cell.PropertyValueFactory;
-
-import java.net.URL;
-import java.text.DecimalFormat;
-import java.text.DecimalFormatSymbols;
-import java.time.format.DateTimeFormatter;
-import java.util.*;
-import java.util.stream.Collectors;
 import javafx.geometry.Insets;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Button;
+import javafx.scene.control.ComboBox;
+import javafx.scene.control.Dialog;
+import javafx.scene.control.ScrollPane;
+import javafx.scene.control.TableCell;
+import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableView;
+import javafx.scene.control.TextField;
+import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.effect.BlurType;
 import javafx.scene.effect.DropShadow;
-import javafx.scene.layout.*;
+import javafx.scene.layout.AnchorPane;
+import javafx.scene.layout.FlowPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Pane;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
@@ -35,7 +46,13 @@ import javafx.scene.text.Text;
  * @description Controller for customer search functionality
  * @author: Tran Tuan Hung
  * @date: 28/10/25
- * @version: 1.0
+ * @version: 2.0 (refactored according to n-layer architecture)
+ * 
+ * Architecture Compliance:
+ * - Controller calls Service methods only (no DAO access)
+ * - Service handles business logic and DTO↔Entity conversion
+ * - Service.loadKhachHangWithStats() returns DTOs with statistics pre-calculated
+ * - Controller only handles UI filtering and display
  */
 public class TimKhachHangController extends ScrollPane {
 
@@ -57,8 +74,8 @@ public class TimKhachHangController extends ScrollPane {
     private ObservableList<KhachHangDTO> dsKhachHang;
     private ObservableList<KhachHangDTO> dsKhachHangGoc; // Để lưu danh sách gốc cho việc lọc
 
-    private KhachHang_Service khachHangDAO;
-    private HoaDon_Service hoaDonDAO;
+    // Service instance - manages business logic and DAO interactions
+    private KhachHang_Service khachHangService;
     private DateTimeFormatter formatter;
 
     // Định dạng tiền tệ kiểu Việt Nam: 1.000đ, 10.000đ
@@ -183,27 +200,28 @@ public class TimKhachHangController extends ScrollPane {
 
         this.getStylesheets().add(getClass().getResource("/com/antam/app/styles/dashboard_style.css").toExternalForm());
         this.setContent(root);
+        
         /** Sự kiện **/
-        khachHangDAO = new KhachHang_Service();
-        hoaDonDAO = new HoaDon_Service();
+        // Service instance to manage business logic and data access
+        khachHangService = new KhachHang_Service();
         formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
-        // Thiết lập các cột của bảng
+        // Setup table columns with property binding
         setupTableColumns();
 
-        // Tải dữ liệu từ database
-        loadDataFromDB();
+        // Load data from Service (already includes statistics)
+        loadDataFromService();
 
-        // Thiết lập các sự kiện
+        // Setup event handlers for user interactions
         setupEventHandlers();
 
-        // Thiết lập các giá trị cho ComboBox
+        // Setup ComboBox filter options
         setupComboBoxes();
     }
 
 
     /**
-     * Thiết lập các cột của bảng
+     * Thiết lập các cột của bảng với property binding
      */
     private void setupTableColumns() {
         colMaKH.setCellValueFactory(new PropertyValueFactory<>("maKH"));
@@ -211,7 +229,7 @@ public class TimKhachHangController extends ScrollPane {
         colSoDienThoai.setCellValueFactory(new PropertyValueFactory<>("soDienThoai"));
         colSoDonHang.setCellValueFactory(new PropertyValueFactory<>("soDonHang"));
 
-        // Định dạng cột Tổng chi tiêu theo VND
+        // Format Tổng chi tiêu column as VND currency
         colTongChiTieu.setCellValueFactory(new PropertyValueFactory<>("tongChiTieu"));
         colTongChiTieu.setCellFactory(column -> new TableCell<KhachHangDTO, Double>() {
             @Override
@@ -225,10 +243,11 @@ public class TimKhachHangController extends ScrollPane {
             }
         });
 
+        // Format Ngày mua gần nhất column
         colDonHangGanNhat.setCellValueFactory(cellData -> {
-            KhachHangDTO kh = cellData.getValue();
-            String dateStr = kh.getNgayMuaGanNhat() != null
-                ? kh.getNgayMuaGanNhat().format(formatter)
+            KhachHangDTO khachHang = cellData.getValue();
+            String dateStr = khachHang.getNgayMuaGanNhat() != null
+                ? khachHang.getNgayMuaGanNhat().format(formatter)
                 : "N/A";
             return new javafx.beans.property.SimpleStringProperty(dateStr);
         });
@@ -236,52 +255,27 @@ public class TimKhachHangController extends ScrollPane {
     }
 
     /**
-     * Tải dữ liệu khách hàng từ database
+     * Tải dữ liệu khách hàng từ Service
+     * Service.loadKhachHangWithStats() returns DTOs with:
+     * - soDonHang: calculated from HoaDon table
+     * - tongChiTieu: sum of all invoice amounts
+     * - ngayMuaGanNhat: latest purchase date
      */
-    private void loadDataFromDB() {
+    private void loadDataFromService() {
         try {
-            // Lấy danh sách khách hàng từ database
-            ArrayList<KhachHangDTO> listKhachHang = I_KhachHang_Service.loadBanFromDB();
+            // Service handles all data access and statistics calculation
+            List<KhachHangDTO> listKhachHang = khachHangService.loadKhachHangWithStats();
 
-            // Lấy danh sách hóa đơn để tính toán thống kê
-            ArrayList<HoaDonDTO> listHoaDon = hoaDonDAO.getAllHoaDon();
-
-            // Tính toán thống kê cho mỗi khách hàng
-            for (KhachHangDTO kh : listKhachHang) {
-                // Lọc các hóa đơn của khách hàng này
-                List<HoaDonDTO> hoaDonCuaKH = listHoaDon.stream()
-                    .filter(hd -> hd.getMaKH().getMaKH().equals(kh.getMaKH()))
-                    .collect(Collectors.toList());
-
-                // Tính số đơn hàng
-                kh.setSoDonHang(hoaDonCuaKH.size());
-
-                // Tính tổng chi tiêu
-                double tongChiTieu = hoaDonCuaKH.stream()
-                    .mapToDouble(HoaDonDTO::getTongTien)
-                    .sum();
-                kh.setTongChiTieu(tongChiTieu);
-
-                // Lấy ngày mua gần nhất
-                if (!hoaDonCuaKH.isEmpty()) {
-                    java.time.LocalDate ngayGanNhat = hoaDonCuaKH.stream()
-                        .map(HoaDonDTO::getNgayTao)
-                        .max(Comparator.naturalOrder())
-                        .orElse(null);
-                    kh.setNgayMuaGanNhat(ngayGanNhat);
-                }
-            }
-
-            // Chuyển đổi sang ObservableList
+            // Convert to ObservableList for TableView binding
             dsKhachHangGoc = FXCollections.observableArrayList(listKhachHang);
             dsKhachHang = FXCollections.observableArrayList(listKhachHang);
 
-            // Gán dữ liệu cho TableView
+            // Display data in table
             tableViewKhachHang.setItems(dsKhachHang);
 
-        } catch (Exception e) {
-            showError("Lỗi tải dữ liệu", "Không thể tải dữ liệu khách hàng từ database: " + e.getMessage());
-            e.printStackTrace();
+        } catch (Exception exception) {
+            showError("Lỗi tải dữ liệu", "Không thể tải dữ liệu khách hàng từ database: " + exception.getMessage());
+            exception.printStackTrace();
         }
     }
 
@@ -289,15 +283,15 @@ public class TimKhachHangController extends ScrollPane {
      * Thiết lập các sự kiện cho UI
      */
     private void setupEventHandlers() {
-        // Sự kiện tìm kiếm tự động khi gõ vào TextField
+        // Real-time search as user types
         txtSearchEmployee.textProperty().addListener((observable, oldValue, newValue) -> handleSearch());
 
-        // Sự kiện khi thay đổi ComboBox
+        // Filter when ComboBox selection changes
         cbSoDonHang.setOnAction(event -> applyFilters());
         cbTrangThai.setOnAction(event -> applyFilters());
         cbTongChiTieu.setOnAction(event -> applyFilters());
 
-        // Sự kiện double-click trên hàng trong bảng để chuyển sang chi tiết
+        // Double-click on row to view customer details
         tableViewKhachHang.setOnMouseClicked(event -> {
             if (event.getClickCount() == 2) {
                 KhachHangDTO selected = tableViewKhachHang.getSelectionModel().getSelectedItem();
@@ -345,7 +339,7 @@ public class TimKhachHangController extends ScrollPane {
     }
 
     /**
-     * Xử lý sự kiện tìm kiếm
+     * Xử lý sự kiện tìm kiếm theo tên, mã, số điện thoại
      */
     private void handleSearch() {
         String searchText = txtSearchEmployee.getText().toLowerCase().trim();
@@ -354,9 +348,9 @@ public class TimKhachHangController extends ScrollPane {
             dsKhachHang.setAll(dsKhachHangGoc);
         } else {
             List<KhachHangDTO> searchResult = dsKhachHangGoc.stream()
-                .filter(kh -> kh.getMaKH().toLowerCase().contains(searchText)
-                    || kh.getTenKH().toLowerCase().contains(searchText)
-                    || kh.getSoDienThoai().contains(searchText))
+                .filter(khachHang -> khachHang.getMaKH().toLowerCase().contains(searchText)
+                    || khachHang.getTenKH().toLowerCase().contains(searchText)
+                    || khachHang.getSoDienThoai().contains(searchText))
                 .collect(Collectors.toList());
 
             dsKhachHang.setAll(searchResult);
@@ -364,32 +358,32 @@ public class TimKhachHangController extends ScrollPane {
     }
 
     /**
-     * Áp dụng các bộ lọc
+     * Áp dụng các bộ lọc từ ComboBox
      */
     private void applyFilters() {
         List<KhachHangDTO> filteredList = new ArrayList<>(dsKhachHangGoc);
 
-        // Lọc theo số đơn hàng
+        // Filter by số đơn hàng
         String selectedSoDonHang = cbSoDonHang.getValue();
         if (selectedSoDonHang != null && !selectedSoDonHang.equals("Chọn số đơn hàng")) {
             filteredList = filteredList.stream()
-                .filter(kh -> filterBySoDonHang(kh, selectedSoDonHang))
+                .filter(khachHang -> filterBySoDonHang(khachHang, selectedSoDonHang))
                 .collect(Collectors.toList());
         }
 
-        // Lọc theo loại khách hàng
+        // Filter by loại khách hàng (VIP/Thường)
         String selectedTrangThai = cbTrangThai.getValue();
         if (selectedTrangThai != null && !selectedTrangThai.equals("Chọn loại khách hàng")) {
             filteredList = filteredList.stream()
-                .filter(kh -> kh.getLoaiKhachHang().equals(selectedTrangThai))
+                .filter(khachHang -> khachHang.getLoaiKhachHang().equals(selectedTrangThai))
                 .collect(Collectors.toList());
         }
 
-        // Lọc theo tổng chi tiêu
+        // Filter by tổng chi tiêu
         String selectedTongChiTieu = cbTongChiTieu.getValue();
         if (selectedTongChiTieu != null && !selectedTongChiTieu.equals("Chọn tổng chi tiêu")) {
             filteredList = filteredList.stream()
-                .filter(kh -> filterByTongChiTieu(kh, selectedTongChiTieu))
+                .filter(khachHang -> filterByTongChiTieu(khachHang, selectedTongChiTieu))
                 .collect(Collectors.toList());
         }
 
@@ -399,8 +393,8 @@ public class TimKhachHangController extends ScrollPane {
     /**
      * Lọc khách hàng theo số đơn hàng
      */
-    private boolean filterBySoDonHang(KhachHangDTO kh, String range) {
-        int soDonHang = kh.getSoDonHang();
+    private boolean filterBySoDonHang(KhachHangDTO khachHang, String range) {
+        int soDonHang = khachHang.getSoDonHang();
         switch (range) {
             case "1-5 đơn hàng":
                 return soDonHang >= 1 && soDonHang <= 5;
@@ -418,8 +412,8 @@ public class TimKhachHangController extends ScrollPane {
     /**
      * Lọc khách hàng theo tổng chi tiêu
      */
-    private boolean filterByTongChiTieu(KhachHangDTO kh, String range) {
-        double tongChiTieu = kh.getTongChiTieu();
+    private boolean filterByTongChiTieu(KhachHangDTO khachHang, String range) {
+        double tongChiTieu = khachHang.getTongChiTieu();
         switch (range) {
             case "Dưới 500,000 VNĐ":
                 return tongChiTieu < 500000;
@@ -434,39 +428,32 @@ public class TimKhachHangController extends ScrollPane {
         }
     }
 
-    /**
-     * Xử lý sự kiện double-click trên hàng
-     */
-    private void handleRowDoubleClick() {
-        KhachHangDTO selected = tableViewKhachHang.getSelectionModel().getSelectedItem();
-        if (selected != null) {
-            openChiTietKhachHangDialog(selected);
-        }
-    }
 
     /**
-     * Mở dialog xem chi tiết khách hàng
+     * Mở dialog để xem chi tiết khách hàng
+     * @param khachHangDTO KhachHangDTO to display
      */
     private void openChiTietKhachHangDialog(KhachHangDTO khachHangDTO) {
         try {
+            XemChiTietKhachHangController detailController = new XemChiTietKhachHangController();
+            detailController.setKhachHang(khachHangDTO);
 
-            XemChiTietKhachHangController xemDialog = new XemChiTietKhachHangController();
-            xemDialog.setKhachHang(khachHangDTO);
-
-            // Tạo Dialog
+            // Create and show dialog
             Dialog<Void> dialog = new Dialog<>();
-            dialog.setDialogPane(xemDialog);
+            dialog.setDialogPane(detailController);
             dialog.setTitle("Chi tiết khách hàng");
             dialog.showAndWait();
 
-        } catch (Exception e) {
-            showError("Lỗi", "Không thể mở chi tiết khách hàng: " + e.getMessage());
-            e.printStackTrace();
+        } catch (Exception exception) {
+            showError("Lỗi", "Không thể mở chi tiết khách hàng: " + exception.getMessage());
+            exception.printStackTrace();
         }
     }
 
     /**
-     * Hiển thị lỗi
+     * Display error message dialog
+     * @param title Dialog title
+     * @param message Error message content
      */
     private void showError(String title, String message) {
         Alert alert = new Alert(Alert.AlertType.ERROR);
@@ -477,7 +464,9 @@ public class TimKhachHangController extends ScrollPane {
     }
 
     /**
-     * Hiển thị thông tin
+     * Display information message dialog
+     * @param title Dialog title
+     * @param message Information message content
      */
     private void showInfo(String title, String message) {
         Alert alert = new Alert(Alert.AlertType.INFORMATION);

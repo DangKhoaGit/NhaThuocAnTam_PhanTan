@@ -1,9 +1,5 @@
 package com.antam.app.service;
 
-import com.antam.app.connect.ConnectDB;
-import com.antam.app.dto.KhuyenMaiDTO;
-import com.antam.app.dto.LoaiKhuyenMaiDTO;
-
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -11,6 +7,10 @@ import java.sql.Statement;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+
+import com.antam.app.connect.ConnectDB;
+import com.antam.app.dto.KhuyenMaiDTO;
+import com.antam.app.dto.LoaiKhuyenMaiDTO;
 
 /*
  * @description:
@@ -23,7 +23,7 @@ public interface I_KhuyenMai_Service {
         List<KhuyenMaiDTO> list = new ArrayList<>();
         String sql = "SELECT km.MaKM, km.TenKM, km.NgayBatDau, km.NgayKetThuc, km.LoaiKhuyenMai, km.So, km.SoLuongToiDa, km.deleteAt, lkm.TenLKM " +
                 "FROM KhuyenMai km JOIN LoaiKhuyenMai lkm ON km.LoaiKhuyenMai = lkm.MaLKM " +
-                "WHERE km.deleteAt = 0 AND km.NgayBatDau <= GETDATE() AND km.NgayKetThuc >= GETDATE()";
+                "WHERE km.deleteAt = 0 AND km.NgayBatDau <= CURDATE() AND km.NgayKetThuc >= CURDATE()";
         try {
             Connection con = ConnectDB.getConnection();
             if (con == null || con.isClosed()) {

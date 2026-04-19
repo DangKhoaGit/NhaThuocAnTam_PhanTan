@@ -1,18 +1,23 @@
 package com.antam.app.dao;
 
-import com.antam.app.connect.ConnectDB;
-import com.antam.app.dao.impl.KhachHang_DAO;
-import com.antam.app.dao.impl.KhuyenMai_DAO;
-import com.antam.app.dao.impl.NhanVien_DAO;
-import com.antam.app.dao.impl.PhieuDat_DAO;
-import com.antam.app.entity.*;
-
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.Date;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+
+import com.antam.app.connect.ConnectDB;
+import com.antam.app.dao.impl.PhieuDat_DAO;
+import com.antam.app.entity.ChiTietPhieuDatThuoc;
+import com.antam.app.entity.KhachHang;
+import com.antam.app.entity.KhuyenMai;
+import com.antam.app.entity.NhanVien;
+import com.antam.app.entity.PhieuDatThuoc;
 
 /*
  * @description:
@@ -46,7 +51,7 @@ public interface I_PhieuDat_DAO {
                 ResultSet kq = state.executeQuery()
         ) {
             ArrayList<NhanVien> nvList = I_NhanVien_DAO.getDsNhanVienformDBS();
-            ArrayList<KhachHang> khList = I_KhachHang_DAO.loadBanFromDB();
+            ArrayList<KhachHang> khList = new PhieuDat_DAO().getAllKhachHangFromDAO();
             List<KhuyenMai> kmList = I_KhuyenMai_DAO.getAllKhuyenMaiConHieuLuc();
 
             Map<String, NhanVien> mapNV = nvList.stream()
@@ -105,7 +110,7 @@ public interface I_PhieuDat_DAO {
                 ResultSet kq = state.executeQuery()
         ) {
             ArrayList<NhanVien> nvList = I_NhanVien_DAO.getDsNhanVienformDBS();
-            ArrayList<KhachHang> khList = I_KhachHang_DAO.loadBanFromDB();
+            ArrayList<KhachHang> khList = new PhieuDat_DAO().getAllKhachHangFromDAO();
             List<KhuyenMai> kmList = I_KhuyenMai_DAO.getAllKhuyenMaiConHieuLuc();
 
             Map<String, NhanVien> mapNV = nvList.stream()
@@ -225,7 +230,7 @@ public interface I_PhieuDat_DAO {
         }
         try {
             Connection con = ConnectDB.getConnection();
-            String sql = "select top 1 MaPDT from PhieuDatThuoc order by MaPDT desc";
+            String sql = "SELECT MaPDT FROM PhieuDatThuoc ORDER BY MaPDT DESC LIMIT 1";
             PreparedStatement state = con.prepareStatement(sql);
             ResultSet kq = state.executeQuery();
             while (kq.next()) {
