@@ -301,4 +301,36 @@ DB
 
 ---
 
+## ⚠️ Audit Findings (April 19, 2026)
+
+**Comprehensive Architecture Audit Completed** - See [AUDIT_REPORT.md](../AUDIT_REPORT.md) for details
+
+### 🔴 CRITICAL ISSUES FOUND (Must Fix)
+
+| Issue | Severity | Location | Fix Time |
+|-------|----------|----------|----------|
+| SQL Server driver in ConnectDB | 🔴 CRITICAL | `ConnectDB.java:30` | 5 min |
+| Connection always null | 🔴 CRITICAL | All DAOs | Auto-fix after #1 |
+| Mixed JDBC + JPA | 🔴 CRITICAL | `connect/*` | Decision needed |
+| Static singleton connection | 🟠 HIGH | `ConnectDB.java:16` | 2-3 hours |
+| No connection pooling | 🟠 HIGH | 50+ locations | 2-3 hours |
+| Services instantiate DAOs | 🟠 HIGH | All services | 3-4 hours |
+
+### ✅ What's Working Well
+- ✅ Layer architecture - excellent separation
+- ✅ DTO pattern - properly implemented  
+- ✅ Entity mapping - JPA annotations correct
+- ✅ Error handling - try-catch wrapping
+- ✅ Relationship loading - explicit and clean
+- ✅ Documentation - comprehensive
+
+### 📊 Status Summary
+- **DAO & Service Layers**: ✅ Complete (9 files)
+- **Code Quality**: ✅ Good architecture
+- **Database Connection**: 🔴 BROKEN (SQL Server vs MariaDB)
+- **Thread Safety**: 🟠 Not thread-safe (static connection)
+- **Performance**: 🟠 No connection pooling
+
+---
+
 **Last Updated**: 19/04/2026

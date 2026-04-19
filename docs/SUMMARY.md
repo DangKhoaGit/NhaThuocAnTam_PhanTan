@@ -8,7 +8,8 @@ Refactor module Hóa Đơn (HoaDon) theo chuẩn **n-layer architecture** với 
 ## 📊 Tiến Độ Hiện Tại
 - **Hoàn Thành**: 9/9 tasks ✅
 - **Trạng Thái**: Giai đoạn DAO & Service layer hoàn tất
-- **Tiếp Theo**: Sửa Controllers để áp dụng data flow chuẩn
+- **⚠️ CRITICAL**: Database connection broken (SQL Server vs MariaDB)
+- **Next Priority**: Fix critical bugs → Sửa Controllers → Testing
 
 ## 🔧 Các Thay Đổi Đã Hoàn Thành
 
@@ -109,8 +110,52 @@ src/main/java/com/antam/app/
     └── ChiTietHoaDon.java
 ```
 
+## � Critical Issues Found (Audit - April 19, 2026)
+
+**Comprehensive audit completed** - 20 issues found. See [AUDIT_REPORT.md](../AUDIT_REPORT.md)
+
+### Blocking Issues (Fix Before Launch)
+
+| # | Issue | Location | Impact | Fix Time |
+|---|-------|----------|--------|----------|
+| 1 | SQL Server driver (should be MariaDB) | `ConnectDB.java:30` | App cannot connect to DB | 5 min ⚡ |
+| 2 | Connection always null | All DAOs | All DAO operations fail | Auto (after #1) |
+| 3 | Mixed JDBC + JPA not coordinated | `connect/*` | Persistence strategy confusion | Decision |
+
+### High Priority Issues
+
+| # | Issue | Impact | Fix Time |
+|---|-------|--------|----------|
+| 4 | Static singleton connection (not thread-safe) | Race conditions | 2-3 hours |
+| 5 | No connection pooling | Performance degrades | 2-3 hours |
+| 6 | Services instantiate DAOs with `new` | Tight coupling | 3-4 hours |
+| 7 | I_KhachHang_Service uses ConnectDB directly | DAO abstraction broken | 1-2 hours |
+| 8 | NhanVien_DAO static cache | Memory leak | 30 min |
+
+### What's Working Well ✅
+- Architecture is excellent (3-layer separation)
+- DTO pattern properly implemented
+- Error handling is comprehensive
+- Entity mapping with JPA is correct
+- Relationship loading is explicit and clean
+
+---
+
 ## 🚀 Next Steps
 
+**PHASE 0: CRITICAL BUG FIXES (BLOCK RELEASE)**
+1. Fix Issue #1: Update ConnectDB.java (SQL Server → MariaDB) - 5 minutes
+2. Verify Issue #2 auto-resolves 
+3. Decide on Issue #3 (JDBC vs JPA strategy)
+   - See [AUDIT_REPORT.md](../AUDIT_REPORT.md) for options
+
+**PHASE 1: HIGH PRIORITY IMPROVEMENTS (1 Week)**
+1. Issue #4: Add connection pooling (HikariCP)
+2. Issue #6: Add dependency injection
+3. Issue #7: Refactor I_KhachHang_Service
+4. Issue #8: Remove static cache
+
+**PHASE 2: STANDARD TASKS (After bugs fixed)**
 1. Review file [COMPLETED.md](./COMPLETED.md) để chi tiết những thay đổi
 2. Review file [TODO.md](./TODO.md) để xem task còn lại
 3. Review file [ARCHITECTURE.md](./ARCHITECTURE.md) để hiểu data flow
@@ -118,4 +163,4 @@ src/main/java/com/antam/app/
 
 ---
 **Last Updated**: 19/04/2026  
-**Status**: 9/9 DAO & Service tasks completed, ready for Controller refactoring
+**Status**: 9/9 DAO & Service tasks completed, 🔴 3 critical bugs found

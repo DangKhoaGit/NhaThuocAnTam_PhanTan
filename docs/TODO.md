@@ -1,5 +1,102 @@
 # ❌ Những Task Cần Hoàn Thành
 
+## 🚨 Phase 0: Critical Bug Fixes (BLOCKING) ⚡
+
+**Status**: 🔴 Must fix before anything else  
+**Timeline**: 1-2 days  
+**Impact**: App cannot run without these fixes
+
+### Critical Issue #1: SQL Server Driver → MariaDB
+**Severity**: 🔴 CRITICAL  
+**Effort**: 5 minutes  
+**File**: `src/main/java/com/antam/app/connect/ConnectDB.java`
+
+**Task**:
+- [ ] Update line 29: `com.microsoft.sqlserver.jdbc.SQLServerDriver` → `org.mariadb.jdbc.Driver`
+- [ ] Update line 30: `jdbc:sqlserver://localhost:1433` → `jdbc:mariadb://localhost:3306`
+- [ ] Update line 31-32: credentials for MariaDB (root/123456)
+- [ ] Test connection with Tester.java
+
+**Details**: Application currently tries to connect to SQL Server but database is MariaDB. This causes immediate connection failure.
+
+---
+
+### Critical Issue #2: Connection Null Pointer (Auto-Fix)
+**Severity**: 🔴 CRITICAL  
+**Effort**: Auto-fix after Issue #1  
+**Verification**: All DAO operations should work
+
+**Task**:
+- [ ] After fixing Issue #1, run any DAO operation
+- [ ] Verify no "Connection is null" errors
+- [ ] If still failing, debug ConnectDB reconnection logic
+
+---
+
+### Critical Issue #3: JDBC vs JPA Strategy Decision
+**Severity**: 🔴 CRITICAL  
+**Effort**: Decision + planning (30 min)  
+**Impact**: Long-term architecture
+
+**Decision Options**:
+
+**Option A: Keep JDBC + Improve**
+- Remove static singleton connection
+- Add HikariCP connection pool
+- Make thread-safe
+- Estimated work: 4-6 hours
+- Recommendation: Quick fix
+
+**Option B: Migrate to Full JPA**
+- Remove raw JDBC entirely
+- Use JPA_Util + AbstractGenericDao
+- Automatic relationship loading
+- Transaction management
+- Estimated work: 16-20 hours
+- Recommendation: Better long-term
+
+**Task**:
+- [ ] Review both options in [AUDIT_REPORT.md](../AUDIT_REPORT.md)
+- [ ] Decide based on timeline & team capabilities
+- [ ] Plan next sprint accordingly
+- [ ] Recommendation: Do Option A now, plan Option B for sprint 2
+
+---
+
+## Phase 1: High Priority Issues (1 Week)
+
+After critical bugs fixed, handle these:
+
+### Issue #4: Add Connection Pooling
+**Effort**: 2-3 hours  
+**File**: `ConnectDB.java`, `pom.xml`
+- [ ] Add HikariCP dependency
+- [ ] Refactor ConnectDB to use HikariDataSource
+- [ ] Test with 10+ concurrent connections
+
+### Issue #6: Add Dependency Injection
+**Effort**: 3-4 hours  
+**Files**: 18 Service implementations
+- [ ] Change from `new HoaDon_DAO()` to constructor injection
+- [ ] Update all Services (18 files)
+- [ ] Enable unit testing with mocks
+
+### Issue #7: Refactor I_KhachHang_Service
+**Effort**: 1-2 hours  
+**File**: `service/I_KhachHang_Service.java`
+- [ ] Remove direct JDBC access
+- [ ] Use DAO layer instead
+- [ ] Fix layer abstraction violation
+
+### Issue #8: Remove NhanVien_DAO Static Cache
+**Effort**: 30 minutes  
+**File**: `dao/impl/NhanVien_DAO.java`
+- [ ] Remove static cache field
+- [ ] Fetch fresh data each query
+- [ ] Prevent memory leak
+
+---
+
 ## Phase 2: Sửa Controllers ⚠️ (TODO)
 
 ### Tổng Quan
@@ -234,9 +331,17 @@ HoaDonDTO hdDTO = HoaDonDTO.builder()
 | DAO Layer | ✅ Complete | 100% |
 | Service Layer | ✅ Complete | 100% |
 | Documentation | ✅ Complete | 100% |
+| **Critical Bugs** | 🔴 TODO | 0% |
+| **High Priority Issues** | 🟠 TODO | 0% |
 | **Controllers** | ❌ TODO | 0% |
 | **Testing** | ❌ TODO | 0% |
-| **Overall** | 🔄 In Progress | 60% |
+| **Overall** | 🔄 In Progress | ~50% |
+
+### Blocking Status
+🔴 **CANNOT PROCEED** until Phase 0 (Critical Bugs) fixed
+- Issue #1: Database connection broken
+- Issue #2: All DAO operations fail
+- Issue #3: Persistence strategy unclear
 
 ---
 
