@@ -6,11 +6,15 @@
 
 package com.antam.app.dao.impl;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.ArrayList;
+
 import com.antam.app.connect.ConnectDB;
 import com.antam.app.entity.Ke;
-
-import java.sql.*;
-import java.util.ArrayList;
 
 /*
  * @description
@@ -88,7 +92,7 @@ public class Ke_DAO implements com.antam.app.dao.I_Ke_DAO {
     /* Duy - Tạo mã kệ tự động */
     @Override
     public String taoMaKeTuDong(){
-        String sql = "SELECT TOP 1 MaKe FROM KeThuoc ORDER BY MaKe DESC";
+        String sql = "SELECT MaKe FROM KeThuoc ORDER BY MaKe DESC LIMIT 1";
         String maKeMoi = "";
         try {
             Connection con = ConnectDB.getConnection();

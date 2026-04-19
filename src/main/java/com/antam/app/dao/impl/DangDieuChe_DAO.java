@@ -6,11 +6,15 @@
 
 package com.antam.app.dao.impl;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.ArrayList;
+
 import com.antam.app.connect.ConnectDB;
 import com.antam.app.entity.DangDieuChe;
-
-import java.sql.*;
-import java.util.ArrayList;
 
 /*
  * @description
@@ -83,7 +87,7 @@ public class DangDieuChe_DAO implements com.antam.app.dao.I_DangDieuChe_DAO {
     @Override
     public String taoMaDDCTuDong() {
         String maDDC = "";
-        String sql = "SELECT TOP 1 MaDDC FROM DangDieuChe ORDER BY MaDDC DESC";
+        String sql = "SELECT MaDDC FROM DangDieuChe ORDER BY MaDDC DESC LIMIT 1";
         try {
             Connection con = ConnectDB.getConnection();
             Statement state = con.createStatement();

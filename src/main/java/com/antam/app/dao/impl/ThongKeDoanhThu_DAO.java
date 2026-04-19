@@ -1,14 +1,18 @@
 package com.antam.app.dao.impl;
 
-import com.antam.app.connect.ConnectDB;
-import com.antam.app.entity.ThongKeDoanhThu;
-import com.antam.app.entity.NhanVien;
-
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.Date;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.Statement;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.Map;
+
+import com.antam.app.connect.ConnectDB;
+import com.antam.app.entity.NhanVien;
+import com.antam.app.entity.ThongKeDoanhThu;
 
 /**
  * DAO class cho thống kê doanh thu
@@ -22,21 +26,21 @@ public class ThongKeDoanhThu_DAO implements com.antam.app.dao.I_ThongKeDoanhThu_
     public ArrayList<ThongKeDoanhThu> getDoanhThuTheoThoiGian(LocalDate tuNgay, LocalDate denNgay, String maNV) {
         ArrayList<ThongKeDoanhThu> dsThongKe = new ArrayList<>();
         StringBuilder sql = new StringBuilder(
-            "SELECT CAST(hd.NgayTao AS DATE) as Ngay, " +
+            "SELECT DATE(hd.NgayTao) as Ngay, " +
             "COUNT(hd.MaHD) as SoDonHang, " +
             "SUM(hd.TongTien) as DoanhThu, " +
             "AVG(hd.TongTien) as DonHangTB, " +
             "COUNT(DISTINCT hd.MaKH) as KhachHangMoi, " +
-            "(SELECT TOP 1 nv2.HoTen FROM NhanVien nv2 WHERE nv2.MaNV = MIN(hd.MaNV)) as NhanVien " +
+            "(SELECT nv2.HoTen FROM NhanVien nv2 WHERE nv2.MaNV = MIN(hd.MaNV) LIMIT 1) as NhanVien " +
             "FROM HoaDon hd " +
-            "WHERE hd.DeleteAt = 0 AND hd.NgayTao BETWEEN ? AND ? "
+            "WHERE hd.DeleteAt = 0 AND DATE(hd.NgayTao) BETWEEN ? AND ? "
         );
 
         if (maNV != null && !maNV.isEmpty() && !maNV.equals("Tất cả")) {
             sql.append("AND hd.MaNV = ? ");
         }
 
-        sql.append("GROUP BY CAST(hd.NgayTao AS DATE) ORDER BY Ngay ASC");
+        sql.append("GROUP BY DATE(hd.NgayTao) ORDER BY Ngay ASC");
 
         try {
             Connection con = ConnectDB.getConnection();
@@ -86,9 +90,9 @@ public class ThongKeDoanhThu_DAO implements com.antam.app.dao.I_ThongKeDoanhThu_
             "SUM(hd.TongTien) as DoanhThu, " +
             "AVG(hd.TongTien) as DonHangTB, " +
             "COUNT(DISTINCT hd.MaKH) as KhachHangMoi, " +
-            "(SELECT TOP 1 nv2.HoTen FROM NhanVien nv2 WHERE nv2.MaNV = MIN(hd.MaNV)) as NhanVien " +
+            "(SELECT nv2.HoTen FROM NhanVien nv2 WHERE nv2.MaNV = MIN(hd.MaNV) LIMIT 1) as NhanVien " +
             "FROM HoaDon hd " +
-            "WHERE hd.DeleteAt = 0 AND hd.NgayTao BETWEEN ? AND ? "
+            "WHERE hd.DeleteAt = 0 AND DATE(hd.NgayTao) BETWEEN ? AND ? "
         );
 
         if (maNV != null && !maNV.isEmpty() && !maNV.equals("Tất cả")) {
@@ -143,7 +147,7 @@ public class ThongKeDoanhThu_DAO implements com.antam.app.dao.I_ThongKeDoanhThu_
     public double getTongDoanhThu(LocalDate tuNgay, LocalDate denNgay, String maNV) {
         double tongDoanhThu = 0;
         StringBuilder sql = new StringBuilder(
-            "SELECT ISNULL(SUM(TongTien), 0) as TongDoanhThu " +
+            "SELECT COALESCE(SUM(TongTien), 0) as TongDoanhThu " +
             "FROM HoaDon WHERE DeleteAt = 0 AND NgayTao BETWEEN ? AND ? "
         );
 
@@ -263,14 +267,15 @@ public class ThongKeDoanhThu_DAO implements com.antam.app.dao.I_ThongKeDoanhThu_
     public Map<String, Integer> getTopSanPhamBanChay(LocalDate tuNgay, LocalDate denNgay, int top) {
         Map<String, Integer> topSanPham = new LinkedHashMap<>();
         String sql =
-            "SELECT TOP " + top + " t.TenThuoc, SUM(cthd.SoLuong) as TongSoLuong " +
+            "SELECT t.TenThuoc, SUM(cthd.SoLuong) as TongSoLuong " +
             "FROM ChiTietHoaDon cthd " +
             "JOIN HoaDon hd ON cthd.MaHD = hd.MaHD " +
             "JOIN ChiTietThuoc ctt ON cthd.MaCTT = ctt.MaCTT " +
             "JOIN Thuoc t ON ctt.MaThuoc = t.MaThuoc " +
             "WHERE hd.DeleteAt = 0 AND hd.NgayTao BETWEEN ? AND ? " +
             "GROUP BY t.TenThuoc " +
-            "ORDER BY TongSoLuong DESC";
+            "ORDER BY TongSoLuong DESC " +
+            "LIMIT " + top;
 
         try {
             Connection con = ConnectDB.getConnection();

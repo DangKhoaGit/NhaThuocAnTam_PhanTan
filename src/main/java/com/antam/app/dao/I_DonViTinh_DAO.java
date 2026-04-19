@@ -1,13 +1,13 @@
 package com.antam.app.dao;
 
-import com.antam.app.connect.ConnectDB;
-import com.antam.app.entity.DonViTinh;
-
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+
+import com.antam.app.connect.ConnectDB;
+import com.antam.app.entity.DonViTinh;
 
 /*
  * @description:
@@ -17,7 +17,7 @@ import java.util.ArrayList;
  */
 public interface I_DonViTinh_DAO {
     static String getHashDVT() {
-        String sql = "select top 1 MaDVT from DonViTinh order by MaDVT desc";
+        String sql = "SELECT MaDVT FROM DonViTinh ORDER BY MaDVT DESC LIMIT 1";
         try {
             ConnectDB.getInstance().connect();
         } catch (SQLException e) {

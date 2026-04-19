@@ -1,34 +1,53 @@
 /*
- * @ (#) TimKhachHangController.java   1.0 28/10/25
+ * @ (#) KhoiPhucKhachHangController.java   1.0 28/10/25
  *
  * Copyright (c) 2025 IUH. All rights reserved.
  */
 package com.antam.app.controller.khachhang;
 
-import com.antam.app.service.impl.HoaDon_Service;
-import com.antam.app.service.impl.KhachHang_Service;
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
+import java.time.format.DateTimeFormatter;
+import java.util.stream.Collectors;
+
 import com.antam.app.dto.KhachHangDTO;
+import com.antam.app.service.impl.KhachHang_Service;
+
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcon;
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcons;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
-import javafx.scene.control.*;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Button;
+import javafx.scene.control.ComboBox;
+import javafx.scene.control.Dialog;
+import javafx.scene.control.ScrollPane;
+import javafx.scene.control.TableCell;
+import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableView;
+import javafx.scene.control.TextField;
+import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.effect.BlurType;
 import javafx.scene.effect.DropShadow;
-import javafx.scene.layout.*;
+import javafx.scene.layout.AnchorPane;
+import javafx.scene.layout.FlowPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Pane;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 
-import java.text.DecimalFormat;
-import java.text.DecimalFormatSymbols;
-import java.time.format.DateTimeFormatter;
-
 /*
- * @description Controller for customer search functionality
+ * @description Controller for recovering (restoring) deleted customers
  * @author: Tran Tuan Hung
  * @date: 28/10/25
- * @version: 1.0
+ * @version: 2.0 (refactored according to n-layer architecture)
+ * 
+ * Architecture Compliance:
+ * - Controller calls Service methods only (no DAO access)
+ * - Service handles business logic and DTO↔Entity conversion
  */
 public class KhoiPhucKhachHangController extends ScrollPane {
 
@@ -52,8 +71,8 @@ public class KhoiPhucKhachHangController extends ScrollPane {
     private ObservableList<KhachHangDTO> dsKhachHang;
     private ObservableList<KhachHangDTO> dsKhachHangGoc; // Để lưu danh sách gốc cho việc lọc
 
-    private KhachHang_Service khachHangDAO;
-    private HoaDon_Service hoaDonDAO;
+    // Service instance - manages business logic and DAO interactions
+    private KhachHang_Service khachHangService;
     private DateTimeFormatter formatter;
 
     // Định dạng tiền tệ kiểu Việt Nam: 1.000đ, 10.000đ
@@ -183,6 +202,293 @@ public class KhoiPhucKhachHangController extends ScrollPane {
 
         this.getStylesheets().add(getClass().getResource("/com/antam/app/styles/dashboard_style.css").toExternalForm());
         this.setContent(root);
+        
         /** Sự kiện **/
+        // Service instance to manage business logic and data access
+        khachHangService = new KhachHang_Service();
+        formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+
+        // Setup table columns with property binding
+        setupTableColumns();
+
+        // Load data from Service (already includes statistics)
+        loadDataFromService();
+
+        // Setup event handlers for user interactions
+        setupEventHandlers();
+
+        // Setup ComboBox filter options
+        setupComboBoxes();
+    }
+
+    /**
+     * Thiết lập các cột của bảng với property binding
+     */
+    private void setupTableColumns() {
+        colMaKH.setCellValueFactory(new PropertyValueFactory<>("maKH"));
+        colTenKH.setCellValueFactory(new PropertyValueFactory<>("tenKH"));
+        colSoDienThoai.setCellValueFactory(new PropertyValueFactory<>("soDienThoai"));
+        colSoDonHang.setCellValueFactory(new PropertyValueFactory<>("soDonHang"));
+
+        // Format Tổng chi tiêu column as VND currency
+        colTongChiTieu.setCellValueFactory(new PropertyValueFactory<>("tongChiTieu"));
+        colTongChiTieu.setCellFactory(column -> new TableCell<KhachHangDTO, Double>() {
+            @Override
+            protected void updateItem(Double item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setText(null);
+                } else {
+                    setText(String.format("%,.0f VNĐ", item));
+                }
+            }
+        });
+
+        // Format Ngày mua gần nhất column
+        colDonHangGanNhat.setCellValueFactory(cellData -> {
+            KhachHangDTO khachHang = cellData.getValue();
+            String dateStr = khachHang.getNgayMuaGanNhat() != null
+                ? khachHang.getNgayMuaGanNhat().format(formatter)
+                : "N/A";
+            return new javafx.beans.property.SimpleStringProperty(dateStr);
+        });
+        colLoaiKhachHang.setCellValueFactory(new PropertyValueFactory<>("loaiKhachHang"));
+    }
+
+    /**
+     * Tải dữ liệu khách hàng từ Service
+     * Service.loadKhachHangWithStats() returns DTOs with:
+     * - soDonHang: calculated from HoaDon table
+     * - tongChiTieu: sum of all invoice amounts
+     * - ngayMuaGanNhat: latest purchase date
+     */
+    private void loadDataFromService() {
+        try {
+            // Service handles all data access and statistics calculation
+            java.util.List<KhachHangDTO> listKhachHang = khachHangService.loadKhachHangWithStats();
+
+            // Convert to ObservableList for TableView binding
+            dsKhachHangGoc = javafx.collections.FXCollections.observableArrayList(listKhachHang);
+            dsKhachHang = javafx.collections.FXCollections.observableArrayList(listKhachHang);
+
+            // Display data in table
+            tableViewKhachHang.setItems(dsKhachHang);
+
+        } catch (Exception exception) {
+            showError("Lỗi tải dữ liệu", "Không thể tải dữ liệu khách hàng từ database: " + exception.getMessage());
+        }
+    }
+
+    /**
+     * Thiết lập các sự kiện cho UI
+     */
+    private void setupEventHandlers() {
+        // Real-time search as user types
+        txtSearchEmployee.textProperty().addListener((observable, oldValue, newValue) -> handleSearch());
+
+        // Filter when ComboBox selection changes
+        cbSoDonHang.setOnAction(event -> applyFilters());
+        cbTrangThai.setOnAction(event -> applyFilters());
+        cbTongChiTieu.setOnAction(event -> applyFilters());
+
+        // Double-click on row to view customer details or restore
+        tableViewKhachHang.setOnMouseClicked(event -> {
+            if (event.getClickCount() == 2) {
+                KhachHangDTO selected = tableViewKhachHang.getSelectionModel().getSelectedItem();
+                if (selected != null) {
+                    openChiTietKhachHangDialog(selected);
+                }
+            }
+        });
+
+        // Restore button action
+        btnKhoiPhuc.setOnAction(event -> {
+            KhachHangDTO selected = tableViewKhachHang.getSelectionModel().getSelectedItem();
+            if (selected != null) {
+                handleKhoiPhuc(selected);
+            } else {
+                showInfo("Thông báo", "Vui lòng chọn khách hàng để khôi phục");
+            }
+        });
+    }
+
+    /**
+     * Thiết lập các giá trị cho ComboBox
+     */
+    private void setupComboBoxes() {
+        // ComboBox Số đơn hàng
+        ObservableList<String> soDonHangOptions = javafx.collections.FXCollections.observableArrayList(
+            "Chọn số đơn hàng",
+            "1-5 đơn hàng",
+            "6-10 đơn hàng",
+            "11-20 đơn hàng",
+            "Trên 20 đơn hàng"
+        );
+        cbSoDonHang.setItems(soDonHangOptions);
+        cbSoDonHang.setValue("Chọn số đơn hàng");
+
+        // ComboBox Loại khách hàng
+        ObservableList<String> trangThaiOptions = javafx.collections.FXCollections.observableArrayList(
+            "Chọn loại khách hàng",
+            "VIP",
+            "Thường"
+        );
+        cbTrangThai.setItems(trangThaiOptions);
+        cbTrangThai.setValue("Chọn loại khách hàng");
+
+        // ComboBox Tổng chi tiêu
+        ObservableList<String> tongChiTieuOptions = javafx.collections.FXCollections.observableArrayList(
+            "Chọn tổng chi tiêu",
+            "Dưới 500,000 VNĐ",
+            "500,000 - 1,000,000 VNĐ",
+            "1,000,000 - 5,000,000 VNĐ",
+            "Trên 5,000,000 VNĐ"
+        );
+        cbTongChiTieu.setItems(tongChiTieuOptions);
+        cbTongChiTieu.setValue("Chọn tổng chi tiêu");
+    }
+
+    /**
+     * Xử lý sự kiện tìm kiếm theo tên, mã, số điện thoại
+     */
+    private void handleSearch() {
+        String searchText = txtSearchEmployee.getText().toLowerCase().trim();
+
+        if (searchText.isEmpty()) {
+            dsKhachHang.setAll(dsKhachHangGoc);
+        } else {
+            java.util.List<KhachHangDTO> searchResult = dsKhachHangGoc.stream()
+                .filter(khachHang -> khachHang.getMaKH().toLowerCase().contains(searchText)
+                    || khachHang.getTenKH().toLowerCase().contains(searchText)
+                    || khachHang.getSoDienThoai().contains(searchText))
+                .collect(Collectors.toList());
+
+            dsKhachHang.setAll(searchResult);
+        }
+    }
+
+    /**
+     * Áp dụng các bộ lọc từ ComboBox
+     */
+    private void applyFilters() {
+        java.util.List<KhachHangDTO> filteredList = new java.util.ArrayList<>(dsKhachHangGoc);
+
+        // Filter by số đơn hàng
+        String selectedSoDonHang = cbSoDonHang.getValue();
+        if (selectedSoDonHang != null && !selectedSoDonHang.equals("Chọn số đơn hàng")) {
+            filteredList = filteredList.stream()
+                .filter(khachHang -> filterBySoDonHang(khachHang, selectedSoDonHang))
+                .collect(Collectors.toList());
+        }
+
+        // Filter by loại khách hàng (VIP/Thường)
+        String selectedTrangThai = cbTrangThai.getValue();
+        if (selectedTrangThai != null && !selectedTrangThai.equals("Chọn loại khách hàng")) {
+            filteredList = filteredList.stream()
+                .filter(khachHang -> khachHang.getLoaiKhachHang().equals(selectedTrangThai))
+                .collect(Collectors.toList());
+        }
+
+        // Filter by tổng chi tiêu
+        String selectedTongChiTieu = cbTongChiTieu.getValue();
+        if (selectedTongChiTieu != null && !selectedTongChiTieu.equals("Chọn tổng chi tiêu")) {
+            filteredList = filteredList.stream()
+                .filter(khachHang -> filterByTongChiTieu(khachHang, selectedTongChiTieu))
+                .collect(Collectors.toList());
+        }
+
+        dsKhachHang.setAll(filteredList);
+    }
+
+    /**
+     * Lọc khách hàng theo số đơn hàng
+     */
+    private boolean filterBySoDonHang(KhachHangDTO khachHang, String range) {
+        int soDonHang = khachHang.getSoDonHang();
+        switch (range) {
+            case "1-5 đơn hàng":
+                return soDonHang >= 1 && soDonHang <= 5;
+            case "6-10 đơn hàng":
+                return soDonHang >= 6 && soDonHang <= 10;
+            case "11-20 đơn hàng":
+                return soDonHang >= 11 && soDonHang <= 20;
+            case "Trên 20 đơn hàng":
+                return soDonHang > 20;
+            default:
+                return true;
+        }
+    }
+
+    /**
+     * Lọc khách hàng theo tổng chi tiêu
+     */
+    private boolean filterByTongChiTieu(KhachHangDTO khachHang, String range) {
+        double tongChiTieu = khachHang.getTongChiTieu();
+        switch (range) {
+            case "Dưới 500,000 VNĐ":
+                return tongChiTieu < 500000;
+            case "500,000 - 1,000,000 VNĐ":
+                return tongChiTieu >= 500000 && tongChiTieu <= 1000000;
+            case "1,000,000 - 5,000,000 VNĐ":
+                return tongChiTieu > 1000000 && tongChiTieu <= 5000000;
+            case "Trên 5,000,000 VNĐ":
+                return tongChiTieu > 5000000;
+            default:
+                return true;
+        }
+    }
+
+    /**
+     * Xử lý khôi phục khách hàng (chuyển DeleteAt = 1 sang DeleteAt = 0)
+     */
+    private void handleKhoiPhuc(KhachHangDTO khachHangDTO) {
+        // TODO: Implement restore logic - call Service to restore (set DeleteAt = 0)
+        showInfo("Khôi phục", "Khôi phục khách hàng: " + khachHangDTO.getTenKH());
+    }
+
+    /**
+     * Mở dialog để xem chi tiết khách hàng
+     * @param khachHangDTO KhachHangDTO to display
+     */
+    private void openChiTietKhachHangDialog(KhachHangDTO khachHangDTO) {
+        try {
+            XemChiTietKhachHangController detailController = new XemChiTietKhachHangController();
+            detailController.setKhachHang(khachHangDTO);
+
+            // Create and show dialog
+            Dialog<Void> dialog = new Dialog<>();
+            dialog.setDialogPane(detailController);
+            dialog.setTitle("Chi tiết khách hàng");
+            dialog.showAndWait();
+
+        } catch (Exception exception) {
+            showError("Lỗi", "Không thể mở chi tiết khách hàng: " + exception.getMessage());
+        }
+    }
+
+    /**
+     * Display error message dialog
+     * @param title Dialog title
+     * @param message Error message content
+     */
+    private void showError(String title, String message) {
+        Alert alert = new Alert(Alert.AlertType.ERROR);
+        alert.setTitle(title);
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+        alert.showAndWait();
+    }
+
+    /**
+     * Display information message dialog
+     * @param title Dialog title
+     * @param message Information message content
+     */
+    private void showInfo(String title, String message) {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle(title);
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+        alert.showAndWait();
     }
 }

@@ -5,13 +5,16 @@
  */
 package com.antam.app.dao.impl;
 
-import com.antam.app.connect.ConnectDB;
-
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import com.antam.app.connect.ConnectDB;
 
 /*
  * @description DAO class for dashboard statistics
@@ -169,17 +172,18 @@ public class ThongKeTrangChinh_DAO implements com.antam.app.dao.I_ThongKeTrangCh
     public Map<String, Integer> getTopSanPhamBanChay(int limit) {
         Map<String, Integer> topProducts = new HashMap<>();
         String sql = """
-            SELECT TOP (?)
+            SELECT
                 t.tenThuoc,
                 SUM(cthd.SoLuong) as tongSoLuong
             FROM ChiTietHoaDon cthd
             JOIN ChiTietThuoc ctt ON cthd.MaCTT = ctt.MaCTT
             JOIN Thuoc t ON ctt.MaThuoc = t.maThuoc
             JOIN HoaDon hd ON cthd.MaHD = hd.maHD
-            WHERE hd.ngayTao >= DATEADD(month, -1, GETDATE())
+            WHERE hd.ngayTao >= DATE_SUB(CURDATE(), INTERVAL 1 MONTH)
                 AND t.deleteAt = 0 AND hd.deleteAt = 0
             GROUP BY t.tenThuoc
             ORDER BY tongSoLuong DESC
+            LIMIT ?
             """;
 
         try {
@@ -210,18 +214,19 @@ public class ThongKeTrangChinh_DAO implements com.antam.app.dao.I_ThongKeTrangCh
     public List<Map<String, Object>> getThuocSapHetHan() {
         List<Map<String, Object>> thuocSapHetHan = new ArrayList<>();
         String sql = """
-            SELECT TOP 10
+            SELECT
                 t.tenThuoc,
                 ct.HanSuDung,
                 ct.TonKho as soLuongTon,
                 ct.MaCTT
             FROM ChiTietThuoc ct
             JOIN Thuoc t ON ct.MaThuoc = t.maThuoc
-            WHERE ct.HanSuDung <= DATEADD(day, 30, GETDATE())
-                AND ct.HanSuDung >= CAST(GETDATE() AS DATE)
+            WHERE ct.HanSuDung <= DATE_ADD(CURDATE(), INTERVAL 30 DAY)
+                AND ct.HanSuDung >= CURDATE()
                 AND ct.TonKho > 0
                 AND t.deleteAt = 0
             ORDER BY ct.HanSuDung ASC
+            LIMIT 10
             """;
 
         try {
@@ -254,7 +259,7 @@ public class ThongKeTrangChinh_DAO implements com.antam.app.dao.I_ThongKeTrangCh
     public List<Map<String, Object>> getThuocTonKhoThap() {
         List<Map<String, Object>> thuocTonKhoThap = new ArrayList<>();
         String sql = """
-            SELECT TOP 10
+            SELECT
                 t.maThuoc,
                 t.tenThuoc,
                 SUM(ct.TonKho) as tongTonKho
@@ -264,6 +269,7 @@ public class ThongKeTrangChinh_DAO implements com.antam.app.dao.I_ThongKeTrangCh
             GROUP BY t.maThuoc, t.tenThuoc
             HAVING SUM(ct.TonKho) <= 50 AND SUM(ct.TonKho) > 0
             ORDER BY tongTonKho ASC
+            LIMIT 10
             """;
 
         try {

@@ -1,250 +1,99 @@
 package com.antam.app.dao;
 
-import com.antam.app.connect.ConnectDB;
-import com.antam.app.entity.KhachHang;
-
-import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.antam.app.entity.KhachHang;
+
 /*
- * @description:
+ * @description: DAO interface cho KhachHang - định nghĩa các phương thức truy cập dữ liệu
  * @author: Pham Dang Khoa
  * @date: 13/04/2026
- * @version: 1.0
+ * @version: 2.0 (refactored according to n-layer architecture)
+ * 
+ * Architecture: n-layer pattern
+ * - Controller → DTO → Service → DAO (instance methods only) → Database
+ * - Service manages DAO instance lifecycle
+ * - NO static helper methods (violates layer separation)
  */
 public interface I_KhachHang_DAO {
-    static ArrayList<KhachHang> loadBanFromDB() {
-        ArrayList<KhachHang> list = new ArrayList<>();
-        try {
-            ConnectDB.getInstance().connect();
-            Connection con = ConnectDB.getConnection();
-            String sql = "SELECT * FROM KhachHang WHERE DeleteAt = 0";
-            PreparedStatement state = con.prepareStatement(sql);
-            ResultSet re = state.executeQuery();
-
-            while (re.next()) {
-                String maKH = re.getString("MaKH");
-                String tenKH = re.getString("TenKH");
-                String soDienThoai = re.getString("SoDienThoai");
-                boolean deleteAt = re.getBoolean("DeleteAt");
-                list.add(new KhachHang(maKH, tenKH, soDienThoai, deleteAt));
-            }
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
-        return list;
-    }
-
-    static List<KhachHang> loadKhachHangFromDB() {
-        List<KhachHang> dsKhachHang = new ArrayList<>();
-
-        try {
-            Connection con = ConnectDB.getConnection();
-            if (con == null || con.isClosed()) {
-                ConnectDB.getInstance().connect();
-                con = ConnectDB.getConnection();
-            }
-
-            String sql = """
-                
-                    SELECT kh.MaKH, kh.TenKH, kh.SoDienThoai, kh.DeleteAt,
-                       COALESCE(SUM(hd.TongTien), 0) as TongChiTieu,
-                       COUNT(hd.MaHD) as SoDonHang,
-                       MAX(hd.NgayTao) as NgayMuaGanNhat
-                FROM KhachHang kh
-                LEFT JOIN HoaDon hd ON kh.MaKH = hd.MaKH AND hd.deleteAt = 0
-                WHERE kh.DeleteAt = 0
-                GROUP BY kh.MaKH, kh.TenKH, kh.SoDienThoai, kh.DeleteAt
-                ORDER BY kh.TenKH
-                """;
-
-            PreparedStatement stmt = con.prepareStatement(sql);
-            ResultSet rs = stmt.executeQuery();
-
-            while (rs.next()) {
-                KhachHang kh = new KhachHang(rs.getString("MaKH"));
-                kh.setTenKH(rs.getString("TenKH"));
-                kh.setSoDienThoai(rs.getString("SoDienThoai"));
-                kh.setDeleteAt(rs.getBoolean("DeleteAt"));
-
-                // Set thêm thông tin thống kê
-                kh.setTongChiTieu(rs.getDouble("TongChiTieu"));
-                kh.setSoDonHang(rs.getInt("SoDonHang"));
-
-                Date ngayMuaGanNhat = rs.getDate("NgayMuaGanNhat");
-                if (ngayMuaGanNhat != null) {
-                    kh.setNgayMuaGanNhat(ngayMuaGanNhat.toLocalDate());
-                }
-
-                dsKhachHang.add(kh);
-            }
-
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-
-        return dsKhachHang;
-    }
-
-    static List<KhachHang> searchKhachHangByName(String tenKH) {
-        List<KhachHang> dsKhachHang = new ArrayList<>();
-
-        try {
-            Connection con = ConnectDB.getConnection();
-            if (con == null || con.isClosed()) {
-                ConnectDB.getInstance().connect();
-                con = ConnectDB.getConnection();
-            }
-
-            String sql =
-                    """
-                SELECT kh.MaKH, kh.TenKH, kh.
-                    SoDienThoai, kh.DeleteAt,
-                       COALESCE(SUM
-                    (hd.TongTien), 0) 
-                                          COUNT(hd.MaHD) as 
-                                     MAX(hd.NgayTao)
-                    as NgayMuaGanNhat
-                FROM KhachH
-                          LEFT JOIN HoaDon hd ON kh.MaKH = hd.MaKH AND hd.
-                    deleteAt = 0
-                WHERE kh.DeleteAt = 0 AND kh.
-                    T
-                               GROUP BY kh.MaKH, kh.TenKH, kh.SoDienThoai, kh.DeleteAt
-                ORDER BY kh.TenKH
-                """;
-
-            PreparedStatement stmt = con.prepareStatement(sql);
-            stmt.setString(1, "%" + tenKH + "%");
-            ResultSet rs = stmt.executeQuery();
-
-            while (rs.next()) {
-                KhachHang kh = new KhachHang(rs.getString("MaKH"));
-                kh.setTenKH(rs.getString("TenKH"));
-                kh.setSoDienThoai(rs.getString("SoDienThoai"));
-                kh.setDeleteAt(rs.getBoolean("DeleteAt"));
-
-                // Set thêm thông tin thống kê
-                kh.setTongChiTieu(rs.getDouble("TongChiTieu"));
-                kh.setSoDonHang(rs.getInt("SoDonHang"));
-
-                Date ngayMuaGanNhat = rs.getDate("NgayMuaGanNhat");
-                if (ngayMuaGanNhat != null) {
-                    kh.setNgayMuaGanNhat(ngayMuaGanNhat.toLocalDate());
-                }
-
-                dsKhachHang.add(kh);
-            }
-
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-
-        return dsKhachHang;
-    }
-
-    static int getTongKhachHang() {
-        try {
-            Connection con = ConnectDB.getConnection();
-            if (con == null || con.isClosed()) {
-                ConnectDB.getInstance().connect();
-                con = ConnectDB.getConnection();
-            }
-
-            String sql = "SELECT COUNT(*) FROM KhachHang WHERE DeleteAt = 0";
-            PreparedStatement stmt = con.prepareStatement(sql);
-            ResultSet rs = stmt.executeQuery();
-            if (rs.next()) {
-                return rs.getInt(1);
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return 0;
-    }
-
-    static int getTongKhachHangVIP() {
-        try {
-            Connection con = ConnectDB.getConnection();
-            if (con == null || con.isClosed()) {
-                ConnectDB.getInstance().
-                    connect();
-                con = ConnectDB.getConnection();
-            }
-
-            String sql
-                    = """
-                SELECT COUNT(*) FROM (
-                                    SELECT kh.MaK
-                         FROM KhachHang 
-                          LEFT JOIN HoaDon hd ON kh.MaKH = hd.MaKH AND 
-                                       WHERE kh.
-                    DeleteAt = 0
-                    GROUP BY kh.MaKH
-                    HAVING COALESCE(SUM(hd.TongTien), 0) >= 1000000
-                ) as VipCustomers
-                """;
-            PreparedStatement stmt = con.prepareStatement(sql);
-            ResultSet rs = stmt.executeQuery();
-            if (rs.next()) {
-                return rs.getInt(1);
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return 0;
-    }
-
-    static int getTongDonHang() {
-        try {
-            Connection con = ConnectDB.getConnection();
-            if (con == null || con.isClosed()) {
-                ConnectDB.getInstance().connect();
-                con = ConnectDB.getConnection();
-            }
-
-            String sql = "SELECT COUNT(*) FROM HoaDon WHERE deleteAt = 0";
-            PreparedStatement stmt = con.prepareStatement(sql);
-            ResultSet rs = stmt.executeQuery();
-            if (rs.next()) {
-                return rs.getInt(1);
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return 0;
-    }
-
-    static double getTongDoanhThu() {
-        try {
-            Connection con = ConnectDB.getConnection();
-            if (con == null || con.isClosed()) {
-                ConnectDB.getInstance().connect();
-                con = ConnectDB.getConnection();
-            }
-
-            String sql = "SELECT COALESCE(SUM(TongTien), 0) FROM HoaDon WHERE deleteAt = 0";
-            PreparedStatement stmt = con.prepareStatement(sql);
-            ResultSet rs = stmt.executeQuery();
-            if (rs.next()) {
-                return rs.getDouble(1);
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return 0;
-    }
-
+    // ========== Instance Methods Only ==========
+    // Service sẽ tạo instance DAO và gọi các method này
+    /**
+     * Thêm khách hàng mới vào cơ sở dữ liệu
+     * @param kh KhachHang entity
+     * @return true nếu thêm thành công, false nếu thất bại
+     */
     boolean insertKhachHang(KhachHang kh);
 
+    /**
+     * Cập nhật thông tin khách hàng trong cơ sở dữ liệu
+     * @param kh KhachHang entity
+     * @return true nếu cập nhật thành công, false nếu thất bại
+     */
     boolean updateKhachHang(KhachHang kh);
 
+    /**
+     * Tìm khách hàng theo mã
+     * @param maKH mã khách hàng
+     * @return KhachHang entity nếu tìm thấy, null nếu không tìm thấy
+     */
     KhachHang getKhachHangTheoMa(String maKH);
 
+    /**
+     * Tìm khách hàng theo số điện thoại
+     * @param soDienThoai số điện thoại
+     * @return KhachHang entity nếu tìm thấy, null nếu không tìm thấy
+     */
     KhachHang getKhachHangTheoSoDienThoai(String soDienThoai);
 
+    /**
+     * Lấy danh sách tất cả khách hàng
+     * @return danh sách KhachHang
+     */
     ArrayList<KhachHang> getAllKhachHang();
 
+    /**
+     * Lấy danh sách tất cả khách hàng với thông tin thống kê
+     * @return danh sách KhachHang với thông tin chi tiêu, số đơn hàng
+     */
+    List<KhachHang> getAllKhachHangWithStats();
+
+    /**
+     * Tìm khách hàng theo tên (LIKE search)
+     * @param tenKH tên khách hàng để tìm kiếm
+     * @return danh sách KhachHang entity phù hợp với thông tin thống kê
+     */
+    List<KhachHang> searchKhachHangByName(String tenKH);
+
+    /**
+     * Lấy mã khách hàng tiếp theo
+     * @return số hash tối đa từ mã khách hàng
+     */
     int getMaxHash();
+
+    /**
+     * Lấy tổng số khách hàng (không bị xóa)
+     * @return số lượng khách hàng
+     */
+    int getTongKhachHang();
+
+    /**
+     * Lấy tổng số khách hàng VIP (chi tiêu >= 1.000.000)
+     * @return số lượng khách hàng VIP
+     */
+    int getTongKhachHangVIP();
+
+    /**
+     * Lấy tổng số đơn hàng (không bị xóa)
+     * @return tổng số đơn hàng
+     */
+    int getTongDonHang();
+
+    /**
+     * Lấy tổng doanh thu từ tất cả hóa đơn (không bị xóa)
+     * @return tổng doanh thu
+     */
+    double getTongDoanhThu();
 }
+
