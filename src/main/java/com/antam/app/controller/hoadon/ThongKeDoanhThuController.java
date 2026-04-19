@@ -69,8 +69,8 @@ public class ThongKeDoanhThuController extends ScrollPane {
 
     private Button btnRefresh;
 
-    private ThongKeDoanhThu_Service thongKeDAO;
-    private ThongKeTrangChinh_Service thongKeTrangChinhDAO;
+    private ThongKeDoanhThu_Service thongKe_service;
+    private ThongKeTrangChinh_Service thongKeTrangChinh_service;
     private LocalDate tuNgay;
     private LocalDate denNgay;
     private String selectedNhanVien = null;
@@ -254,8 +254,8 @@ public class ThongKeDoanhThuController extends ScrollPane {
         this.getChildren().add(root);
 
         /** Sự kiện **/
-        thongKeDAO = new ThongKeDoanhThu_Service();
-        thongKeTrangChinhDAO = new ThongKeTrangChinh_Service();
+        thongKe_service = new ThongKeDoanhThu_Service();
+        thongKeTrangChinh_service = new ThongKeTrangChinh_Service();
 
         // Khởi tạo ComboBox thời gian
         cmbThoiGian.setItems(FXCollections.observableArrayList(
@@ -392,7 +392,7 @@ public class ThongKeDoanhThuController extends ScrollPane {
     }
 
     private void loadDanhSachNhanVien() {
-        ArrayList<NhanVienDTO> dsNhanVien = thongKeDAO.getDanhSachNhanVien();
+        ArrayList<NhanVienDTO> dsNhanVien = thongKe_service.getDanhSachNhanVien();
         ObservableList<String> items = FXCollections.observableArrayList("Tất cả");
         for (NhanVienDTO nv : dsNhanVien) {
             items.add(nv.getMaNV() + " - " + nv.getHoTen());
@@ -465,9 +465,9 @@ public class ThongKeDoanhThuController extends ScrollPane {
     }
 
     private void loadTongQuan() {
-        double tongDoanhThu = thongKeDAO.getTongDoanhThu(tuNgay, denNgay, selectedNhanVien);
-        int tongDonHang = thongKeDAO.getTongDonHang(tuNgay, denNgay, selectedNhanVien);
-        int soKhachHang = thongKeDAO.getSoKhachHangMoi(tuNgay, denNgay, selectedNhanVien);
+        double tongDoanhThu = thongKe_service.getTongDoanhThu(tuNgay, denNgay, selectedNhanVien);
+        int tongDonHang = thongKe_service.getTongDonHang(tuNgay, denNgay, selectedNhanVien);
+        int soKhachHang = thongKe_service.getSoKhachHangMoi(tuNgay, denNgay, selectedNhanVien);
         double donHangTB = tongDonHang > 0 ? tongDoanhThu / tongDonHang : 0;
 
         // Cập nhật text
@@ -490,14 +490,14 @@ public class ThongKeDoanhThuController extends ScrollPane {
         LocalDate tuNgayTruoc = tuNgay.minusDays(days);
         LocalDate denNgayTruoc = denNgay.minusDays(days);
 
-        double doanhThuHienTai = thongKeDAO.getTongDoanhThu(tuNgay, denNgay, selectedNhanVien);
-        double doanhThuTruoc = thongKeDAO.getTongDoanhThu(tuNgayTruoc, denNgayTruoc, selectedNhanVien);
+        double doanhThuHienTai = thongKe_service.getTongDoanhThu(tuNgay, denNgay, selectedNhanVien);
+        double doanhThuTruoc = thongKe_service.getTongDoanhThu(tuNgayTruoc, denNgayTruoc, selectedNhanVien);
 
-        int donHangHienTai = thongKeDAO.getTongDonHang(tuNgay, denNgay, selectedNhanVien);
-        int donHangTruoc = thongKeDAO.getTongDonHang(tuNgayTruoc, denNgayTruoc, selectedNhanVien);
+        int donHangHienTai = thongKe_service.getTongDonHang(tuNgay, denNgay, selectedNhanVien);
+        int donHangTruoc = thongKe_service.getTongDonHang(tuNgayTruoc, denNgayTruoc, selectedNhanVien);
 
-        int khachHangHienTai = thongKeDAO.getSoKhachHangMoi(tuNgay, denNgay, selectedNhanVien);
-        int khachHangTruoc = thongKeDAO.getSoKhachHangMoi(tuNgayTruoc, denNgayTruoc, selectedNhanVien);
+        int khachHangHienTai = thongKe_service.getSoKhachHangMoi(tuNgay, denNgay, selectedNhanVien);
+        int khachHangTruoc = thongKe_service.getSoKhachHangMoi(tuNgayTruoc, denNgayTruoc, selectedNhanVien);
 
         updateChangeButton(btnDoanhThuChange, doanhThuHienTai, doanhThuTruoc);
         updateChangeButton(btnDonHangChange, donHangHienTai, donHangTruoc);
@@ -537,10 +537,10 @@ public class ThongKeDoanhThuController extends ScrollPane {
         ArrayList<ThongKeDoanhThuDTO> dsThongKe;
         if (hienThiTheoThang) {
             // Lấy dữ liệu theo tháng
-            dsThongKe = thongKeDAO.getDoanhThuTheoThang(tuNgay, denNgay, selectedNhanVien);
+            dsThongKe = thongKe_service.getDoanhThuTheoThang(tuNgay, denNgay, selectedNhanVien);
         } else {
             // Lấy dữ liệu theo ngày
-            dsThongKe = thongKeDAO.getDoanhThuTheoThoiGian(tuNgay, denNgay, selectedNhanVien);
+            dsThongKe = thongKe_service.getDoanhThuTheoThoiGian(tuNgay, denNgay, selectedNhanVien);
         }
 
         XYChart.Series<String, Number> series = new XYChart.Series<>();
@@ -710,7 +710,7 @@ public class ThongKeDoanhThuController extends ScrollPane {
 
         try {
             // *** CHỈNH SỐ SẢN PHẨM: Thay đổi số 5 để hiển thị nhiều/ít sản phẩm hơn ***
-            Map<String, Integer> topProducts = thongKeTrangChinhDAO.getTopSanPhamBanChay(5);
+            Map<String, Integer> topProducts = thongKeTrangChinh_service.getTopSanPhamBanChay(5);
 
             XYChart.Series<String, Number> series = new XYChart.Series<>();
             series.setName("Số lượng bán");
@@ -781,7 +781,7 @@ public class ThongKeDoanhThuController extends ScrollPane {
     }
 
     private void loadTableData() {
-        ArrayList<ThongKeDoanhThuDTO> dsThongKe = thongKeDAO.getDoanhThuTheoThoiGian(tuNgay, denNgay, selectedNhanVien);
+        ArrayList<ThongKeDoanhThuDTO> dsThongKe = thongKe_service.getDoanhThuTheoThoiGian(tuNgay, denNgay, selectedNhanVien);
         ObservableList<ThongKeDoanhThuDTO> data = FXCollections.observableArrayList(dsThongKe);
         tableChiTiet.setItems(data);
     }
@@ -833,9 +833,9 @@ public class ThongKeDoanhThuController extends ScrollPane {
         // Lấy dữ liệu
         ArrayList<ThongKeDoanhThuDTO> dsThongKe;
         if (hienThiTheoThang) {
-            dsThongKe = thongKeDAO.getDoanhThuTheoThang(tuNgay, denNgay, selectedNhanVien);
+            dsThongKe = thongKe_service.getDoanhThuTheoThang(tuNgay, denNgay, selectedNhanVien);
         } else {
-            dsThongKe = thongKeDAO.getDoanhThuTheoThoiGian(tuNgay, denNgay, selectedNhanVien);
+            dsThongKe = thongKe_service.getDoanhThuTheoThoiGian(tuNgay, denNgay, selectedNhanVien);
         }
 
         // Tạo FileWriter với UTF-8 BOM để Excel hiển thị đúng tiếng Việt
@@ -855,9 +855,9 @@ public class ThongKeDoanhThuController extends ScrollPane {
 
             // Ghi thông tin tổng quan
             writer.append("THONG TIN TONG QUAN\n");
-            double tongDoanhThu = thongKeDAO.getTongDoanhThu(tuNgay, denNgay, selectedNhanVien);
-            int tongDonHang = thongKeDAO.getTongDonHang(tuNgay, denNgay, selectedNhanVien);
-            int soKhachHang = thongKeDAO.getSoKhachHangMoi(tuNgay, denNgay, selectedNhanVien);
+            double tongDoanhThu = thongKe_service.getTongDoanhThu(tuNgay, denNgay, selectedNhanVien);
+            int tongDonHang = thongKe_service.getTongDonHang(tuNgay, denNgay, selectedNhanVien);
+            int soKhachHang = thongKe_service.getSoKhachHangMoi(tuNgay, denNgay, selectedNhanVien);
             double donHangTB = tongDonHang > 0 ? tongDoanhThu / tongDonHang : 0;
 
             writer.append("Tong doanh thu,").append(String.format("%.2f", tongDoanhThu)).append(" VND\n");
@@ -894,7 +894,7 @@ public class ThongKeDoanhThuController extends ScrollPane {
             writer.append("TOP SAN PHAM BAN CHAY\n");
             writer.append("Ten thuoc,So luong ban\n");
 
-            Map<String, Integer> topSanPham = thongKeDAO.getTopSanPhamBanChay(tuNgay, denNgay, 5);
+            Map<String, Integer> topSanPham = thongKe_service.getTopSanPhamBanChay(tuNgay, denNgay, 5);
             for (Map.Entry<String, Integer> entry : topSanPham.entrySet()) {
                 writer.append(entry.getKey()).append(",");
                 writer.append(String.valueOf(entry.getValue())).append("\n");

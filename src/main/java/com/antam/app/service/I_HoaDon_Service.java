@@ -1,133 +1,105 @@
 package com.antam.app.service;
 
-import com.antam.app.connect.ConnectDB;
-import com.antam.app.service.impl.KhachHang_Service;
-import com.antam.app.service.impl.KhuyenMai_Service;
-import com.antam.app.service.impl.NhanVien_Service;
 import com.antam.app.dto.HoaDonDTO;
-import com.antam.app.dto.KhachHangDTO;
-import com.antam.app.dto.KhuyenMaiDTO;
-import com.antam.app.dto.NhanVienDTO;
-
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.time.LocalDate;
 import java.util.ArrayList;
 
 /*
- * @description:
- * @author: Pham Dang Khoa
- * @date: 13/04/2026
+ * @ (#) I_HoaDon_Service.java   1.0 19/04/2026
+ *
+ * Copyright (c) 2025 IUH. All rights reserved.
+ */
+
+/*
+ * @description: Business Logic Interface cho HoaDon
+ * Theo chuẩn luồng dữ liệu: Ghi UI→DTO→Service→Entity→DAO→DB
+ *                         Đọc DB→DAO→Entity→Service→DTO→UI
+ * @author: Duong Nguyen, Pham Dang Khoa, Tran Tuan Hung
+ * @date: 19/04/2026
  * @version: 1.0
  */
 public interface I_HoaDon_Service {
     /**
+     * Lấy tất cả hóa đơn
+     * DB→DAO→Entity→Service→DTO→UI
+     * @return danh sách tất cả hóa đơn
+     */
+    ArrayList<HoaDonDTO> getAllHoaDon();
+
+    /**
+     * Lấy hóa đơn theo mã hóa đơn
+     * @param maHD mã hóa đơn
+     * @return hóa đơn nếu tìm thấy, null nếu không
+     */
+    HoaDonDTO getHoaDonTheoMa(String maHD);
+
+    /**
      * Lấy danh sách hóa đơn theo mã khách hàng
-     *
      * @param maKH mã khách hàng
      * @return danh sách hóa đơn của khách hàng đó
      */
-    static ArrayList<HoaDonDTO> getHoaDonByMaKH(String maKH) {
-        ArrayList<HoaDonDTO> dsHoaDon = new ArrayList<>();
-        String sql = "SELECT * FROM HoaDon WHERE MaKH = ? AND DeleteAt = 0 ORDER BY NgayTao DESC";
+    ArrayList<HoaDonDTO> getHoaDonByMaKH(String maKH);
 
-        // Danh sách lưu trữ dữ liệu tạm từ ResultSet
-        class TempHoaDonData {
-            final String maHD, maKH, maKM, maNV;
-            final LocalDate ngayTao;
-            final double tongTien;
-            final boolean deleteAt;
-
-            TempHoaDonData(String maHD, LocalDate ngayTao, String maNV, String maKH, String maKM, double tongTien, boolean deleteAt) {
-                this.maHD = maHD;
-                this.ngayTao = ngayTao;
-                this.maNV = maNV;
-                this.maKH = maKH;
-                this.maKM = maKM;
-                this.tongTien = tongTien;
-                this.deleteAt = deleteAt;
-            }
-        }
-
-        ArrayList<TempHoaDonData> tempList = new ArrayList<>();
-
-        try {
-            Connection con = ConnectDB.getConnection();
-            if (con == null || con.isClosed()) {
-                ConnectDB.getInstance().connect();
-                con = ConnectDB.getConnection();
-            }
-
-            // Bước 1: Đọc tất cả dữ liệu từ ResultSet trước
-            try (PreparedStatement ps = con.prepareStatement(sql)) {
-                ps.setString(1, maKH);
-                try (ResultSet rs = ps.executeQuery()) {
-                    while (rs.next()) {
-                        String maHD = rs.getString("MaHD");
-                        LocalDate ngayTaoDate = rs.getDate("NgayTao").toLocalDate();
-                        String maNV = rs.getString("MaNV");
-                        String maKM = rs.getString("MaKM");
-                        double tongTien = rs.getDouble("TongTien");
-                        boolean deleteAt = rs.getBoolean("DeleteAt");
-
-                        tempList.add(new TempHoaDonData(maHD, ngayTaoDate, maNV, maKH, maKM, tongTien, deleteAt));
-                    }
-                }
-            }
-
-            // Bước 2: Sau khi đóng ResultSet, gọi các DAO khác để lấy thông tin chi tiết
-            NhanVien_Service nhanVienDAO = new NhanVien_Service();
-            KhachHang_Service khachHangDAO = new KhachHang_Service();
-            KhuyenMai_Service khuyenMaiDAO = new KhuyenMai_Service();
-
-            for (TempHoaDonData temp : tempList) {
-                // Lấy đầy đủ thông tin nhân viên từ NhanVien_DAO
-                NhanVienDTO nhanVienDTO = nhanVienDAO.findNhanVienVoiMa(temp.maNV);
-                if (nhanVienDTO == null) {
-                    nhanVienDTO = new NhanVienDTO(temp.maNV);
-                }
-
-                // Lấy đầy đủ thông tin khách hàng từ KhachHang_DAO
-                KhachHangDTO khachHangDTO = khachHangDAO.getKhachHangTheoMa(temp.maKH);
-                if (khachHangDTO == null) {
-                    khachHangDTO = new KhachHangDTO(temp.maKH);
-                }
-
-                // Lấy đầy đủ thông tin khuyến mãi từ KhuyenMai_DAO
-                KhuyenMaiDTO khuyenMaiDTO = null;
-                if (temp.maKM != null && !temp.maKM.trim().isEmpty()) {
-                    khuyenMaiDTO = khuyenMaiDAO.getKhuyenMaiTheoMa(temp.maKM);
-                }
-
-                HoaDonDTO hoaDonDTO = new HoaDonDTO(temp.maHD, temp.ngayTao, nhanVienDTO, khachHangDTO, khuyenMaiDTO, temp.tongTien, temp.deleteAt);
-                hoaDonDTO.setTongTien(temp.tongTien);
-                dsHoaDon.add(hoaDonDTO);
-            }
-        } catch (Exception e) {
-            System.err.println("Lỗi khi lấy hóa đơn theo mã khách hàng: " + e.getMessage());
-            e.printStackTrace();
-        }
-        return dsHoaDon;
-    }
-
-    ArrayList<HoaDonDTO> getAllHoaDon();
-
-    HoaDonDTO getHoaDonTheoMa(String maHD);
-
-    boolean CapNhatTongTienHoaDon(String maHD, double tongTien);
-
-    boolean xoaMemHoaDon(String maHD);
-
+    /**
+     * Tìm kiếm hóa đơn theo mã hóa đơn (LIKE)
+     * @param maHd phần mã hóa đơn cần tìm
+     * @return danh sách hóa đơn phù hợp
+     */
     ArrayList<HoaDonDTO> searchHoaDonByMaHd(String maHd);
 
+    /**
+     * Tìm kiếm hóa đơn theo trạng thái
+     * @param status trạng thái cần tìm ("Tất cả", "Hoạt động", "Đã huỷ")
+     * @return danh sách hóa đơn phù hợp
+     */
     ArrayList<HoaDonDTO> searchHoaDonByStatus(String status);
 
+    /**
+     * Tìm kiếm hóa đơn theo mã nhân viên
+     * @param maNV mã nhân viên
+     * @return danh sách hóa đơn của nhân viên đó
+     */
     ArrayList<HoaDonDTO> searchHoaDonByMaNV(String maNV);
 
+    /**
+     * Thêm hóa đơn vào database
+     * UI→DTO→Service→Entity→DAO→DB
+     * @param hoaDonDTO hóa đơn DTO cần thêm
+     * @return true nếu thêm thành công, false nếu thất bại
+     */
     boolean insertHoaDon(HoaDonDTO hoaDonDTO);
 
+    /**
+     * Cập nhật hóa đơn trong database
+     * @param hoaDonDTO hóa đơn DTO cần cập nhật
+     * @return true nếu cập nhật thành công, false nếu thất bại
+     */
+    boolean updateHoaDon(HoaDonDTO hoaDonDTO);
+
+    /**
+     * Cập nhật tổng tiền của hóa đơn
+     * @param maHD mã hóa đơn
+     * @param tongTien tổng tiền mới
+     * @return true nếu cập nhật thành công, false nếu thất bại
+     */
+    boolean CapNhatTongTienHoaDon(String maHD, double tongTien);
+
+    /**
+     * Xóa mềm hóa đơn (set DeleteAt = 1)
+     * @param maHD mã hóa đơn
+     * @return true nếu xóa thành công, false nếu thất bại
+     */
+    boolean xoaMemHoaDon(String maHD);
+
+    /**
+     * Đếm số lượng hóa đơn đã sử dụng khuyến mãi với mã cho trước
+     * @param maKM mã khuyến mãi
+     * @return số lượng hóa đơn
+     */
     int soHoaDonDaCoKhuyenMaiVoiMa(String maKM);
 
+    /**
+     * Lấy mã hóa đơn lớn nhất (để tạo mã tiếp theo)
+     * @return mã hóa đơn lớn nhất
+     */
     String getMaxHash();
 }

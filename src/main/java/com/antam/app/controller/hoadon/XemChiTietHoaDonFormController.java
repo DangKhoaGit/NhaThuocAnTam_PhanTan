@@ -248,27 +248,27 @@ public class XemChiTietHoaDonFormController extends DialogPane{
         txtDate.setText("Ngày: " + hoaDonDTO.getNgayTao().toString());
         txtCustomer.setText("Khách hàng: " + hoaDonDTO.getMaKH().getTenKH());
         txtEmployee.setText("Nhân viên: " + hoaDonDTO.getMaNV().getHoTen());
-        // Lấy danh sách chi tiết hóa đơn từ DAO
-        ChiTietHoaDon_Service cthdDAO = new ChiTietHoaDon_Service();
-        LoThuoc_Service chiTietThuoc_dao = new LoThuoc_Service();
-        Thuoc_Service thuoc_dao = new Thuoc_Service();
-        DonViTinh_Service donViTinh_dao = new DonViTinh_Service();
-        java.util.List<ChiTietHoaDonDTO> list = cthdDAO.getAllChiTietHoaDonTheoMaHD(hoaDonDTO.getMaHD());
+        // Lấy danh sách chi tiết hóa đơn từ Service
+        ChiTietHoaDon_Service chiTietHoaDon_service = new ChiTietHoaDon_Service();
+        LoThuoc_Service loThuoc_service = new LoThuoc_Service();
+        Thuoc_Service thuoc_service = new Thuoc_Service();
+        DonViTinh_Service donViTinh_service = new DonViTinh_Service();
+        java.util.List<ChiTietHoaDonDTO> list = chiTietHoaDon_service.getAllChiTietHoaDonTheoMaHD(hoaDonDTO.getMaHD());
         double subTotal = 0;
         double returnTotal = 0;
         double soldItemsTotal = 0; // Tổng tiền của hàng bán
         double vatTotal = 0; // Tổng thuế VAT của hàng bán
         for (ChiTietHoaDonDTO chiTietHoaDonDTO : list) {
-            LoThuocDTO ctt = chiTietThuoc_dao.getChiTietThuoc(chiTietHoaDonDTO.getMaLoThuocDTO().getMaLoThuoc());
+            LoThuocDTO ctt = loThuoc_service.getChiTietThuoc(chiTietHoaDonDTO.getMaLoThuocDTO().getMaLoThuoc());
             if (ctt != null) {
-                ThuocDTO t = thuoc_dao.getThuocTheoMa(ctt.getMaThuocDTO().getMaThuoc());
+                ThuocDTO t = thuoc_service.getThuocTheoMa(ctt.getMaThuocDTO().getMaThuoc());
                 if (t != null) {
                     ctt.setMaThuocDTO(t);
                 }
                 chiTietHoaDonDTO.setMaLoThuocDTO(ctt);
             }
             // Lấy lại thông tin đơn vị tính
-            DonViTinhDTO dvt = donViTinh_dao.getDVTTheoMa(chiTietHoaDonDTO.getMaDVT().getMaDVT());
+            DonViTinhDTO dvt = donViTinh_service.getDVTTheoMa(chiTietHoaDonDTO.getMaDVT().getMaDVT());
             if (dvt != null) {
                 chiTietHoaDonDTO.setMaDVT(dvt);
             }

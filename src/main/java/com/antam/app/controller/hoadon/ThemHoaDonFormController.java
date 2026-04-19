@@ -235,8 +235,8 @@ public class ThemHoaDonFormController extends DialogPane {
             if (newVal != null && !newVal.trim().isEmpty()) {
                 // Chỉ tìm khi đủ 10 số
                 if (newVal.trim().matches("\\d{10}")) {
-                    KhachHang_Service khachHangDAO = new KhachHang_Service();
-                    KhachHangDTO kh = khachHangDAO.getKhachHangTheoSoDienThoai(newVal.trim());
+                    KhachHang_Service khachHang_service = new KhachHang_Service();
+                    KhachHangDTO kh = khachHang_service.getKhachHangTheoSoDienThoai(newVal.trim());
                     if (kh != null) {
                         // Tìm thấy khách hàng, tự động điền tên
                         txtTenKhachHang.setText(kh.getTenKH());
@@ -266,8 +266,8 @@ public class ThemHoaDonFormController extends DialogPane {
         });
 
         // Load thuốc vào cbMedicine
-        Thuoc_Service thuocDAO = new Thuoc_Service();
-        var thuocList = FXCollections.observableArrayList(thuocDAO.getAllThuoc());
+        Thuoc_Service thuoc_service = new Thuoc_Service();
+        var thuocList = FXCollections.observableArrayList(thuoc_service.getAllThuoc());
         cbMedicine.setItems(thuocList);
         cbMedicine.setConverter(new javafx.util.StringConverter<>() {
             @Override
@@ -323,7 +323,7 @@ public class ThemHoaDonFormController extends DialogPane {
         }
 
         // Load khuyến mãi vào cb_promotion
-        KhuyenMai_Service khuyenMaiDAO = new KhuyenMai_Service();
+        KhuyenMai_Service khuyenMai_service = new KhuyenMai_Service();
         var dsKhuyenMai = I_KhuyenMai_Service.getAllKhuyenMaiConHieuLuc();
         cb_promotion.setItems(FXCollections.observableArrayList(dsKhuyenMai));
         cb_promotion.setConverter(new javafx.util.StringConverter<>() {
@@ -443,7 +443,7 @@ public class ThemHoaDonFormController extends DialogPane {
             }
 
             // Kiểm tra tồn kho cho từng thuốc
-            LoThuoc_Service chiTietThuocDAO = new LoThuoc_Service();
+            LoThuoc_Service loThuoc_service = new LoThuoc_Service();
             boolean enoughStock = true;
             String outOfStockMedicine = null;
             for (var node : medicineRowsVBox.getChildren()) {
@@ -457,7 +457,7 @@ public class ThemHoaDonFormController extends DialogPane {
                     } catch (Exception ex) {
                     }
                     if (thuocDTO != null && soLuong > 0) {
-                        int tongTonKho = chiTietThuocDAO.getTongTonKhoTheoMaThuoc(thuocDTO.getMaThuoc());
+                        int tongTonKho = loThuoc_service.getTongTonKhoTheoMaThuoc(thuocDTO.getMaThuoc());
                         if (tongTonKho < soLuong) {
                             enoughStock = false;
                             outOfStockMedicine = thuocDTO.getTenThuoc();
@@ -478,11 +478,11 @@ public class ThemHoaDonFormController extends DialogPane {
 
             // 1. Lấy mã khách hàng (tự động thêm nếu chưa có)
             String maKH = getOrCreateMaKhachHang();
-            KhachHang_Service khachHangDAO = new KhachHang_Service();
-            KhachHangDTO kh = khachHangDAO.getKhachHangTheoMa(maKH);
+            KhachHang_Service khachHang_service = new KhachHang_Service();
+            KhachHangDTO kh = khachHang_service.getKhachHangTheoMa(maKH);
 
             // 2. Lấy nhân viên (nếu có ComboBox chọn nhân viên, ví dụ cbEmployee)
-            NhanVien_Service nhanVienDAO = new NhanVien_Service();
+            NhanVien_Service nhanVien_service = new NhanVien_Service();
             NhanVienDTO nhanVienDTO = PhienNguoiDungDTO.getMaNV(); // Hardcode mã nhân viên
             if (nhanVienDTO == null || nhanVienDTO.getMaNV() == null) {
                 txtWarning.setText("Không tìm thấy nhân viên hợp lệ! Không thể tạo hóa đơn.");
@@ -499,9 +499,9 @@ public class ThemHoaDonFormController extends DialogPane {
             double tongTien = tongTienThucTe;
 
             // 6. Tạo hoá đơn đúng kiểu constructor
-            HoaDon_Service hoaDonDAO = new HoaDon_Service();
+            HoaDon_Service hoaDon_service = new HoaDon_Service();
             HoaDonDTO hoaDonDTO = new HoaDonDTO(maHD, LocalDate.now(), nhanVienDTO, kh, km, tongTien, false);
-            boolean hoaDonInserted = hoaDonDAO.insertHoaDon(hoaDonDTO);
+            boolean hoaDonInserted = hoaDon_service.insertHoaDon(hoaDonDTO);
             if (!hoaDonInserted) {
                 txtWarning.setText("Tạo hóa đơn thất bại! Vui lòng kiểm tra lại thông tin.");
                 txtWarning.setVisible(true);
@@ -509,7 +509,7 @@ public class ThemHoaDonFormController extends DialogPane {
                 return;
             }
             // 5. Thêm chi tiết hoá đơn cho từng thuốc và trừ kho
-            ChiTietHoaDon_Service chiTietHoaDonDAO = new ChiTietHoaDon_Service();
+            ChiTietHoaDon_Service chiTietHoaDon_service = new ChiTietHoaDon_Service();
             ArrayList<ChiTietHoaDonDTO> listCTHD = new ArrayList<>(); // Danh sách chi tiết hóa đơn để truyền vào hàm xuất
 
             // Gộp các dòng cùng loại thuốc lại trước khi xử lý
@@ -556,7 +556,7 @@ public class ThemHoaDonFormController extends DialogPane {
                 ThuocDTO thuocDTODayDu = thuocObjMap.get(maThuoc); // Lấy đối tượng Thuoc đầy đủ
 
                 // Lấy danh sách các lô ChiTietThuoc còn tồn kho cho thuốc này
-                List<LoThuocDTO> listCTT = chiTietThuocDAO.getAllChiTietThuoc().stream()
+                List<LoThuocDTO> listCTT = loThuoc_service.getAllChiTietThuoc().stream()
                         .filter(ctt -> ctt.getMaThuocDTO().getMaThuoc().equals(maThuoc) && ctt.getSoLuong() > 0)
                         .sorted(java.util.Comparator.comparing(LoThuocDTO::getHanSuDung)) // Ưu tiên lô hết hạn trước
                         .collect(Collectors.toList());
@@ -571,10 +571,10 @@ public class ThemHoaDonFormController extends DialogPane {
                     ctt.setMaThuocDTO(thuocDTODayDu);
 
                     ChiTietHoaDonDTO cthd = new ChiTietHoaDonDTO(new HoaDonDTO(maHD), ctt, soLuongXuat, dvt, "Bán", soLuongXuat * donGia);
-                    chiTietHoaDonDAO.themChiTietHoaDon(cthd);
+                    chiTietHoaDon_service.themChiTietHoaDon(cthd);
                     listCTHD.add(cthd); // Thêm vào danh sách để xuất PDF
                     // Trừ kho lô này
-                    chiTietThuocDAO.CapNhatSoLuongChiTietThuoc(ctt.getMaLoThuoc(), -soLuongXuat);
+                    loThuoc_service.CapNhatSoLuongChiTietThuoc(ctt.getMaLoThuoc(), -soLuongXuat);
                     soLuongConLai -= soLuongXuat;
                 }
             }
@@ -663,8 +663,8 @@ public class ThemHoaDonFormController extends DialogPane {
         TextField txtQuantity = (TextField) hbox.getChildren().get(2);
         TextField txt_price = (TextField) hbox.getChildren().get(3);
         txt_price.setEditable(false); // Khóa không cho sửa giá
-        Thuoc_Service thuocDAO = new Thuoc_Service();
-        var thuocList = FXCollections.observableArrayList(thuocDAO.getAllThuoc());
+        Thuoc_Service thuoc_service = new Thuoc_Service();
+        var thuocList = FXCollections.observableArrayList(thuoc_service.getAllThuoc());
         cbMedicine.setItems(thuocList);
         cbMedicine.setConverter(new javafx.util.StringConverter<>() {
             @Override
@@ -681,12 +681,12 @@ public class ThemHoaDonFormController extends DialogPane {
         // Khi chọn thuốc, tự động set đơn vị cơ sở và không cho chọn đơn vị khác
         cbMedicine.valueProperty().addListener((obs, oldVal, newVal) -> {
             if (newVal != null) {
-                DonViTinh_Service donViTinhDAO = new DonViTinh_Service();
+                DonViTinh_Service donViTinh_service = new DonViTinh_Service();
                 // Chỉ lấy đơn vị cơ sở của thuốc
                 DonViTinhDTO dvtCoSo = newVal.getMaDVTCoSo();
                 if (dvtCoSo != null) {
                     // Lấy thông tin đầy đủ của đơn vị tính từ database
-                    DonViTinhDTO dvtFull = donViTinhDAO.getDVTTheoMa(dvtCoSo.getMaDVT());
+                    DonViTinhDTO dvtFull = donViTinh_service.getDVTTheoMa(dvtCoSo.getMaDVT());
                     if (dvtFull != null) {
                         cb_unit.setItems(FXCollections.observableArrayList(dvtFull));
                         cb_unit.getSelectionModel().selectFirst();
@@ -774,8 +774,8 @@ public class ThemHoaDonFormController extends DialogPane {
      * Sinh mã hoá đơn mới chưa tồn tại trong CSDL dạng HDxxx
      */
     private String generateNewMaHoaDon() {
-        HoaDon_Service hoaDonDAO = new HoaDon_Service();
-        List<String> allMaHD = hoaDonDAO.getAllHoaDon().stream().map(hd -> hd.getMaHD()).collect(Collectors.toList());
+        HoaDon_Service hoaDon_service = new HoaDon_Service();
+        List<String> allMaHD = hoaDon_service.getAllHoaDon().stream().map(hd -> hd.getMaHD()).collect(Collectors.toList());
         int max = 0;
         for (String ma : allMaHD) {
             if (ma != null && ma.matches("HD\\d+")) {
@@ -793,22 +793,22 @@ public class ThemHoaDonFormController extends DialogPane {
 
         if (tenKH.isEmpty() || soDienThoai.isEmpty()) return null;
 
-        KhachHang_Service khachHangDAO = new KhachHang_Service();
+        KhachHang_Service khachHang_service = new KhachHang_Service();
 
         // Tìm khách hàng theo số điện thoại trước
-        KhachHangDTO existingKH = khachHangDAO.getKhachHangTheoSoDienThoai(soDienThoai);
+        KhachHangDTO existingKH = khachHang_service.getKhachHangTheoSoDienThoai(soDienThoai);
         if (existingKH != null) {
             return existingKH.getMaKH();
         }
 
         // Nếu không tìm thấy, tạo khách hàng mới với số điện thoại đã nhập
-        List<KhachHangDTO> allKH = khachHangDAO.getAllKhachHang();
+        List<KhachHangDTO> allKH = khachHang_service.getAllKhachHang();
         String newMaKH = generateNewMaKhachHang(allKH);
         KhachHangDTO newKH = new KhachHangDTO(
                 newMaKH, tenKH, soDienThoai, false
 
         );
-        khachHangDAO.insertKhachHang(newKH);
+        khachHang_service.insertKhachHang(newKH);
         return newMaKH;
     }
 

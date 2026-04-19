@@ -5,11 +5,11 @@ module com.antam.app {
     requires java.desktop;
     requires java.sql;
     requires javafx.controls;
-    requires fontawesomefx;
     requires jbcrypt;
     requires itextpdf;
     requires static lombok;
     requires jakarta.persistence;
+    requires fontawesomefx;
 
     // cho FXML
     opens com.antam.app.controller.hoadon to javafx.fxml;

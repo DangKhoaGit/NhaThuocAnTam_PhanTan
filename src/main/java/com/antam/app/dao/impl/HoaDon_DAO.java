@@ -1,5 +1,5 @@
 /*
- * @ (#) HoaDon_DAO.java   1.0 10/3/2025
+ * @ (#) HoaDon_DAO.java   1.0 19/04/2026
  *
  * Copyright (c) 2025 IUH. All rights reserved.
  */
@@ -18,41 +18,81 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 
 /*
- * @description
- * @author: Duong Nguyen
- * @date: 10/3/2025
- * version: 1.0
+ * @description: Implementation của I_HoaDon_DAO
+ * Theo chuẩn luồng dữ liệu: Ghi UI→DTO→Service→Entity→DAO→DB
+ *                         Đọc DB→DAO→Entity→Service→DTO→UI
+ * @author: Duong Nguyen, Pham Dang Khoa, Tran Tuan Hung
+ * @date: 19/04/2026
+ * @version: 1.0
  */
 public class HoaDon_DAO implements I_HoaDon_DAO {
-    // duong
+
+    private final NhanVien_DAO nhanVienDAO = new NhanVien_DAO();
+    private final KhachHang_DAO khachHangDAO = new KhachHang_DAO();
+    private final KhuyenMai_DAO khuyenMaiDAO = new KhuyenMai_DAO();
+
     /**
      * Lấy tất cả hóa đơn từ database
-     * @return danh sách hóa đơn
+     * DB→DAO→Entity→Service→DTO
      */
     @Override
     public ArrayList<HoaDon> getAllHoaDon() {
         ArrayList<HoaDon> dsHoaDon = new ArrayList<>();
         String sql = "SELECT * FROM HoaDon";
 
-        // Danh sách lưu trữ dữ liệu tạm từ ResultSet
-        class TempHoaDonData {
-            final String maHD, maKH, maKM, maNV;
-            final LocalDate ngayTao;
-            final double tongTien;
-            final boolean deleteAt;
-
-            TempHoaDonData(String maHD, LocalDate ngayTao, String maNV, String maKH, String maKM, double tongTien, boolean deleteAt) {
-                this.maHD = maHD;
-                this.ngayTao = ngayTao;
-                this.maNV = maNV;
-                this.maKH = maKH;
-                this.maKM = maKM;
-                this.tongTien = tongTien;
-                this.deleteAt = deleteAt;
+        try {
+            Connection con = ConnectDB.getConnection();
+            if (con == null || con.isClosed()) {
+                ConnectDB.getInstance().connect();
+                con = ConnectDB.getConnection();
             }
-        }
 
-        ArrayList<TempHoaDonData> tempList = new ArrayList<>();
+            try (Statement state = con.createStatement(); ResultSet rs = state.executeQuery(sql)) {
+                while (rs.next()) {
+                    HoaDon hd = mapResultSetToEntity(rs);
+                    dsHoaDon.add(hd);
+                }
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Lỗi khi lấy tất cả hóa đơn", e);
+        }
+        return dsHoaDon;
+    }
+
+    /**
+     * Lấy hóa đơn theo mã hóa đơn
+     */
+    @Override
+    public HoaDon getHoaDonTheoMa(String maHD) {
+        String sql = "SELECT * FROM HoaDon WHERE MaHD = ?";
+        try {
+            Connection con = ConnectDB.getConnection();
+            if (con == null || con.isClosed()) {
+                ConnectDB.getInstance().connect();
+                con = ConnectDB.getConnection();
+            }
+
+            try (PreparedStatement ps = con.prepareStatement(sql)) {
+                ps.setString(1, maHD);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) {
+                        return mapResultSetToEntity(rs);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Lỗi khi lấy hóa đơn theo mã", e);
+        }
+        return null;
+    }
+
+    /**
+     * Lấy danh sách hóa đơn theo mã khách hàng
+     */
+    @Override
+    public ArrayList<HoaDon> getHoaDonByMaKH(String maKH) {
+        ArrayList<HoaDon> dsHoaDon = new ArrayList<>();
+        String sql = "SELECT * FROM HoaDon WHERE MaKH = ? AND DeleteAt = 0 ORDER BY NgayTao DESC";
 
         try {
             Connection con = ConnectDB.getConnection();
@@ -61,158 +101,32 @@ public class HoaDon_DAO implements I_HoaDon_DAO {
                 con = ConnectDB.getConnection();
             }
 
-            // Bước 1: Đọc tất cả dữ liệu từ ResultSet trước
-            try (Statement state = con.createStatement(); ResultSet rs = state.executeQuery(sql)) {
-                while (rs.next()) {
-                    String maHD = rs.getString("MaHD");
-                    LocalDate ngayTaoDate = rs.getDate("NgayTao").toLocalDate();
-                    String maKH = rs.getString("MaKH");
-                    String maNV = rs.getString("MaNV");
-                    String maKM = rs.getString("MaKM");
-                    double tongTien = rs.getDouble("TongTien");
-                    boolean deleteAt = rs.getBoolean("DeleteAt");
-
-                    tempList.add(new TempHoaDonData(maHD, ngayTaoDate, maNV, maKH, maKM, tongTien, deleteAt));
+            try (PreparedStatement ps = con.prepareStatement(sql)) {
+                ps.setString(1, maKH);
+                try (ResultSet rs = ps.executeQuery()) {
+                    while (rs.next()) {
+                        HoaDon hd = mapResultSetToEntity(rs);
+                        dsHoaDon.add(hd);
+                    }
                 }
-            }
-
-            // Bước 2: Sau khi đóng ResultSet, gọi các DAO khác để lấy thông tin chi tiết
-            NhanVien_DAO nhanVienDAO = new NhanVien_DAO();
-            KhachHang_DAO khachHangDAO = new KhachHang_DAO();
-            KhuyenMai_DAO khuyenMaiDAO = new KhuyenMai_DAO();
-
-            for (TempHoaDonData temp : tempList) {
-                // Lấy đầy đủ thông tin nhân viên từ NhanVien_DAO
-                NhanVien nhanVien = nhanVienDAO.findNhanVienVoiMa(temp.maNV);
-                if (nhanVien == null) {
-                    nhanVien = new NhanVien(temp.maNV);
-                }
-
-                // Lấy đầy đủ thông tin khách hàng từ KhachHang_DAO
-                KhachHang khachHang = khachHangDAO.getKhachHangTheoMa(temp.maKH);
-                if (khachHang == null) {
-                    khachHang = new KhachHang(temp.maKH);
-                }
-
-                // Lấy đầy đủ thông tin khuyến mãi từ KhuyenMai_DAO
-                KhuyenMai khuyenMai = null;
-                if (temp.maKM != null && !temp.maKM.trim().isEmpty()) {
-                    khuyenMai = khuyenMaiDAO.getKhuyenMaiTheoMa(temp.maKM);
-                }
-
-                HoaDon hoaDon = new HoaDon(temp.maHD, temp.ngayTao, nhanVien, khachHang, khuyenMai, temp.tongTien, temp.deleteAt);
-                hoaDon.setTongTien(temp.tongTien);
-                dsHoaDon.add(hoaDon);
             }
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException("Lỗi khi lấy hóa đơn theo khách hàng", e);
         }
         return dsHoaDon;
     }
 
     /**
-     * Thêm hóa đơn vào database
-     * @param maHD hóa đơn cần thêm
-     * @return true nếu thêm thành công, false nếu thêm thất bại
-     */
-    @Override
-    public HoaDon getHoaDonTheoMa(String maHD){
-        HoaDon hd = new HoaDon(maHD);
-        String sql = "SELECT * FROM HoaDon WHERE MaHD = ?";
-        Connection con = ConnectDB.getConnection();
-        try{
-            PreparedStatement statement = con.prepareStatement(sql);
-            statement.setString(1, maHD);
-            ResultSet rs = statement.executeQuery();
-            if(rs.next()){
-                hd.setMaKH(new KhachHang(rs.getString("MaKH")));
-                hd.setMaNV(new NhanVien(rs.getString("MaNV")));
-                hd.setNgayTao(rs.getDate("NgayTao").toLocalDate());
-                hd.setTongTien(rs.getDouble("TongTien"));
-                hd.setMaKM(rs.getString("MaKM") != null ? new KhuyenMai(rs.getString("MaKM")) : null);
-                hd.setDeleteAt(rs.getBoolean("DeleteAt"));
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return hd;
-    }
-
-    /**
-     * Cập nhật tổng tiền của hóa đơn
-     * @param maHD mã hóa đơn cần cập nhật
-     * @param tongTien tổng tiền mới
-     * @return true nếu cập nhật thành công, false nếu cập nhật thất bại
-     */
-    @Override
-    public boolean CapNhatTongTienHoaDon(String maHD, double tongTien){
-        String sql = "UPDATE HoaDon SET TongTien = ? WHERE MaHD = ?";
-        Connection con = ConnectDB.getConnection();
-        try{
-            PreparedStatement statement = con.prepareStatement(sql);
-            statement.setDouble(1, tongTien);
-            statement.setString(2, maHD);
-            int rowsAffected = statement.executeUpdate();
-            return rowsAffected > 0;
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return false;
-    }
-    /**
-     * Thêm hóa đơn vào database
-     * @param maHD hóa đơn cần thêm
-     * @return true nếu thêm thành công, false nếu thêm thất bại
-     */
-    @Override
-    public boolean xoaMemHoaDon(String maHD){
-        String sql = "UPDATE HoaDon SET DeleteAt = 1 WHERE MaHD = ?";
-        Connection con = ConnectDB.getConnection();
-        try{
-            PreparedStatement statement = con.prepareStatement(sql);
-            statement.setString(1, maHD);
-            int rowsAffected = statement.executeUpdate();
-            return rowsAffected > 0;
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return false;
-    }
-    // duong
-
-    //hung
-    /**
-     * Tìm kiếm hóa đơn theo mã hóa đơn (MaHD) - tìm tương đối (LIKE).
-     * @param maHd Mã hóa đơn cần tìm (có thể là một phần mã)
-     * @return Danh sách hóa đơn có mã chứa chuỗi nhập vào
+     * Tìm kiếm hóa đơn theo mã hóa đơn (LIKE)
      */
     @Override
     public ArrayList<HoaDon> searchHoaDonByMaHd(String maHd) {
         ArrayList<HoaDon> dsHoaDon = new ArrayList<>();
         if (maHd == null || maHd.trim().isEmpty()) {
-            return dsHoaDon; // Trả về rỗng nếu không truyền mã
+            return dsHoaDon;
         }
+
         String sql = "SELECT * FROM HoaDon WHERE MaHD LIKE ? AND DeleteAt = 0";
-
-        // Danh sách lưu trữ dữ liệu tạm từ ResultSet
-        class TempHoaDonData {
-            final String maHD, maKH, maKM, maNV;
-            final LocalDate ngayTao;
-            final double tongTien;
-            final boolean deleteAt;
-
-            TempHoaDonData(String maHD, LocalDate ngayTao, String maNV, String maKH, String maKM, double tongTien, boolean deleteAt) {
-                this.maHD = maHD;
-                this.ngayTao = ngayTao;
-                this.maNV = maNV;
-                this.maKH = maKH;
-                this.maKM = maKM;
-                this.tongTien = tongTien;
-                this.deleteAt = deleteAt;
-            }
-        }
-
-        ArrayList<TempHoaDonData> tempList = new ArrayList<>();
 
         try {
             Connection con = ConnectDB.getConnection();
@@ -221,65 +135,29 @@ public class HoaDon_DAO implements I_HoaDon_DAO {
                 con = ConnectDB.getConnection();
             }
 
-            // Bước 1: Đọc tất cả dữ liệu từ ResultSet trước
             try (PreparedStatement ps = con.prepareStatement(sql)) {
-                ps.setString(1, "%" + maHd + "%"); // Tìm tương đối
+                ps.setString(1, "%" + maHd + "%");
                 try (ResultSet rs = ps.executeQuery()) {
                     while (rs.next()) {
-                        String maHD = rs.getString("MaHD");
-                        LocalDate ngayTaoDate = rs.getDate("NgayTao").toLocalDate();
-                        String maKH = rs.getString("MaKH");
-                        String maNVRes = rs.getString("MaNV");
-                        String maKM = rs.getString("MaKM");
-                        double tongTien = rs.getDouble("TongTien");
-                        boolean deleteAt = rs.getBoolean("DeleteAt");
-
-                        tempList.add(new TempHoaDonData(maHD, ngayTaoDate, maNVRes, maKH, maKM, tongTien, deleteAt));
+                        HoaDon hd = mapResultSetToEntity(rs);
+                        dsHoaDon.add(hd);
                     }
                 }
             }
-
-            // Bước 2: Sau khi đóng ResultSet, gọi các DAO khác để lấy thông tin chi tiết
-            NhanVien_DAO nhanVienDAO = new NhanVien_DAO();
-            KhachHang_DAO khachHangDAO = new KhachHang_DAO();
-            KhuyenMai_DAO khuyenMaiDAO = new KhuyenMai_DAO();
-
-            for (TempHoaDonData temp : tempList) {
-                // Lấy đầy đủ thông tin nhân viên từ NhanVien_DAO
-                NhanVien nhanVien = nhanVienDAO.findNhanVienVoiMa(temp.maNV);
-                if (nhanVien == null) {
-                    nhanVien = new NhanVien(temp.maNV);
-                }
-
-                // Lấy đầy đủ thông tin khách hàng từ KhachHang_DAO
-                KhachHang khachHang = khachHangDAO.getKhachHangTheoMa(temp.maKH);
-                if (khachHang == null) {
-                    khachHang = new KhachHang(temp.maKH);
-                }
-
-                // Lấy đầy đủ thông tin khuyến mãi từ KhuyenMai_DAO
-                KhuyenMai khuyenMai = null;
-                if (temp.maKM != null && !temp.maKM.trim().isEmpty()) {
-                    khuyenMai = khuyenMaiDAO.getKhuyenMaiTheoMa(temp.maKM);
-                }
-
-                HoaDon hoaDon = new HoaDon(temp.maHD, temp.ngayTao, nhanVien, khachHang, khuyenMai, temp.tongTien, temp.deleteAt);
-                hoaDon.setTongTien(temp.tongTien);
-                dsHoaDon.add(hoaDon);
-            }
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException("Lỗi khi tìm kiếm hóa đơn theo mã", e);
         }
         return dsHoaDon;
     }
 
     /**
-     * Lọc hóa đơn theo trạng thái: "Tất cả", "Hoạt động", "Đã huỷ"
+     * Tìm kiếm hóa đơn theo trạng thái
      */
     @Override
     public ArrayList<HoaDon> searchHoaDonByStatus(String status) {
         ArrayList<HoaDon> dsHoaDon = new ArrayList<>();
         String sql;
+
         if ("Tất cả".equals(status)) {
             sql = "SELECT * FROM HoaDon";
         } else if ("Hoạt động".equals(status)) {
@@ -290,26 +168,6 @@ public class HoaDon_DAO implements I_HoaDon_DAO {
             sql = "SELECT * FROM HoaDon";
         }
 
-        // Danh sách lưu trữ dữ liệu tạm từ ResultSet
-        class TempHoaDonData {
-            final String maHD, maKH, maKM, maNV;
-            final LocalDate ngayTao;
-            final double tongTien;
-            final boolean deleteAt;
-
-            TempHoaDonData(String maHD, LocalDate ngayTao, String maNV, String maKH, String maKM, double tongTien, boolean deleteAt) {
-                this.maHD = maHD;
-                this.ngayTao = ngayTao;
-                this.maNV = maNV;
-                this.maKH = maKH;
-                this.maKM = maKM;
-                this.tongTien = tongTien;
-                this.deleteAt = deleteAt;
-            }
-        }
-
-        ArrayList<TempHoaDonData> tempList = new ArrayList<>();
-
         try {
             Connection con = ConnectDB.getConnection();
             if (con == null || con.isClosed()) {
@@ -317,84 +175,25 @@ public class HoaDon_DAO implements I_HoaDon_DAO {
                 con = ConnectDB.getConnection();
             }
 
-            // Bước 1: Đọc tất cả dữ liệu từ ResultSet trước
             try (Statement state = con.createStatement(); ResultSet rs = state.executeQuery(sql)) {
                 while (rs.next()) {
-                    String maHD = rs.getString("MaHD");
-                    LocalDate ngayTaoDate = rs.getDate("NgayTao").toLocalDate();
-                    String maKH = rs.getString("MaKH");
-                    String maNV = rs.getString("MaNV");
-                    String maKM = rs.getString("MaKM");
-                    double tongTien = rs.getDouble("TongTien");
-                    boolean deleteAt = rs.getBoolean("DeleteAt");
-
-                    tempList.add(new TempHoaDonData(maHD, ngayTaoDate, maNV, maKH, maKM, tongTien, deleteAt));
+                    HoaDon hd = mapResultSetToEntity(rs);
+                    dsHoaDon.add(hd);
                 }
-            }
-
-            // Bước 2: Sau khi đóng ResultSet, gọi các DAO khác để lấy thông tin chi tiết
-            NhanVien_DAO nhanVienDAO = new NhanVien_DAO();
-            KhachHang_DAO khachHangDAO = new KhachHang_DAO();
-            KhuyenMai_DAO khuyenMaiDAO = new KhuyenMai_DAO();
-
-            for (TempHoaDonData temp : tempList) {
-                // Lấy đầy đủ thông tin nhân viên từ NhanVien_DAO
-                NhanVien nhanVien = nhanVienDAO.findNhanVienVoiMa(temp.maNV);
-                if (nhanVien == null) {
-                    nhanVien = new NhanVien(temp.maNV);
-                }
-
-                // Lấy đầy đủ thông tin khách hàng từ KhachHang_DAO
-                KhachHang khachHang = khachHangDAO.getKhachHangTheoMa(temp.maKH);
-                if (khachHang == null) {
-                    khachHang = new KhachHang(temp.maKH);
-                }
-
-                // Lấy đầy đủ thông tin khuyến mãi từ KhuyenMai_DAO
-                KhuyenMai khuyenMai = null;
-                if (temp.maKM != null && !temp.maKM.trim().isEmpty()) {
-                    khuyenMai = khuyenMaiDAO.getKhuyenMaiTheoMa(temp.maKM);
-                }
-
-                HoaDon hoaDon = new HoaDon(temp.maHD, temp.ngayTao, nhanVien, khachHang, khuyenMai, temp.tongTien, temp.deleteAt);
-                hoaDon.setTongTien(temp.tongTien);
-                dsHoaDon.add(hoaDon);
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            throw new RuntimeException("Lỗi khi tìm kiếm hóa đơn theo trạng thái", e);
         }
         return dsHoaDon;
     }
 
     /**
      * Tìm kiếm hóa đơn theo mã nhân viên
-     * @param maNV mã nhân viên
-     * @return danh sách hóa đơn của nhân viên đó
      */
     @Override
     public ArrayList<HoaDon> searchHoaDonByMaNV(String maNV) {
         ArrayList<HoaDon> dsHoaDon = new ArrayList<>();
         String sql = "SELECT * FROM HoaDon WHERE MaNV = ?";
-
-        // Danh sách lưu trữ dữ liệu tạm từ ResultSet
-        class TempHoaDonData {
-            String maHD, maKH, maKM, maNV;
-            LocalDate ngayTao;
-            double tongTien;
-            boolean deleteAt;
-
-            TempHoaDonData(String maHD, LocalDate ngayTao, String maNV, String maKH, String maKM, double tongTien, boolean deleteAt) {
-                this.maHD = maHD;
-                this.ngayTao = ngayTao;
-                this.maNV = maNV;
-                this.maKH = maKH;
-                this.maKM = maKM;
-                this.tongTien = tongTien;
-                this.deleteAt = deleteAt;
-            }
-        }
-
-        ArrayList<TempHoaDonData> tempList = new ArrayList<>();
 
         try {
             Connection con = ConnectDB.getConnection();
@@ -403,62 +202,24 @@ public class HoaDon_DAO implements I_HoaDon_DAO {
                 con = ConnectDB.getConnection();
             }
 
-            // Bước 1: Đọc tất cả dữ liệu từ ResultSet trước
-            try (PreparedStatement state = con.prepareStatement(sql)) {
-                state.setString(1, maNV);
-                try (ResultSet rs = state.executeQuery()) {
+            try (PreparedStatement ps = con.prepareStatement(sql)) {
+                ps.setString(1, maNV);
+                try (ResultSet rs = ps.executeQuery()) {
                     while (rs.next()) {
-                        String maHD = rs.getString("MaHD");
-                        LocalDate ngayTaoDate = rs.getDate("NgayTao").toLocalDate();
-                        String maKH = rs.getString("MaKH");
-                        String maKM = rs.getString("MaKM");
-                        double tongTien = rs.getDouble("TongTien");
-                        boolean deleteAt = rs.getBoolean("DeleteAt");
-
-                        tempList.add(new TempHoaDonData(maHD, ngayTaoDate, maNV, maKH, maKM, tongTien, deleteAt));
+                        HoaDon hd = mapResultSetToEntity(rs);
+                        dsHoaDon.add(hd);
                     }
                 }
             }
-
-            // Bước 2: Sau khi đóng ResultSet, gọi các DAO khác để lấy thông tin chi tiết
-            NhanVien_DAO nhanVienDAO = new NhanVien_DAO();
-            KhachHang_DAO khachHangDAO = new KhachHang_DAO();
-            KhuyenMai_DAO khuyenMaiDAO = new KhuyenMai_DAO();
-
-            for (TempHoaDonData temp : tempList) {
-                // Lấy đầy đủ thông tin nhân viên từ NhanVien_DAO
-                NhanVien nhanVien = nhanVienDAO.findNhanVienVoiMa(temp.maNV);
-                if (nhanVien == null) {
-                    nhanVien = new NhanVien(temp.maNV);
-                }
-
-                // Lấy đầy đủ thông tin khách hàng từ KhachHang_DAO
-                KhachHang khachHang = khachHangDAO.getKhachHangTheoMa(temp.maKH);
-                if (khachHang == null) {
-                    khachHang = new KhachHang(temp.maKH);
-                }
-
-                // Lấy đầy đủ thông tin khuyến mãi từ KhuyenMai_DAO
-                KhuyenMai khuyenMai = null;
-                if (temp.maKM != null && !temp.maKM.trim().isEmpty()) {
-                    khuyenMai = khuyenMaiDAO.getKhuyenMaiTheoMa(temp.maKM);
-                }
-
-                HoaDon hoaDon = new HoaDon(temp.maHD, temp.ngayTao, nhanVien, khachHang, khuyenMai, temp.tongTien, temp.deleteAt);
-                hoaDon.setTongTien(temp.tongTien);
-                dsHoaDon.add(hoaDon);
-            }
-
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException("Lỗi khi tìm kiếm hóa đơn theo nhân viên", e);
         }
         return dsHoaDon;
     }
 
     /**
      * Thêm hóa đơn vào database
-     * @param hoaDon hóa đơn cần thêm
-     * @return true nếu thêm thành công, false nếu thêm thất bại
+     * UI→DTO→Service→Entity→DAO→DB
      */
     @Override
     public boolean insertHoaDon(HoaDon hoaDon) {
@@ -469,6 +230,7 @@ public class HoaDon_DAO implements I_HoaDon_DAO {
                 ConnectDB.getInstance().connect();
                 con = ConnectDB.getConnection();
             }
+
             try (PreparedStatement ps = con.prepareStatement(sql)) {
                 ps.setString(1, hoaDon.getMaHD());
                 ps.setDate(2, Date.valueOf(hoaDon.getNgayTao()));
@@ -485,57 +247,176 @@ public class HoaDon_DAO implements I_HoaDon_DAO {
                 return rows > 0;
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            throw new RuntimeException("Lỗi khi thêm hóa đơn", e);
         }
-        return false;
     }
 
     /**
-     * Đếm số hóa đơn đã áp dụng khuyến mãi với mã khuyến mãi cụ thể
-     * @param maKM mã khuyến mãi
-     * @return số lượng hóa đơn đã áp dụng khuyến mãi
+     * Cập nhật hóa đơn trong database
      */
     @Override
-    public int soHoaDonDaCoKhuyenMaiVoiMa(String maKM){
-        int count = 0;
-        String sql = "SELECT COUNT(*) AS SoLuong FROM HoaDon WHERE MaKM = ? AND DeleteAt = 0";
-        Connection con = ConnectDB.getConnection();
-        try{
-            PreparedStatement statement = con.prepareStatement(sql);
-            statement.setString(1, maKM);
-            ResultSet rs = statement.executeQuery();
-            if(rs.next()){
-                count = rs.getInt("SoLuong");
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return count;
-    }
-
-    /**
-     * Lấy mã hóa đơn lớn nhất hiện có trong database
-     * @return string - phần số của mã hóa đơn lớn nhất
-     */
-    @Override
-    public String getMaxHash(){
-        try {
-            ConnectDB.getInstance().connect();
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
+    public boolean updateHoaDon(HoaDon hoaDon) {
+        String sql = "UPDATE HoaDon SET NgayTao = ?, MaNV = ?, MaKH = ?, MaKM = ?, TongTien = ?, DeleteAt = ? WHERE MaHD = ?";
         try {
             Connection con = ConnectDB.getConnection();
-            String sql = "select top 1 MaHD from HoaDon order by MaHD desc";
-            PreparedStatement state = con.prepareStatement(sql);
-            ResultSet kq = state.executeQuery();
-            while (kq.next()){
-                return kq.getString(1).substring(3,5);
+            if (con == null || con.isClosed()) {
+                ConnectDB.getInstance().connect();
+                con = ConnectDB.getConnection();
             }
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
+
+            try (PreparedStatement ps = con.prepareStatement(sql)) {
+                ps.setDate(1, Date.valueOf(hoaDon.getNgayTao()));
+                ps.setString(2, hoaDon.getMaNV() != null ? hoaDon.getMaNV().getMaNV() : null);
+                ps.setString(3, hoaDon.getMaKH() != null ? hoaDon.getMaKH().getMaKH() : null);
+                if (hoaDon.getMaKM() != null) {
+                    ps.setString(4, hoaDon.getMaKM().getMaKM());
+                } else {
+                    ps.setNull(4, Types.VARCHAR);
+                }
+                ps.setDouble(5, hoaDon.getTongTien());
+                ps.setBoolean(6, hoaDon.isDeleteAt());
+                ps.setString(7, hoaDon.getMaHD());
+                int rows = ps.executeUpdate();
+                return rows > 0;
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Lỗi khi cập nhật hóa đơn", e);
         }
-        return "";
+    }
+
+    /**
+     * Cập nhật tổng tiền của hóa đơn
+     */
+    @Override
+    public boolean CapNhatTongTienHoaDon(String maHD, double tongTien) {
+        String sql = "UPDATE HoaDon SET TongTien = ? WHERE MaHD = ?";
+        try {
+            Connection con = ConnectDB.getConnection();
+            if (con == null || con.isClosed()) {
+                ConnectDB.getInstance().connect();
+                con = ConnectDB.getConnection();
+            }
+
+            try (PreparedStatement ps = con.prepareStatement(sql)) {
+                ps.setDouble(1, tongTien);
+                ps.setString(2, maHD);
+                int rows = ps.executeUpdate();
+                return rows > 0;
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Lỗi khi cập nhật tổng tiền hóa đơn", e);
+        }
+    }
+
+    /**
+     * Xóa mềm hóa đơn (set DeleteAt = 1)
+     */
+    @Override
+    public boolean xoaMemHoaDon(String maHD) {
+        String sql = "UPDATE HoaDon SET DeleteAt = 1 WHERE MaHD = ?";
+        try {
+            Connection con = ConnectDB.getConnection();
+            if (con == null || con.isClosed()) {
+                ConnectDB.getInstance().connect();
+                con = ConnectDB.getConnection();
+            }
+
+            try (PreparedStatement ps = con.prepareStatement(sql)) {
+                ps.setString(1, maHD);
+                int rows = ps.executeUpdate();
+                return rows > 0;
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Lỗi khi xóa mềm hóa đơn", e);
+        }
+    }
+
+    /**
+     * Đếm số hóa đơn đã sử dụng khuyến mãi với mã cho trước
+     */
+    @Override
+    public int soHoaDonDaCoKhuyenMaiVoiMa(String maKM) {
+        String sql = "SELECT COUNT(*) FROM HoaDon WHERE MaKM = ?";
+        try {
+            Connection con = ConnectDB.getConnection();
+            if (con == null || con.isClosed()) {
+                ConnectDB.getInstance().connect();
+                con = ConnectDB.getConnection();
+            }
+
+            try (PreparedStatement ps = con.prepareStatement(sql)) {
+                ps.setString(1, maKM);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) {
+                        return rs.getInt(1);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Lỗi khi đếm hóa đơn có khuyến mãi", e);
+        }
+        return 0;
+    }
+
+    /**
+     * Lấy mã hóa đơn lớn nhất (để tạo mã tiếp theo)
+     */
+    @Override
+    public String getMaxHash() {
+        String sql = "SELECT MAX(MaHD) FROM HoaDon";
+        try {
+            Connection con = ConnectDB.getConnection();
+            if (con == null || con.isClosed()) {
+                ConnectDB.getInstance().connect();
+                con = ConnectDB.getConnection();
+            }
+
+            try (Statement state = con.createStatement(); ResultSet rs = state.executeQuery(sql)) {
+                if (rs.next() && rs.getString(1) != null) {
+                    return rs.getString(1);
+                }
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Lỗi khi lấy mã hóa đơn lớn nhất", e);
+        }
+        return "HD000";
+    }
+
+    /**
+     * Helper method: Ánh xạ ResultSet thành Entity
+     * Gọi các DAO khác để load relationship
+     */
+    private HoaDon mapResultSetToEntity(ResultSet rs) throws SQLException {
+        String maHD = rs.getString("MaHD");
+        LocalDate ngayTao = rs.getDate("NgayTao").toLocalDate();
+        String maNV = rs.getString("MaNV");
+        String maKH = rs.getString("MaKH");
+        String maKM = rs.getString("MaKM");
+        double tongTien = rs.getDouble("TongTien");
+        boolean deleteAt = rs.getBoolean("DeleteAt");
+
+        // Load relationship từ các DAO khác
+        NhanVien nhanVien = null;
+        if (maNV != null) {
+            nhanVien = nhanVienDAO.findNhanVienVoiMa(maNV);
+        }
+        if (nhanVien == null) {
+            nhanVien = new NhanVien(maNV);
+        }
+
+        KhachHang khachHang = null;
+        if (maKH != null) {
+            khachHang = khachHangDAO.getKhachHangTheoMa(maKH);
+        }
+        if (khachHang == null) {
+            khachHang = new KhachHang(maKH);
+        }
+
+        KhuyenMai khuyenMai = null;
+        if (maKM != null && !maKM.trim().isEmpty()) {
+            khuyenMai = khuyenMaiDAO.getKhuyenMaiTheoMa(maKM);
+        }
+
+        return new HoaDon(maHD, ngayTao, nhanVien, khachHang, khuyenMai, tongTien, deleteAt);
     }
 }
-

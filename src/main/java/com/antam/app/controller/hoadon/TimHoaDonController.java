@@ -187,12 +187,12 @@ public class TimHoaDonController extends ScrollPane{
         colTrangThai.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().isDeleteAt() ? "Đã huỷ" : "Hoạt động"));
 
         // Load dữ liệu hóa đơn từ DB lên bảng
-        HoaDon_Service hoaDonDAO = new HoaDon_Service();
-        ObservableList<HoaDonDTO> hoaDonList = FXCollections.observableArrayList(hoaDonDAO.getAllHoaDon());
+        HoaDon_Service hoaDon_service = new HoaDon_Service();
+        ObservableList<HoaDonDTO> hoaDonList = FXCollections.observableArrayList(hoaDon_service.getAllHoaDon());
         table_invoice.setItems(hoaDonList);
 
         // --- Khởi tạo ComboBox nhân viên ---
-        NhanVien_Service nhanVienDAO = new NhanVien_Service();
+        NhanVien_Service nhanVien_service = new NhanVien_Service();
         ObservableList<NhanVienDTO> dsNhanVien = FXCollections.observableArrayList(I_NhanVien_Service.getDsNhanVienformDBS());
         // Thêm lựa chọn "Tất cả" vào đầu danh sách
         NhanVienDTO tatCaNV = new NhanVienDTO("Tất cả");
@@ -241,7 +241,7 @@ public class TimHoaDonController extends ScrollPane{
 
         // --- Hàm lọc hóa đơn theo nhân viên, trạng thái, khoảng giá, ngày ---
         Runnable filterInvoices = () -> {
-            HoaDon_Service hoaDonDAO1 = new HoaDon_Service();
+            HoaDon_Service hoaDon_service1 = new HoaDon_Service();
             NhanVienDTO selectedNV = cbEmployee.getValue();
             String selectedStatus = cbStatus.getValue();
             String selectedPrice = cbPrice.getValue();
@@ -254,13 +254,13 @@ public class TimHoaDonController extends ScrollPane{
             // Lọc theo nhân viên và trạng thái trước
             ArrayList<HoaDonDTO> baseList;
             if (allNV && allStatus) {
-                baseList = new ArrayList<>(hoaDonDAO1.getAllHoaDon());
+                baseList = new ArrayList<>(hoaDon_service1.getAllHoaDon());
             } else if (!allNV && allStatus) {
-                baseList = new ArrayList<>(hoaDonDAO1.searchHoaDonByMaNV(selectedNV.getMaNV()));
+                baseList = new ArrayList<>(hoaDon_service1.searchHoaDonByMaNV(selectedNV.getMaNV()));
             } else if (allNV && !allStatus) {
-                baseList = new ArrayList<>(hoaDonDAO1.searchHoaDonByStatus(selectedStatus));
+                baseList = new ArrayList<>(hoaDon_service1.searchHoaDonByStatus(selectedStatus));
             } else {
-                ArrayList<HoaDonDTO> byStatus = hoaDonDAO1.searchHoaDonByStatus(selectedStatus);
+                ArrayList<HoaDonDTO> byStatus = hoaDon_service1.searchHoaDonByStatus(selectedStatus);
                 baseList = new ArrayList<>();
                 for (HoaDonDTO hd : byStatus) {
                     if (hd.getMaNV() != null && selectedNV.getMaNV().equals(hd.getMaNV().getMaNV())) {
@@ -322,7 +322,7 @@ public class TimHoaDonController extends ScrollPane{
             if (cbFirstDate != null) cbFirstDate.setValue(null);
             if (cbEndDate != null) cbEndDate.setValue(null);
             // Load lại toàn bộ hóa đơn
-            ObservableList<HoaDonDTO> allHoaDon = FXCollections.observableArrayList(hoaDonDAO.getAllHoaDon());
+            ObservableList<HoaDonDTO> allHoaDon = FXCollections.observableArrayList(hoaDon_service.getAllHoaDon());
             table_invoice.setItems(allHoaDon);
         });
 
@@ -337,11 +337,11 @@ public class TimHoaDonController extends ScrollPane{
         txtSearchInvoice.textProperty().addListener((observable, oldValue, newValue) -> {
             if (newValue == null || newValue.trim().isEmpty()) {
                 // Nếu ô tìm kiếm rỗng, load lại toàn bộ hóa đơn
-                ObservableList<HoaDonDTO> allHoaDon = FXCollections.observableArrayList(hoaDonDAO.getAllHoaDon());
+                ObservableList<HoaDonDTO> allHoaDon = FXCollections.observableArrayList(hoaDon_service.getAllHoaDon());
                 table_invoice.setItems(allHoaDon);
             } else {
                 // Nếu có nội dung, search theo mã
-                ObservableList<HoaDonDTO> searchResult = FXCollections.observableArrayList(hoaDonDAO.searchHoaDonByMaHd(newValue));
+                ObservableList<HoaDonDTO> searchResult = FXCollections.observableArrayList(hoaDon_service.searchHoaDonByMaHd(newValue));
                 table_invoice.setItems(searchResult);
             }
         });
@@ -349,10 +349,10 @@ public class TimHoaDonController extends ScrollPane{
         btnSearchInvoice.setOnAction(e -> {
             String maHd = txtSearchInvoice.getText();
             if (maHd == null || maHd.trim().isEmpty()) {
-                ObservableList<HoaDonDTO> allHoaDon = FXCollections.observableArrayList(hoaDonDAO.getAllHoaDon());
+                ObservableList<HoaDonDTO> allHoaDon = FXCollections.observableArrayList(hoaDon_service.getAllHoaDon());
                 table_invoice.setItems(allHoaDon);
             } else {
-                ObservableList<HoaDonDTO> searchResult = FXCollections.observableArrayList(hoaDonDAO.searchHoaDonByMaHd(maHd));
+                ObservableList<HoaDonDTO> searchResult = FXCollections.observableArrayList(hoaDon_service.searchHoaDonByMaHd(maHd));
                 table_invoice.setItems(searchResult);
             }
         });
