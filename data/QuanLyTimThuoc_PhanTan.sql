@@ -169,7 +169,8 @@ VALUES
 
 INSERT INTO NhanVien (MaNV, HoTen, SoDienThoai, Email, DiaChi, LuongCoBan, TaiKhoan, MatKhau, IsQuanLi)
 VALUES
-('NV00011', 'Nguyễn Thái Dương', '0901111111', 'a@demo.com', N'Hà Nội', 8000000, 'Duong2008', '@Qlinh2702', 0);
+('NV00011', 'Nguyễn Thái Dương', '0901111111', 'a@demo.com', N'Hà Nội', 8000000, 'Duong2008', '@Qlinh2702', 1);
+('NV00011', 'Trần Tuấn Hưng', '092516379', 'a@demo.com', N'Hà Nội', 8000000, 'hung', '$2a$10$6wQWTyWHn3HrYcuTeaBtOeqULklQ57UiYoSjhE9n1NPNRT1/nidGq', 1);
 
 -- 7) KhachHang (10)
 INSERT INTO KhachHang (MaKH, TenKH, SoDienThoai)
