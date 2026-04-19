@@ -67,7 +67,7 @@ public class PhieuNhap_Service implements I_PhieuNhap_Service {
     /* Duy - Tạo mã phiêu nhập tự động */
     @Override
     public String taoMaPhieuNhapTuDong(){
-        String sql = "SELECT TOP 1 MaPhieuNhap FROM PhieuNhap ORDER BY MaPhieuNhap DESC";
+        String sql = "SELECT MaPhieuNhap FROM PhieuNhap ORDER BY MaPhieuNhap DESC LIMIT 1";
         String maPhieuNhapMoi = "";
         try {
             Connection con = ConnectDB.getConnection();

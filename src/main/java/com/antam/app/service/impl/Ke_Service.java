@@ -1,229 +1,144 @@
 /*
- * @ (#) Ke_DAO.java   1.0 10/1/2025
+ * @ (#) Ke_Service.java   1.0 19/04/2026
  *
  * Copyright (c) 2025 IUH. All rights reserved.
  */
 
 package com.antam.app.service.impl;
 
-import com.antam.app.connect.ConnectDB;
-import com.antam.app.service.I_Ke_Service;
+import com.antam.app.dao.I_Ke_DAO;
+import com.antam.app.dao.impl.Ke_DAO;
 import com.antam.app.dto.KeDTO;
+import com.antam.app.entity.Ke;
+import com.antam.app.service.I_Ke_Service;
 
-import java.sql.*;
 import java.util.ArrayList;
 
 /*
- * @description
- * @author: Duong Nguyen
- * @date: 10/1/2025
- * version: 1.0
+ * @description: Implementation cua I_Ke_Service
+ * Theo chuan luong du lieu: Ghi UI→DTO→Service→Entity→DAO→DB
+ *                         Doc DB→DAO→Entity→Service→DTO→UI
+ * @author: Duong Nguyen, Pham Dang Khoa
+ * @date: 19/04/2026
+ * @version: 1.0
  */
 public class Ke_Service implements I_Ke_Service {
-    /* Duy - Xoá kệ */
+
+    private final I_Ke_DAO keDAO = new Ke_DAO();
+
     @Override
     public boolean xoaKe(String maKe) {
-        String sql = "UPDATE KeThuoc SET DeleteAt = 1 WHERE MaKe = ? AND DeleteAt = 0";
         try {
-            Connection con = ConnectDB.getConnection();
-            PreparedStatement ps = con.prepareStatement(sql);
-            ps.setString(1, maKe);
-            int rowsAffected = ps.executeUpdate();
-            return rowsAffected > 0;
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return false;
+            return keDAO.xoaKe(maKe);
+        } catch (Exception e) {
+            throw new RuntimeException("Loi khi xoa ke", e);
         }
     }
 
-    /* Duy - Khôi phục kệ */
     @Override
     public boolean khoiPhucKe(String maKe) {
-        String sql = "UPDATE KeThuoc SET DeleteAt = 0 WHERE MaKe = ? AND DeleteAt = 1";
         try {
-            Connection con = ConnectDB.getConnection();
-            PreparedStatement ps = con.prepareStatement(sql);
-            ps.setString(1, maKe);
-            int rowsAffected = ps.executeUpdate();
-            return rowsAffected > 0;
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return false;
+            return keDAO.khoiPhucKe(maKe);
+        } catch (Exception e) {
+            throw new RuntimeException("Loi khi khoi phuc ke", e);
         }
     }
 
-    /* Duy - Sửa kệ */
     @Override
     public boolean suaKe(KeDTO keDTO) {
-        String sql = "UPDATE KeThuoc SET TenKe = ?, LoaiKe = ? WHERE MaKe = ? AND DeleteAt = 0";
         try {
-            Connection con = ConnectDB.getConnection();
-            PreparedStatement ps = con.prepareStatement(sql);
-            ps.setString(1, keDTO.getTenKe());
-            ps.setString(2, keDTO.getLoaiKe());
-            ps.setString(3, keDTO.getMaKe());
-            int rowsAffected = ps.executeUpdate();
-            return rowsAffected > 0;
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return false;
+            return keDAO.suaKe(mapDTOToEntity(keDTO));
+        } catch (Exception e) {
+            throw new RuntimeException("Loi khi cap nhat ke", e);
         }
     }
-    /* Duy - Thêm kệ */
+
     @Override
     public boolean themKe(KeDTO keDTO) {
-        String sql = "INSERT INTO KeThuoc (MaKe, TenKe, LoaiKe, DeleteAt) VALUES (?, ?, ?, 0)";
         try {
-            Connection con = ConnectDB.getConnection();
-            PreparedStatement ps = con.prepareStatement(sql);
-            ps.setString(1, keDTO.getMaKe());
-            ps.setString(2, keDTO.getTenKe());
-            ps.setString(3, keDTO.getLoaiKe());
-            int rowsAffected = ps.executeUpdate();
-            return rowsAffected > 0;
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return false;
+            return keDAO.themKe(mapDTOToEntity(keDTO));
+        } catch (Exception e) {
+            throw new RuntimeException("Loi khi them ke", e);
         }
-    }
-    /* Duy - Tạo mã kệ tự động */
-    @Override
-    public String taoMaKeTuDong(){
-        String sql = "SELECT TOP 1 MaKe FROM KeThuoc ORDER BY MaKe DESC";
-        String maKeMoi = "";
-        try {
-            Connection con = ConnectDB.getConnection();
-            PreparedStatement ps = con.prepareStatement(sql);
-            ResultSet rs = ps.executeQuery();
-            while (rs.next()){
-                String maPhieuNhap = rs.getString("MaKe");
-                int soThuTu = Integer.parseInt(maPhieuNhap.substring(2)) + 1;
-                maKeMoi = String.format("KE%04d", soThuTu);
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return maKeMoi;
     }
 
-    /* Duy - Lấy tất cả kệ */
+    @Override
+    public String taoMaKeTuDong() {
+        try {
+            return keDAO.taoMaKeTuDong();
+        } catch (Exception e) {
+            throw new RuntimeException("Loi khi tao ma ke tu dong", e);
+        }
+    }
+
     @Override
     public ArrayList<KeDTO> getTatCaKeThuoc() {
-        ArrayList<KeDTO> listKe = new ArrayList<>();
-        String sql = "SELECT * FROM KeThuoc ORDER BY MaKe DESC";
-        try{
-            Connection con = ConnectDB.getConnection();
-            Statement state = con.createStatement();
-            ResultSet rs = state.executeQuery(sql);
-            while (rs.next()) {
-                String maKe = rs.getString("MaKe");
-                String tenKe = rs.getString("TenKe");
-                String loaiKe = rs.getString("LoaiKe");
-                boolean deleteAt = rs.getBoolean("DeleteAt");
-                KeDTO keDTO = new KeDTO();
-                listKe.add(keDTO);
+        ArrayList<KeDTO> result = new ArrayList<>();
+        try {
+            ArrayList<Ke> entities = keDAO.getTatCaKeThuoc();
+            for (Ke ke : entities) {
+                result.add(mapEntityToDTO(ke));
             }
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
+        } catch (Exception e) {
+            throw new RuntimeException("Loi khi lay tat ca ke", e);
         }
-        return listKe;
+        return result;
     }
 
-    /**
-     * Lấy tất cả kệ chưa bị xóa
-     * @return Danh sách kệ
-     */
     @Override
     public ArrayList<KeDTO> getTatCaKeHoatDong() {
-        ArrayList<KeDTO> listKe = new ArrayList<>();
-        String sql = "SELECT * FROM KeThuoc WHERE DeleteAt = 0";
-        try{
-            Connection con = ConnectDB.getConnection();
-            Statement state = con.createStatement();
-            ResultSet rs = state.executeQuery(sql);
-            while (rs.next()) {
-                String maKe = rs.getString("MaKe");
-                String tenKe = rs.getString("TenKe");
-                String loaiKe = rs.getString("LoaiKe");
-                boolean deleteAt = rs.getBoolean("DeleteAt");
-                KeDTO keDTO = new KeDTO(maKe, tenKe, loaiKe, deleteAt);
-                listKe.add(keDTO);
+        ArrayList<KeDTO> result = new ArrayList<>();
+        try {
+            ArrayList<Ke> entities = keDAO.getTatCaKeHoatDong();
+            for (Ke ke : entities) {
+                result.add(mapEntityToDTO(ke));
             }
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
+        } catch (Exception e) {
+            throw new RuntimeException("Loi khi lay ke hoat dong", e);
         }
-        return listKe;
+        return result;
     }
 
-    /**
-     * Lấy kệ theo mã
-     * @param ma Mã kệ
-     * @return Kệ
-     */
     @Override
     public KeDTO getKeTheoMa(String ma) {
-        KeDTO keDTO = null;
-        String sql = "SELECT * FROM KeThuoc WHERE MaKe = ? AND DeleteAt = 0";
-        try{
-            Connection con = ConnectDB.getConnection();
-            PreparedStatement state = con.prepareStatement(sql);
-            state.setString(1, ma);
-            ResultSet rs = state.executeQuery();
-            if (rs.next()) {
-                String maKe = rs.getString("MaKe");
-                String tenKe = rs.getString("TenKe");
-                String loaiKe = rs.getString("LoaiKe");
-                boolean deleteAt = rs.getBoolean("DeleteAt");
-                keDTO = new KeDTO(maKe, tenKe, loaiKe, deleteAt);
-            }
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
+        try {
+            Ke entity = keDAO.getKeTheoMa(ma);
+            return entity == null ? null : mapEntityToDTO(entity);
+        } catch (Exception e) {
+            throw new RuntimeException("Loi khi lay ke theo ma", e);
         }
-        return keDTO;
     }
-    /**
-     * Lấy kệ theo tên
-     * @param name Tên kệ
-     * @return Kệ
-     */
+
     @Override
     public KeDTO getKeTheoName(String name) {
-        KeDTO keDTO = null;
-        String sql = "SELECT * FROM KeThuoc WHERE TenKe = ? AND DeleteAt = 0";
-        try{
-            Connection con = ConnectDB.getConnection();
-            PreparedStatement state = con.prepareStatement(sql);
-            state.setString(1, name);
-            ResultSet rs = state.executeQuery();
-            if (rs.next()) {
-                String maKe = rs.getString("MaKe");
-                String tenKe = rs.getString("TenKe");
-                String loaiKe = rs.getString("LoaiKe");
-                boolean deleteAt = rs.getBoolean("DeleteAt");
-                keDTO = new KeDTO(maKe, tenKe, loaiKe, deleteAt);
-            }
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
+        try {
+            Ke entity = keDAO.getKeTheoName(name);
+            return entity == null ? null : mapEntityToDTO(entity);
+        } catch (Exception e) {
+            throw new RuntimeException("Loi khi lay ke theo ten", e);
         }
-        return keDTO;
     }
 
     @Override
     public boolean isTenKeTrung(String tenKe, String maKeHienTai) {
-        String sql = "SELECT COUNT(*) FROM KeThuoc WHERE tenKe = ? AND maKe <> ?";
-        try{
-            Connection con = ConnectDB.getConnection();
-            PreparedStatement ps = con.prepareStatement(sql);
-            ps.setString(1, tenKe);
-            ps.setString(2, maKeHienTai);
-            ResultSet rs = ps.executeQuery();
-            if (rs.next()) {
-                return rs.getInt(1) > 0;
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
+        try {
+            return keDAO.isTenKeTrung(tenKe, maKeHienTai);
+        } catch (Exception e) {
+            throw new RuntimeException("Loi khi kiem tra ten ke trung", e);
         }
-        return false;
     }
 
+    private KeDTO mapEntityToDTO(Ke entity) {
+        if (entity == null) {
+            return null;
+        }
+        return new KeDTO(entity.getMaKe(), entity.getTenKe(), entity.getLoaiKe(), entity.isDeleteAt());
+    }
+
+    private Ke mapDTOToEntity(KeDTO dto) {
+        if (dto == null) {
+            return null;
+        }
+        return new Ke(dto.getMaKe(), dto.getTenKe(), dto.getLoaiKe(), dto.isDeleteAt());
+    }
 }

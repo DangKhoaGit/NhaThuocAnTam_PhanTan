@@ -80,7 +80,7 @@ public class ThongKeTrangChinh_Service implements I_ThongKeTrangChinh_Service {
     @Override
     public int getSoHoaDonHomNay() {
         int count = 0;
-        String sql = "SELECT COUNT(*) FROM HoaDon WHERE CAST(ngayTao AS DATE) = CAST(GETDATE() AS DATE) AND deleteAt = 0";
+        String sql = "SELECT COUNT(*) FROM HoaDon WHERE DATE(ngayTao) = CURDATE() AND deleteAt = 0";
 
         try {
             Connection con = ConnectDB.getInstance().connect();
@@ -106,7 +106,7 @@ public class ThongKeTrangChinh_Service implements I_ThongKeTrangChinh_Service {
     @Override
     public int getSoKhuyenMaiApDung() {
         int count = 0;
-        String sql = "SELECT COUNT(*) FROM KhuyenMai WHERE GETDATE() BETWEEN ngayBatDau AND ngayKetThuc AND deleteAt = 0";
+        String sql = "SELECT COUNT(*) FROM KhuyenMai WHERE CURDATE() BETWEEN ngayBatDau AND ngayKetThuc AND deleteAt = 0";
 
         try {
             Connection con = ConnectDB.getInstance().connect();
@@ -134,12 +134,12 @@ public class ThongKeTrangChinh_Service implements I_ThongKeTrangChinh_Service {
         Map<String, Double> doanhThu = new HashMap<>();
         String sql = """
             SELECT
-                CAST(ngayTao AS DATE) as ngay,
+                DATE(ngayTao) as ngay,
                 SUM(tongTien) as doanhThu
             FROM HoaDon
-            WHERE ngayTao >= DATEADD(day, -7, GETDATE())
+            WHERE ngayTao >= DATE_SUB(NOW(), INTERVAL 7 DAY)
                 AND deleteAt = 0
-            GROUP BY CAST(ngayTao AS DATE)
+            GROUP BY DATE(ngayTao)
             ORDER BY ngay
             """;
 
@@ -170,17 +170,18 @@ public class ThongKeTrangChinh_Service implements I_ThongKeTrangChinh_Service {
     public Map<String, Integer> getTopSanPhamBanChay(int limit) {
         Map<String, Integer> topProducts = new HashMap<>();
         String sql = """
-            SELECT TOP (?)
+            SELECT
                 t.tenThuoc,
                 SUM(cthd.SoLuong) as tongSoLuong
             FROM ChiTietHoaDon cthd
-            JOIN ChiTietThuoc ctt ON cthd.MaCTT = ctt.MaCTT
-            JOIN Thuoc t ON ctt.MaThuoc = t.maThuoc
+            JOIN LoThuoc lt ON cthd.MaLoThuoc = lt.MaLoThuoc
+            JOIN Thuoc t ON lt.MaThuoc = t.maThuoc
             JOIN HoaDon hd ON cthd.MaHD = hd.maHD
-            WHERE hd.ngayTao >= DATEADD(month, -1, GETDATE())
+            WHERE hd.ngayTao >= DATE_SUB(NOW(), INTERVAL 1 MONTH)
                 AND t.deleteAt = 0 AND hd.deleteAt = 0
             GROUP BY t.tenThuoc
             ORDER BY tongSoLuong DESC
+            LIMIT ?
             """;
 
         try {
@@ -211,18 +212,19 @@ public class ThongKeTrangChinh_Service implements I_ThongKeTrangChinh_Service {
     public List<Map<String, Object>> getThuocSapHetHan() {
         List<Map<String, Object>> thuocSapHetHan = new ArrayList<>();
         String sql = """
-            SELECT TOP 10
+            SELECT
                 t.tenThuoc,
-                ct.HanSuDung,
-                ct.TonKho as soLuongTon,
-                ct.MaCTT
-            FROM ChiTietThuoc ct
-            JOIN Thuoc t ON ct.MaThuoc = t.maThuoc
-            WHERE ct.HanSuDung <= DATEADD(day, 30, GETDATE())
-                AND ct.HanSuDung >= CAST(GETDATE() AS DATE)
-                AND ct.TonKho > 0
+                lt.HanSuDung,
+                lt.TonKho as soLuongTon,
+                lt.MaLoThuoc
+            FROM LoThuoc lt
+            JOIN Thuoc t ON lt.MaThuoc = t.maThuoc
+            WHERE lt.HanSuDung <= DATE_ADD(CURDATE(), INTERVAL 30 DAY)
+                AND lt.HanSuDung >= CURDATE()
+                AND lt.TonKho > 0
                 AND t.deleteAt = 0
-            ORDER BY ct.HanSuDung ASC
+            ORDER BY lt.HanSuDung ASC
+            LIMIT 10
             """;
 
         try {
@@ -255,16 +257,17 @@ public class ThongKeTrangChinh_Service implements I_ThongKeTrangChinh_Service {
     public List<Map<String, Object>> getThuocTonKhoThap() {
         List<Map<String, Object>> thuocTonKhoThap = new ArrayList<>();
         String sql = """
-            SELECT TOP 10
+            SELECT
                 t.maThuoc,
                 t.tenThuoc,
-                SUM(ct.TonKho) as tongTonKho
-            FROM ChiTietThuoc ct
-            JOIN Thuoc t ON ct.MaThuoc = t.maThuoc
-            WHERE t.deleteAt = 0 AND ct.TonKho >= 0
+                SUM(lt.TonKho) as tongTonKho
+            FROM LoThuoc lt
+            JOIN Thuoc t ON lt.MaThuoc = t.maThuoc
+            WHERE t.deleteAt = 0 AND lt.TonKho >= 0
             GROUP BY t.maThuoc, t.tenThuoc
-            HAVING SUM(ct.TonKho) <= 50 AND SUM(ct.TonKho) > 0
+            HAVING SUM(lt.TonKho) <= 50 AND SUM(lt.TonKho) > 0
             ORDER BY tongTonKho ASC
+            LIMIT 10
             """;
 
         try {

@@ -1,5 +1,5 @@
 /*
- * @ (#) ChiTietThuoc_DAO.java   1.0 10/6/2025
+ * @ (#) LoThuoc_DAO.java   1.0 19/04/2026
  *
  * Copyright (c) 2025 IUH. All rights reserved.
  */
@@ -8,313 +8,228 @@ package com.antam.app.dao.impl;
 
 import com.antam.app.connect.ConnectDB;
 import com.antam.app.dao.I_LoThuoc_DAO;
+import com.antam.app.entity.ChiTietPhieuNhap;
 import com.antam.app.entity.LoThuoc;
 import com.antam.app.entity.PhieuNhap;
 import com.antam.app.entity.Thuoc;
 
 import java.sql.Connection;
+import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Collections;
 
 /*
- * @description
- * @author: Duong Nguyen
- * @date: 10/6/2025
- * version: 1.0
+ * @description: Implementation của I_LoThuoc_DAO
+ * Theo chuẩn luồng dữ liệu: Ghi UI→DTO→Service→Entity→DAO→DB
+ *                         Đọc DB→DAO→Entity→Service→DTO→UI
+ * @author: Duong Nguyen, Pham Dang Khoa
+ * @date: 19/04/2026
+ * @version: 1.0
  */
 public class LoThuoc_DAO implements I_LoThuoc_DAO {
 
-    /** Duy - Thêm chi tiết thuốc */
+    private final Thuoc_DAO thuocDAO = new Thuoc_DAO();
+
+    private static final String BASE_SELECT = """
+        SELECT lt.MaLoThuoc, lt.MaThuoc, lt.HanSuDung, lt.NgaySanXuat, lt.TonKho,
+               ctpn.MaPN
+        FROM LoThuoc lt
+        LEFT JOIN (
+            SELECT MaLoThuoc, MIN(MaPN) AS MaPN
+            FROM ChiTietPhieuNhap
+            GROUP BY MaLoThuoc
+        ) ctpn ON ctpn.MaLoThuoc = lt.MaLoThuoc
+    """;
+
     @Override
-    public boolean themChiTietThuoc(LoThuoc ctt){
-        String sql = "INSERT INTO ChiTietThuoc (MaPN, MaThuoc, HanSuDung, NgaySanXuat, TonKho) " +
-                "VALUES (?, ?, ?, ?, ?)";
+    public boolean themChiTietThuoc(LoThuoc ctt) {
+        String sql = "INSERT INTO LoThuoc (MaThuoc, HanSuDung, NgaySanXuat, TonKho) VALUES (?, ?, ?, ?)";
         try {
-            Connection con = ConnectDB.getConnection();
-            PreparedStatement ps = con.prepareStatement(sql);
-//            ps.setString(1, ctt.get().getMaPhieuNhap());
-            ps.setString(2, ctt.getMaThuoc().getMaThuoc());
-            ps.setString(3, ctt.getHanSuDung().toString());
-            ps.setString(4, ctt.getNgaySanXuat().toString());
-            ps.setInt(5, ctt.getSoLuong());
-            int kq = ps.executeUpdate();
-            return kq > 0;
-        } catch (SQLException e) {
-            e.printStackTrace();
+            Connection con = ensureConnection();
+            try (PreparedStatement ps = con.prepareStatement(sql)) {
+                ps.setString(1, ctt.getMaThuoc().getMaThuoc());
+                ps.setDate(2, java.sql.Date.valueOf(ctt.getHanSuDung()));
+                ps.setDate(3, java.sql.Date.valueOf(ctt.getNgaySanXuat()));
+                ps.setInt(4, ctt.getSoLuong());
+                return ps.executeUpdate() > 0;
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Loi khi them lo thuoc", e);
         }
-        return false;
     }
 
-    /**
-     * Lấy tất cả chi tiết thuốc từ database
-     * @return danh sách chi tiết thuốc
-     */
     @Override
     public ArrayList<LoThuoc> getAllChiTietThuoc() {
-        ArrayList<LoThuoc> listLoThuoc = new ArrayList<>();
-        String sql = "SELECT * FROM ChiTietThuoc";
+        ArrayList<LoThuoc> list = new ArrayList<>();
+        String sql = BASE_SELECT + " ORDER BY lt.MaLoThuoc";
+
         try {
-            Connection con = ConnectDB.getConnection();
-            if (con == null || con.isClosed()) {
-                ConnectDB.getInstance().connect();
-                con = ConnectDB.getConnection();
-            }
-            PreparedStatement ps = con.prepareStatement(sql);
-            ResultSet rs = ps.executeQuery();
-            while (rs.next()) {
-                int maCTT = rs.getInt("MaCTT");
-                String maPN = rs.getString("MaPN");
-                String maThuoc = rs.getString("MaThuoc");
-                int soLuong = rs.getInt("TonKho");
-                java.sql.Date hanSuDung = rs.getDate("HanSuDung");
-                java.sql.Date ngaySanXuat = rs.getDate("NgaySanXuat");
-
-                LoThuoc loThuoc = new LoThuoc(
-//                        maCTT,
-//                        new PhieuNhap(maPN),
-//                        new Thuoc(maThuoc),
-//                        soLuong,
-//                        hanSuDung.toLocalDate(),
-//                        ngaySanXuat.toLocalDate()
-                );
-                listLoThuoc.add(loThuoc);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return listLoThuoc;
-    }
-
-    /**
-     * Lấy tất cả chi tiết thuốc theo mã thuốc từ database
-     * @param ma mã thuốc
-     * @return danh sách chi tiết thuốc
-     */
-    @Override
-    public ArrayList<LoThuoc> getAllCHiTietThuocTheoMaThuoc(String ma) {
-        ArrayList<LoThuoc> listLoThuoc = new ArrayList<>();
-        String sql = "SELECT * FROM ChiTietThuoc WHERE MaThuoc = ?";
-        try {
-            Connection con = ConnectDB.getConnection();
-            if (con == null || con.isClosed()) {
-                ConnectDB.getInstance().connect();
-                con = ConnectDB.getConnection();
-            }
-            PreparedStatement ps = con.prepareStatement(sql);
-            ps.setString(1, ma);
-            ResultSet rs = ps.executeQuery();
-            while (rs.next()) {
-                int maCTT = rs.getInt("MaCTT");
-                String maPN = rs.getString("MaPN");
-                String maThuoc = rs.getString("MaThuoc");
-                int soLuong = rs.getInt("TonKho");
-                java.sql.Date hanSuDung = rs.getDate("HanSuDung");
-                java.sql.Date ngaySanXuat = rs.getDate("NgaySanXuat");
-
-                LoThuoc loThuoc = new LoThuoc(
-//                        maCTT,
-//                        new PhieuNhap(maPN),
-//                        new Thuoc(maThuoc),
-//                        soLuong,
-//                        hanSuDung.toLocalDate(),
-//                        ngaySanXuat.toLocalDate()
-                );
-                listLoThuoc.add(loThuoc);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return listLoThuoc;
-    }
-
-    /**
-     * Lấy chi tiết thuốc theo mã từ database
-     * @param ma mã chi tiết thuốc
-     * @return chi tiết thuốc
-     */
-    @Override
-    public LoThuoc getChiTietThuoc(int ma) {
-        LoThuoc loThuoc = new LoThuoc();
-        String sql = "SELECT * FROM ChiTietThuoc WHERE MaCTT = ?";
-        Thuoc_DAO thuocDAO = new Thuoc_DAO();
-
-        // Tạo connection riêng cho method này
-        try (Connection con = ConnectDB.getInstance().connect();
-             PreparedStatement ps = con.prepareStatement(sql)) {
-
-            ps.setInt(1, ma);
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    int maCTT = rs.getInt("MaCTT");
-                    String maPN = rs.getString("MaPN");
-                    String maThuoc = rs.getString("MaThuoc");
-                    int soLuong = rs.getInt("TonKho");
-                    java.sql.Date hanSuDung = rs.getDate("HanSuDung");
-                    java.sql.Date ngaySanXuat = rs.getDate("NgaySanXuat");
-
-                    // Lấy đầy đủ thông tin thuốc từ Thuoc_DAO
-                    Thuoc thuoc = thuocDAO.getThuocTheoMa(maThuoc);
-                    if (thuoc == null) {
-                        // Fallback nếu không tìm thấy thuốc
-                        thuoc = new Thuoc(maThuoc);
-                    }
-
-                    loThuoc = new LoThuoc(
-//                            maCTT,
-//                            new PhieuNhap(maPN),
-//                            thuoc,
-//                            soLuong,
-//                            hanSuDung.toLocalDate(),
-//                            ngaySanXuat.toLocalDate()
-                    );
+            Connection con = ensureConnection();
+            try (PreparedStatement ps = con.prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    list.add(mapResultSetToEntity(rs));
                 }
             }
         } catch (Exception e) {
-            System.err.println("Lỗi khi lấy chi tiết thuốc: " + e.getMessage());
-            e.printStackTrace();
+            throw new RuntimeException("Loi khi lay tat ca lo thuoc", e);
         }
-        return loThuoc;
+        return list;
     }
 
-    /**
-     * Cập nhật số lượng chi tiết thuốc trong database
-     * @param maCTT mã chi tiết thuốc
-     * @param soLuong số lượng cần cập nhật
-     * @return true nếu cập nhật thành công, false nếu thất bại
-     */
+    @Override
+    public ArrayList<LoThuoc> getAllCHiTietThuocTheoMaThuoc(String ma) {
+        ArrayList<LoThuoc> list = new ArrayList<>();
+        String sql = BASE_SELECT + " WHERE lt.MaThuoc = ? ORDER BY lt.MaLoThuoc";
+
+        try {
+            Connection con = ensureConnection();
+            try (PreparedStatement ps = con.prepareStatement(sql)) {
+                ps.setString(1, ma);
+                try (ResultSet rs = ps.executeQuery()) {
+                    while (rs.next()) {
+                        list.add(mapResultSetToEntity(rs));
+                    }
+                }
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Loi khi lay lo thuoc theo ma thuoc", e);
+        }
+        return list;
+    }
+
+    @Override
+    public LoThuoc getChiTietThuoc(int ma) {
+        String sql = BASE_SELECT + " WHERE lt.MaLoThuoc = ?";
+
+        try {
+            Connection con = ensureConnection();
+            try (PreparedStatement ps = con.prepareStatement(sql)) {
+                ps.setInt(1, ma);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) {
+                        return mapResultSetToEntity(rs);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Loi khi lay lo thuoc theo ma", e);
+        }
+        return null;
+    }
+
     @Override
     public boolean CapNhatSoLuongChiTietThuoc(int maCTT, int soLuong) {
-        String sql = "UPDATE ChiTietThuoc SET TonKho = TonKho + ? WHERE MaCTT = ?";
+        String sql = "UPDATE LoThuoc SET TonKho = TonKho + ? WHERE MaLoThuoc = ?";
         try {
-            Connection con = ConnectDB.getConnection();
-            if (con == null || con.isClosed()) {
-                ConnectDB.getInstance().connect();
-                con = ConnectDB.getConnection();
+            Connection con = ensureConnection();
+            try (PreparedStatement ps = con.prepareStatement(sql)) {
+                ps.setInt(1, soLuong);
+                ps.setInt(2, maCTT);
+                return ps.executeUpdate() > 0;
             }
-            PreparedStatement statement = con.prepareStatement(sql);
-            statement.setInt(1, soLuong);
-            statement.setInt(2, maCTT);
-            int rowsAffected = statement.executeUpdate();
-            return rowsAffected > 0;
         } catch (Exception e) {
-            e.printStackTrace();
+            throw new RuntimeException("Loi khi cap nhat ton kho lo thuoc", e);
         }
-        return false;
     }
 
     @Override
     public ArrayList<LoThuoc> getChiTietThuocHanSuDungGiamDan(String maThuoc) {
-        ArrayList<LoThuoc> listLoThuoc = new ArrayList<>();
-        String sql = "SELECT * FROM ChiTietThuoc WHERE TonKho > 0 AND MaThuoc = ? ORDER BY HanSuDung ASC";
-        try {
-            Connection con = ConnectDB.getConnection();
-            if (con == null || con.isClosed()) {
-                ConnectDB.getInstance().connect();
-                con = ConnectDB.getConnection();
-            }
-            PreparedStatement ps = con.prepareStatement(sql);
-            ps.setString(1, maThuoc);
-            ResultSet rs = ps.executeQuery();
-            while (rs.next()) {
-                int maCTT = rs.getInt("MaCTT");
-                String maPN = rs.getString("MaPN");
-                String maThuocDB = rs.getString("MaThuoc");
-                int soLuong = rs.getInt("TonKho");
-                java.sql.Date hanSuDung = rs.getDate("HanSuDung");
-                java.sql.Date ngaySanXuat = rs.getDate("NgaySanXuat");
-
-                LoThuoc loThuoc = new LoThuoc(
-//                        maCTT,
-//                        new PhieuNhap(maPN),
-//                        new Thuoc(maThuocDB),
-//                        soLuong,
-//                        hanSuDung.toLocalDate(),
-//                        ngaySanXuat.toLocalDate()
-                );
-                listLoThuoc.add(loThuoc);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return listLoThuoc;
-    }
-
-    /**
-     * Lấy tổng số lượng tồn kho (TonKho) của một mã thuốc
-     * @param maThuoc mã thuốc
-     * @return tổng số lượng tồn kho
-     */
-    @Override
-    public int getTongTonKhoTheoMaThuoc(String maThuoc) {
-        int tong = 0;
-        String sql = "SELECT SUM(TonKho) AS TongTonKho FROM ChiTietThuoc WHERE MaThuoc = ?";
-        try {
-            Connection con = ConnectDB.getConnection();
-            if (con == null || con.isClosed()) {
-                ConnectDB.getInstance().connect();
-                con = ConnectDB.getConnection();
-            }
-            PreparedStatement ps = con.prepareStatement(sql);
-            ps.setString(1, maThuoc);
-            ResultSet rs = ps.executeQuery();
-            if (rs.next()) {
-                tong = rs.getInt("TongTonKho");
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return tong;
-    }
-
-    @Override
-    public ArrayList<LoThuoc> getAllChiTietThuocVoiMaChoCTPD(String maThuoc) {
-
-        ArrayList<LoThuoc> ds = new ArrayList<>();
-
-        String sql = """
-        SELECT *
-        FROM ChiTietThuoc
-        WHERE MaThuoc = ?
-          AND TonKho > 0
-          AND HanSuDung > GETDATE()
-        ORDER BY HanSuDung ASC
-    """;
+        ArrayList<LoThuoc> list = new ArrayList<>();
+        String sql = BASE_SELECT + " WHERE lt.TonKho > 0 AND lt.MaThuoc = ? ORDER BY lt.HanSuDung ASC";
 
         try {
-            Connection con = ConnectDB.getConnection();
-            if (con == null || con.isClosed()) {
-                ConnectDB.getInstance().connect();
-                con = ConnectDB.getConnection();
-            }
-
-            Thuoc thuoc = new Thuoc_DAO().getThuocTheoMa(maThuoc);
-
+            Connection con = ensureConnection();
             try (PreparedStatement ps = con.prepareStatement(sql)) {
                 ps.setString(1, maThuoc);
-
                 try (ResultSet rs = ps.executeQuery()) {
                     while (rs.next()) {
-
-                        LoThuoc ctt = new LoThuoc(
-//                                rs.getInt("MaCTT"),
-//                                new PhieuNhap(rs.getString("MaPN")),
-//                                thuoc,
-//                                rs.getInt("TonKho"),
-//                                rs.getDate("HanSuDung").toLocalDate(),
-//                                rs.getDate("NgaySanXuat").toLocalDate()
-                        );
-
-                        ds.add(ctt);
+                        list.add(mapResultSetToEntity(rs));
                     }
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            throw new RuntimeException("Loi khi lay lo thuoc theo han su dung", e);
         }
-
-        return ds;
+        return list;
     }
 
+    @Override
+    public int getTongTonKhoTheoMaThuoc(String maThuoc) {
+        String sql = "SELECT COALESCE(SUM(TonKho), 0) AS TongTonKho FROM LoThuoc WHERE MaThuoc = ?";
+        try {
+            Connection con = ensureConnection();
+            try (PreparedStatement ps = con.prepareStatement(sql)) {
+                ps.setString(1, maThuoc);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) {
+                        return rs.getInt("TongTonKho");
+                    }
+                }
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Loi khi tinh tong ton kho theo ma thuoc", e);
+        }
+        return 0;
+    }
+
+    @Override
+    public ArrayList<LoThuoc> getAllChiTietThuocVoiMaChoCTPD(String maThuoc) {
+        ArrayList<LoThuoc> list = new ArrayList<>();
+        String sql = BASE_SELECT + " WHERE lt.MaThuoc = ? AND lt.TonKho > 0 AND lt.HanSuDung > CURDATE() ORDER BY lt.HanSuDung ASC";
+
+        try {
+            Connection con = ensureConnection();
+            try (PreparedStatement ps = con.prepareStatement(sql)) {
+                ps.setString(1, maThuoc);
+                try (ResultSet rs = ps.executeQuery()) {
+                    while (rs.next()) {
+                        list.add(mapResultSetToEntity(rs));
+                    }
+                }
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Loi khi lay lo thuoc cho CTPDT", e);
+        }
+        return list;
+    }
+
+    private Connection ensureConnection() throws SQLException {
+        Connection con = ConnectDB.getConnection();
+        if (con == null || con.isClosed()) {
+            ConnectDB.getInstance().connect();
+            con = ConnectDB.getConnection();
+        }
+        return con;
+    }
+
+    private LoThuoc mapResultSetToEntity(ResultSet rs) throws SQLException {
+        int maLoThuoc = rs.getInt("MaLoThuoc");
+        String maThuoc = rs.getString("MaThuoc");
+        Date hanSuDungSql = rs.getDate("HanSuDung");
+        Date ngaySanXuatSql = rs.getDate("NgaySanXuat");
+        LocalDate hanSuDung = hanSuDungSql == null ? null : hanSuDungSql.toLocalDate();
+        LocalDate ngaySanXuat = ngaySanXuatSql == null ? null : ngaySanXuatSql.toLocalDate();
+        int tonKho = rs.getInt("TonKho");
+        String maPN = rs.getString("MaPN");
+
+        Thuoc thuoc = thuocDAO.getThuocTheoMa(maThuoc);
+        if (thuoc == null) {
+            thuoc = new Thuoc(maThuoc);
+        }
+
+        LoThuoc loThuoc = new LoThuoc(0, new PhieuNhap(maPN == null ? "" : maPN), thuoc, tonKho, hanSuDung, ngaySanXuat, maLoThuoc);
+
+        if (maPN != null && !maPN.isBlank()) {
+            ChiTietPhieuNhap chiTietPhieuNhap = new ChiTietPhieuNhap();
+            chiTietPhieuNhap.setMaPN(new PhieuNhap(maPN));
+            chiTietPhieuNhap.setLoThuoc(loThuoc);
+            loThuoc.setMaCTPN(new ArrayList<>(Collections.singletonList(chiTietPhieuNhap)));
+        }
+
+        return loThuoc;
+    }
 }

@@ -74,8 +74,8 @@ public class LoThuoc {
         this.maThuoc = value;
         MaLoThuoc = maLoThuoc;
         setSoLuong(value1);
-        setHanSuDung(value2);
         setNgaySanXuat(value3);
+        setHanSuDung(value2);
     }
 
     /**
@@ -92,8 +92,8 @@ public class LoThuoc {
         this.maThuoc = value;
         MaLoThuoc = i;
         setSoLuong(value1);
-        setHanSuDung(value2);
         setNgaySanXuat(value3);
+        setHanSuDung(value2);
     }
 
 
@@ -110,7 +110,7 @@ public class LoThuoc {
         return hanSuDung;
     }
     public void setHanSuDung(LocalDate hanSuDung) {
-        if (hanSuDung.isBefore(ngaySanXuat)) {
+        if (hanSuDung != null && ngaySanXuat != null && hanSuDung.isBefore(ngaySanXuat)) {
             throw new IllegalArgumentException("Hạn sử dụng không được trước ngày sản xuất");
         }
         this.hanSuDung = hanSuDung;
@@ -119,10 +119,14 @@ public class LoThuoc {
         return ngaySanXuat;
     }
     public void setNgaySanXuat(LocalDate ngaySanXuat) {
-        if (LocalDate.now().isBefore(ngaySanXuat)) {
+        if (ngaySanXuat != null && LocalDate.now().isBefore(ngaySanXuat)) {
             throw new IllegalArgumentException("Ngày sản xuất không được sau ngày hiện tại");
         }
         this.ngaySanXuat = ngaySanXuat;
+
+        if (this.hanSuDung != null && this.ngaySanXuat != null && this.hanSuDung.isBefore(this.ngaySanXuat)) {
+            throw new IllegalArgumentException("Hạn sử dụng không được trước ngày sản xuất");
+        }
     }
 
 }

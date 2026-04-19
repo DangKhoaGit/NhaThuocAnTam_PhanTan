@@ -5,7 +5,10 @@
 
 package com.antam.app.controller.thuoc;
 
-import com.antam.app.connect.ConnectDB;
+import com.antam.app.service.I_DangDieuChe_Service;
+import com.antam.app.service.I_DonViTinh_Service;
+import com.antam.app.service.I_Ke_Service;
+import com.antam.app.service.I_Thuoc_Service;
 import com.antam.app.service.impl.DangDieuChe_Service;
 import com.antam.app.service.impl.DonViTinh_Service;
 import com.antam.app.service.impl.Ke_Service;
@@ -17,8 +20,6 @@ import javafx.scene.control.ButtonBar.ButtonData;
 import javafx.scene.text.Text;
 import javafx.util.StringConverter;
 
-import java.sql.Connection;
-import java.sql.SQLException;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Locale;
@@ -30,10 +31,10 @@ import javafx.scene.layout.*;
 import javafx.scene.text.Font;
 
 public class ThemThuocFormController extends DialogPane{
-    private DangDieuChe_Service ddc_dao;
-    private DonViTinh_Service dvt_dao;
-    private Thuoc_Service thuoc_dao;
-    private Ke_Service ke_dao;
+    private final I_DangDieuChe_Service dangDieuCheService;
+    private final I_DonViTinh_Service donViTinhService;
+    private final I_Thuoc_Service thuocService;
+    private final I_Ke_Service keService;
 
     private TextField txtAddMaThuoc, txtAddTenThuoc, txtAddHamLuong;
 
@@ -49,6 +50,11 @@ public class ThemThuocFormController extends DialogPane{
 
 
     public ThemThuocFormController() {
+        this.dangDieuCheService = new DangDieuChe_Service();
+        this.donViTinhService = new DonViTinh_Service();
+        this.thuocService = new Thuoc_Service();
+        this.keService = new Ke_Service();
+
         this.setPrefSize(800, 600);
 
         FlowPane header = new FlowPane();
@@ -171,10 +177,6 @@ public class ThemThuocFormController extends DialogPane{
         this.getButtonTypes().add(cancelButton);
         this.getButtonTypes().add(applyButton);
 
-        // ket noi database
-        try { Connection con = ConnectDB.getInstance().connect(); }
-        catch (SQLException e) { throw new RuntimeException(e); }
-
         // su kien button luu
         Button applyBtn = (Button) this.lookupButton(applyButton);
 
@@ -196,13 +198,7 @@ public class ThemThuocFormController extends DialogPane{
 
                 ThuocDTO thuocDTO = new ThuocDTO(maThuoc, tenThuoc, hamLuong, giaBan, giaGoc, thue.floatValue(), false,
                         dangDieuCheDTO, donViCoSo, keDTO);
-                thuoc_dao = new Thuoc_Service();
-                try {
-                    ConnectDB.getInstance().connect();
-                } catch (SQLException e) {
-                    throw new RuntimeException(e);
-                }
-                boolean check = thuoc_dao.themThuoc(thuocDTO);
+                boolean check = thuocService.themThuoc(thuocDTO);
                 if (!check) {
                     notification_addThuoc.setText("Thêm thuốc thất bại!");
                     event.consume();
@@ -277,11 +273,71 @@ public class ThemThuocFormController extends DialogPane{
         spAddThue.setValueFactory(valueFactoryThue);
         spAddThue.setEditable(true);
         //them combo box ke
+        configureComboBoxDisplay();
         addComBoBoxKe();
         // them combo box don vi co so
         addComBoBoxDVCS();
         //them combo box dang dieu che
         addComBoBoxDDC();
+    }
+
+    private void configureComboBoxDisplay() {
+        cbAddKe.setCellFactory(lv -> new ListCell<>() {
+            @Override
+            protected void updateItem(KeDTO item, boolean empty) {
+                super.updateItem(item, empty);
+                setText(empty || item == null ? null : formatKe(item));
+            }
+        });
+        cbAddKe.setButtonCell(new ListCell<>() {
+            @Override
+            protected void updateItem(KeDTO item, boolean empty) {
+                super.updateItem(item, empty);
+                setText(empty || item == null ? null : formatKe(item));
+            }
+        });
+
+        cbAddDangDieuChe.setCellFactory(lv -> new ListCell<>() {
+            @Override
+            protected void updateItem(DangDieuCheDTO item, boolean empty) {
+                super.updateItem(item, empty);
+                setText(empty || item == null ? null : formatDDC(item));
+            }
+        });
+        cbAddDangDieuChe.setButtonCell(new ListCell<>() {
+            @Override
+            protected void updateItem(DangDieuCheDTO item, boolean empty) {
+                super.updateItem(item, empty);
+                setText(empty || item == null ? null : formatDDC(item));
+            }
+        });
+
+        cbAddDVCS.setCellFactory(lv -> new ListCell<>() {
+            @Override
+            protected void updateItem(DonViTinhDTO item, boolean empty) {
+                super.updateItem(item, empty);
+                setText(empty || item == null ? null : formatDVT(item));
+            }
+        });
+        cbAddDVCS.setButtonCell(new ListCell<>() {
+            @Override
+            protected void updateItem(DonViTinhDTO item, boolean empty) {
+                super.updateItem(item, empty);
+                setText(empty || item == null ? null : formatDVT(item));
+            }
+        });
+    }
+
+    private String formatKe(KeDTO keDTO) {
+        return keDTO.getMaKe() + " - " + keDTO.getTenKe();
+    }
+
+    private String formatDDC(DangDieuCheDTO ddc) {
+        return ddc.getMaDDC() + " - " + ddc.getTenDDC();
+    }
+
+    private String formatDVT(DonViTinhDTO dvt) {
+        return dvt.getMaDVT() + " - " + dvt.getTenDVT();
     }
 
     // ham validate kiem tra du lieu truyen vao dung hay ko
@@ -301,13 +357,7 @@ public class ThemThuocFormController extends DialogPane{
             return false;
         }else{
             if (maThuoc.matches("^VN-\\d{5}-\\d{2}$")) {
-                try {
-                    ConnectDB.getInstance().connect();
-                } catch (SQLException e) {
-                    throw new RuntimeException(e);
-                }
-                thuoc_dao = new Thuoc_Service();
-                if (thuoc_dao.getThuocTheoMa(maThuoc) != null){
+                if (thuocService.getThuocTheoMa(maThuoc) != null){
                     notification_addThuoc.setText("Mã thuốc đã tồn tại!");
                     return false;
                 }
@@ -372,8 +422,7 @@ public class ThemThuocFormController extends DialogPane{
 
     // them value vao combobox ke
     public void addComBoBoxKe() {
-        ke_dao = new Ke_Service();
-        ArrayList<KeDTO> arrayKe = ke_dao.getTatCaKeHoatDong();
+        ArrayList<KeDTO> arrayKe = keService.getTatCaKeHoatDong();
         cbAddKe.getItems().clear();
         for (KeDTO keDTO : arrayKe) {
             cbAddKe.getItems().add(keDTO);
@@ -383,8 +432,7 @@ public class ThemThuocFormController extends DialogPane{
 
     // Them value vao combobox dang dieu che
     public void addComBoBoxDDC() {
-        ddc_dao = new DangDieuChe_Service();
-        ArrayList<DangDieuCheDTO> arrayDDC = ddc_dao.getDangDieuCheHoatDong();
+        ArrayList<DangDieuCheDTO> arrayDDC = dangDieuCheService.getDangDieuCheHoatDong();
         cbAddDangDieuChe.getItems().clear();
         for (DangDieuCheDTO ddc : arrayDDC){
             cbAddDangDieuChe.getItems().add(ddc);
@@ -394,8 +442,7 @@ public class ThemThuocFormController extends DialogPane{
 
     // Them value vao combobox don vi tinh
     public void addComBoBoxDVCS() {
-        dvt_dao = new DonViTinh_Service();
-        ArrayList<DonViTinhDTO> arrayDVT = dvt_dao.getAllDonViTinh();
+        ArrayList<DonViTinhDTO> arrayDVT = donViTinhService.getAllDonViTinh();
         cbAddDVCS.getItems().clear();
         arrayDVT.forEach(dvt -> cbAddDVCS.getItems().add(dvt));
         cbAddDVCS.getSelectionModel().selectFirst();

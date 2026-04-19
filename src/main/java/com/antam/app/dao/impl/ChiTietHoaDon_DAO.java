@@ -38,11 +38,7 @@ public class ChiTietHoaDon_DAO implements I_ChiTietHoaDon_DAO {
         String sql = "SELECT * FROM ChiTietHoaDon WHERE MaHD = ?";
 
         try {
-            Connection con = ConnectDB.getConnection();
-            if (con == null || con.isClosed()) {
-                ConnectDB.getInstance().connect();
-                con = ConnectDB.getConnection();
-            }
+            Connection con = ensureConnection();
 
             try (PreparedStatement ps = con.prepareStatement(sql)) {
                 ps.setString(1, maHD);
@@ -68,11 +64,7 @@ public class ChiTietHoaDon_DAO implements I_ChiTietHoaDon_DAO {
         String sql = "SELECT * FROM ChiTietHoaDon WHERE MaHD = ?";
 
         try {
-            Connection con = ConnectDB.getConnection();
-            if (con == null || con.isClosed()) {
-                ConnectDB.getInstance().connect();
-                con = ConnectDB.getConnection();
-            }
+            Connection con = ensureConnection();
 
             try (PreparedStatement ps = con.prepareStatement(sql)) {
                 ps.setString(1, maHD);
@@ -98,11 +90,7 @@ public class ChiTietHoaDon_DAO implements I_ChiTietHoaDon_DAO {
         String sql = "SELECT * FROM ChiTietHoaDon WHERE MaHD = ? AND TinhTrang = ?";
 
         try {
-            Connection con = ConnectDB.getConnection();
-            if (con == null || con.isClosed()) {
-                ConnectDB.getInstance().connect();
-                con = ConnectDB.getConnection();
-            }
+            Connection con = ensureConnection();
 
             try (PreparedStatement ps = con.prepareStatement(sql)) {
                 ps.setString(1, maHD);
@@ -128,11 +116,7 @@ public class ChiTietHoaDon_DAO implements I_ChiTietHoaDon_DAO {
         String sql = "UPDATE ChiTietHoaDon SET TinhTrang = ? WHERE MaHD = ? AND MaLoThuoc = ?";
 
         try {
-            Connection con = ConnectDB.getConnection();
-            if (con == null || con.isClosed()) {
-                ConnectDB.getInstance().connect();
-                con = ConnectDB.getConnection();
-            }
+            Connection con = ensureConnection();
 
             try (PreparedStatement ps = con.prepareStatement(sql)) {
                 ps.setString(1, tinhTrang);
@@ -156,17 +140,17 @@ public class ChiTietHoaDon_DAO implements I_ChiTietHoaDon_DAO {
                      "VALUES (?, ?, ?, ?, ?, ?)";
 
         try {
-            Connection con = ConnectDB.getConnection();
-            if (con == null || con.isClosed()) {
-                ConnectDB.getInstance().connect();
-                con = ConnectDB.getConnection();
-            }
+            Connection con = ensureConnection();
 
             try (PreparedStatement ps = con.prepareStatement(sql)) {
                 ps.setString(1, cthd.getMaHD().getMaHD());
                 ps.setInt(2, cthd.getMaLoThuoc().getMaLoThuoc());
                 ps.setInt(3, cthd.getSoLuong());
-                ps.setString(4, cthd.getMaDVT() != null ? String.valueOf(cthd.getMaDVT().getMaDVT()) : null);
+                if (cthd.getMaDVT() != null) {
+                    ps.setInt(4, cthd.getMaDVT().getMaDVT());
+                } else {
+                    ps.setNull(4, Types.INTEGER);
+                }
                 ps.setString(5, cthd.getTinhTrang());
                 ps.setDouble(6, cthd.getThanhTien());
                 int rows = ps.executeUpdate();
@@ -186,11 +170,7 @@ public class ChiTietHoaDon_DAO implements I_ChiTietHoaDon_DAO {
         // Kiểm tra số lượng dòng có trạng thái "Trả Khi Đổi"
         String checkSql = "SELECT COUNT(*) FROM ChiTietHoaDon WHERE MaHD = ? AND MaLoThuoc = ? AND TinhTrang = ?";
         try {
-            Connection con = ConnectDB.getConnection();
-            if (con == null || con.isClosed()) {
-                ConnectDB.getInstance().connect();
-                con = ConnectDB.getConnection();
-            }
+            Connection con = ensureConnection();
 
             try (PreparedStatement checkPs = con.prepareStatement(checkSql)) {
                 checkPs.setString(1, cthd.getMaHD().getMaHD());
@@ -220,15 +200,15 @@ public class ChiTietHoaDon_DAO implements I_ChiTietHoaDon_DAO {
                      "WHERE MaHD = ? AND MaLoThuoc = ?";
 
         try {
-            Connection con = ConnectDB.getConnection();
-            if (con == null || con.isClosed()) {
-                ConnectDB.getInstance().connect();
-                con = ConnectDB.getConnection();
-            }
+            Connection con = ensureConnection();
 
             try (PreparedStatement ps = con.prepareStatement(sql)) {
                 ps.setInt(1, cthd.getSoLuong());
-                ps.setString(2, cthd.getMaDVT() != null ? String.valueOf(cthd.getMaDVT().getMaDVT()) : null);
+                if (cthd.getMaDVT() != null) {
+                    ps.setInt(2, cthd.getMaDVT().getMaDVT());
+                } else {
+                    ps.setNull(2, Types.INTEGER);
+                }
                 ps.setString(3, cthd.getTinhTrang());
                 ps.setDouble(4, cthd.getThanhTien());
                 ps.setString(5, cthd.getMaHD().getMaHD());
@@ -242,6 +222,46 @@ public class ChiTietHoaDon_DAO implements I_ChiTietHoaDon_DAO {
     }
 
     /**
+     * Kiểm tra chi tiết hóa đơn đã tồn tại theo khóa chính kép (MaHD, MaLoThuoc, TinhTrang)
+     */
+    @Override
+    public boolean tonTaiChiTietHoaDon(String maHD, int maLoThuoc) {
+        String sql = "SELECT 1 FROM ChiTietHoaDon WHERE MaHD = ? AND MaLoThuoc = ? LIMIT 1";
+        try {
+            Connection con = ensureConnection();
+            try (PreparedStatement ps = con.prepareStatement(sql)) {
+                ps.setString(1, maHD);
+                ps.setInt(2, maLoThuoc);
+                try (ResultSet rs = ps.executeQuery()) {
+                    return rs.next();
+                }
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Lỗi khi kiểm tra tồn tại chi tiết hóa đơn", e);
+        }
+    }
+
+    /**
+     * Kiểm tra chi tiết hóa đơn đã tồn tại theo khóa chính kép (MaHD, MaLoThuoc, TinhTrang)
+     */
+    public boolean tonTaiChiTietHoaDonTheoTinhTrang(String maHD, int maLoThuoc, String tinhTrang) {
+        String sql = "SELECT 1 FROM ChiTietHoaDon WHERE MaHD = ? AND MaLoThuoc = ? AND TinhTrang = ? LIMIT 1";
+        try {
+            Connection con = ensureConnection();
+            try (PreparedStatement ps = con.prepareStatement(sql)) {
+                ps.setString(1, maHD);
+                ps.setInt(2, maLoThuoc);
+                ps.setString(3, tinhTrang);
+                try (ResultSet rs = ps.executeQuery()) {
+                    return rs.next();
+                }
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Lỗi khi kiểm tra tồn tại chi tiết hóa đơn theo trạng thái", e);
+        }
+    }
+
+    /**
      * Xóa tất cả chi tiết hóa đơn theo mã hóa đơn
      */
     @Override
@@ -249,11 +269,7 @@ public class ChiTietHoaDon_DAO implements I_ChiTietHoaDon_DAO {
         String sql = "DELETE FROM ChiTietHoaDon WHERE MaHD = ?";
 
         try {
-            Connection con = ConnectDB.getConnection();
-            if (con == null || con.isClosed()) {
-                ConnectDB.getInstance().connect();
-                con = ConnectDB.getConnection();
-            }
+            Connection con = ensureConnection();
 
             try (PreparedStatement ps = con.prepareStatement(sql)) {
                 ps.setString(1, maHD);
@@ -272,22 +288,47 @@ public class ChiTietHoaDon_DAO implements I_ChiTietHoaDon_DAO {
         String maHD = rs.getString("MaHD");
         int maLoThuoc = rs.getInt("MaLoThuoc");
         int soLuong = rs.getInt("SoLuong");
-        String maDVT = rs.getString("MaDVT");
+        int maDVT = rs.getInt("MaDVT");
+        boolean maDVTNull = rs.wasNull();
         String tinhTrang = rs.getString("TinhTrang");
         double thanhTien = rs.getDouble("ThanhTien");
 
-        // Load relationship từ các DAO khác
         HoaDon hd = hoaDonDAO.getHoaDonTheoMa(maHD);
+        if (hd == null) {
+            hd = new HoaDon(maHD);
+        }
+
         LoThuoc lt = loThuocDAO.getChiTietThuoc(maLoThuoc);
-        DonViTinh dvt = maDVT != null ? donViTinhDAO.getDVTTheoMa(Integer.parseInt(maDVT)) : null;
+        if (lt == null) {
+            lt = new LoThuoc();
+            lt.setMaLoThuoc(maLoThuoc);
+        }
+
+        DonViTinh dvt = null;
+        if (!maDVTNull) {
+            dvt = donViTinhDAO.getDVTTheoMa(maDVT);
+            if (dvt == null) {
+                dvt = new DonViTinh(maDVT);
+            }
+        }
 
         return ChiTietHoaDon.builder()
-                .MaHD(hd != null ? hd : new HoaDon(maHD))
-                .maLoThuoc(lt != null ? lt : new LoThuoc())
+                .MaHD(hd)
+                .maLoThuoc(lt)
                 .soLuong(soLuong)
                 .maDVT(dvt)
                 .tinhTrang(tinhTrang)
                 .thanhTien(thanhTien)
                 .build();
     }
+
+    private Connection ensureConnection() throws SQLException {
+        Connection con = ConnectDB.getConnection();
+        if (con == null || con.isClosed()) {
+            ConnectDB.getInstance().connect();
+            con = ConnectDB.getConnection();
+        }
+        return con;
+    }
 }
+

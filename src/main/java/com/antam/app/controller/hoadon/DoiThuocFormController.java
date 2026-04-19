@@ -28,6 +28,7 @@ import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.*;
 import javafx.scene.text.Font;
+import javafx.util.StringConverter;
 
 import static javafx.collections.FXCollections.observableArrayList;
 
@@ -332,6 +333,78 @@ public class DoiThuocFormController extends DialogPane{
                 event.consume();
             }
             else {
+                // BƯỚC 1: Validate tất cả dữ liệu TRƯỚC khi xóa/sửa gì cả
+                boolean validationPassed = true;
+                String validationMessage = "";
+
+                for (Node node : vhDSCTHDM.getChildren()) {
+                    if (node instanceof HBox hBox) {
+                        VBox vbThuoc = (VBox) hBox.getChildren().get(0);
+                        VBox vbDVT = (VBox) hBox.getChildren().get(1);
+                        VBox vbSoLuong = (VBox) hBox.getChildren().get(2);
+
+                        ComboBox<ThuocDTO> comboThuoc = (ComboBox<ThuocDTO>) vbThuoc.getChildren().get(1);
+                        ComboBox<DonViTinhDTO> comboDonVi = (ComboBox<DonViTinhDTO>) vbDVT.getChildren().get(1);
+                        Spinner<Integer> spinnerSoLuong = (Spinner<Integer>) vbSoLuong.getChildren().get(1);
+
+                        if (comboThuoc.getValue() != null && comboDonVi.getValue() != null && spinnerSoLuong.getValue() != null) {
+                            ThuocDTO t = comboThuoc.getValue();
+                            int soLuong = spinnerSoLuong.getValue();
+                            ArrayList<LoThuocDTO> listCTT = loThuoc_service.getChiTietThuocHanSuDungGiamDan(t.getMaThuoc());
+                            ArrayList<LoThuocDTO> danhSachLoHopLe = new ArrayList<>();
+                            int tongSoLuong = 0;
+
+                            for (LoThuocDTO cts : listCTT) {
+                                boolean daTonTaiTrongHoaDon = chiTietHoaDon_service.tonTaiChiTietHoaDon(
+                                        hoaDonDTO.getMaHD(),
+                                        cts.getMaLoThuoc()
+                                );
+                                if (!daTonTaiTrongHoaDon) {
+                                    danhSachLoHopLe.add(cts);
+                                    tongSoLuong += cts.getSoLuong();
+                                }
+                            }
+
+                            if (tongSoLuong < soLuong) {
+                                validationPassed = false;
+                                validationMessage = "Số lượng thuốc trong kho không đủ hoặc bị trùng lô";
+                                break;
+                            }
+
+                            // Check xem đã có 2 dòng "Thuốc Mới Khi Đổi" cho lô nào không
+                            for (LoThuocDTO ctt : danhSachLoHopLe) {
+                                int countThuocMoiKhiDoi = chiTietHoaDons.stream()
+                                    .filter(ct -> ct.getMaLoThuocDTO().getMaLoThuoc() == ctt.getMaLoThuoc()
+                                               && "Thuốc Mới Khi Đổi".equals(ct.getTinhTrang()))
+                                    .toList()
+                                    .size();
+
+                                if (countThuocMoiKhiDoi >= 2) {
+                                    validationPassed = false;
+                                    validationMessage = "Lô thuốc này đã được mua 2 lần trong hóa đơn này. Không thể mua thêm nữa.";
+                                    break;
+                                }
+                            }
+
+                            if (!validationPassed) {
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                // Nếu validation không pass, hiển thị cảnh báo và RETURN (không làm gì cả)
+                if (!validationPassed) {
+                    Alert alert = new Alert(Alert.AlertType.WARNING);
+                    alert.setTitle("Cảnh báo");
+                    alert.setHeaderText("Không thể thực hiện giao dịch");
+                    alert.setContentText(validationMessage);
+                    alert.showAndWait();
+                    event.consume();
+                    return;
+                }
+
+                // BƯỚC 2: Validation passed, giờ mới bắt đầu xóa/sửa
                 for (ChiTietHoaDonDTO ct : selectedItems) {
                     chiTietHoaDon_service.xoaMemChiTietHoaDon(ct.getMaHD().getMaHD(), ct.getMaLoThuocDTO().getMaLoThuoc(), "Trả Khi Đổi");
                     switch (lyDo) {
@@ -354,11 +427,12 @@ public class DoiThuocFormController extends DialogPane{
                             break;
 
                         default:
-                            // Nếu có giá trị không nằm trong danh sách trên
                             System.out.println("Lý do trả không hợp lệ: " + lyDo);
                             break;
                     }
                 }
+
+                // BƯỚC 3: Insert các chi tiết hóa đơn mới
                 for (Node node : vhDSCTHDM.getChildren()) {
                     if (node instanceof HBox hBox) {
                         VBox vbThuoc = (VBox) hBox.getChildren().get(0);
@@ -368,54 +442,54 @@ public class DoiThuocFormController extends DialogPane{
                         ComboBox<ThuocDTO> comboThuoc = (ComboBox<ThuocDTO>) vbThuoc.getChildren().get(1);
                         ComboBox<DonViTinhDTO> comboDonVi = (ComboBox<DonViTinhDTO>) vbDVT.getChildren().get(1);
                         Spinner<Integer> spinnerSoLuong = (Spinner<Integer>) vbSoLuong.getChildren().get(1);
+
                         if (comboThuoc.getValue() != null && comboDonVi.getValue() != null && spinnerSoLuong.getValue() != null) {
                             ThuocDTO t = comboThuoc.getValue();
                             int soLuong = spinnerSoLuong.getValue();
                             ArrayList<LoThuocDTO> listCTT = loThuoc_service.getChiTietThuocHanSuDungGiamDan(t.getMaThuoc());
-                            int tongSoLuong = 0;
+                            ArrayList<LoThuocDTO> danhSachLoHopLe = new ArrayList<>();
                             double tongTienMua = 0;
+
                             for (LoThuocDTO cts : listCTT) {
-                                tongSoLuong += cts.getSoLuong();
-                            }
-                            if (tongSoLuong < soLuong) {
-                                Alert alert = new Alert(Alert.AlertType.WARNING);
-                                alert.setTitle("Cảnh báo");
-                                alert.setHeaderText("Số lượng thuốc trong kho không đủ");
-                                alert.setContentText("Vui lòng kiểm tra lại số lượng thuốc mới.");
-                                alert.showAndWait();
-                                event.consume();
-                                return;
-                            }else{
-                                for (LoThuocDTO ctt : listCTT) {
-                                    if (ctt.getSoLuong() >= soLuong) {
-                                        ChiTietHoaDonDTO newCTHD = new ChiTietHoaDonDTO(
-                                                hoaDonDTO,
-                                                ctt,
-                                                soLuong,
-                                                comboDonVi.getValue(),
-                                                "Thuốc Mới Khi Đổi",
-                                                t.getGiaBan() * soLuong
-                                        );
-                                        chiTietHoaDon_service.themChiTietHoaDon(newCTHD);
-                                        loThuoc_service.CapNhatSoLuongChiTietThuoc(ctt.getMaLoThuoc(), -soLuong);
-                                        tongTienMua += Math.round(t.getGiaBan() * soLuong * (1 + t.getThue()) * 100.0) / 100.0;
-                                        break;
-                                    }else{
-                                        soLuong -= ctt.getSoLuong();
-                                        ChiTietHoaDonDTO newCTHD = new ChiTietHoaDonDTO(
-                                                hoaDonDTO,
-                                                ctt,
-                                                ctt.getSoLuong(),
-                                                comboDonVi.getValue(),
-                                                "Thuốc Mới Khi Đổi",
-                                                t.getGiaBan() * ctt.getSoLuong()
-                                        );
-                                        chiTietHoaDon_service.themChiTietHoaDon(newCTHD);
-                                        loThuoc_service.CapNhatSoLuongChiTietThuoc(ctt.getMaLoThuoc(), -ctt.getSoLuong());
-                                        tongTienMua += Math.round(t.getGiaBan() * ctt.getSoLuong() * (1 + t.getThue()) * 100.0) / 100.0;
-                                    }
+                                boolean daTonTaiTrongHoaDon = chiTietHoaDon_service.tonTaiChiTietHoaDon(
+                                        hoaDonDTO.getMaHD(),
+                                        cts.getMaLoThuoc()
+                                );
+                                if (!daTonTaiTrongHoaDon) {
+                                    danhSachLoHopLe.add(cts);
                                 }
                             }
+
+                            for (LoThuocDTO ctt : danhSachLoHopLe) {
+                                if (ctt.getSoLuong() >= soLuong) {
+                                    ChiTietHoaDonDTO newCTHD = new ChiTietHoaDonDTO(
+                                            hoaDonDTO,
+                                            ctt,
+                                            soLuong,
+                                            comboDonVi.getValue(),
+                                            "Thuốc Mới Khi Đổi",
+                                            t.getGiaBan() * soLuong
+                                    );
+                                    chiTietHoaDon_service.themChiTietHoaDon(newCTHD);
+                                    loThuoc_service.CapNhatSoLuongChiTietThuoc(ctt.getMaLoThuoc(), -soLuong);
+                                    tongTienMua += Math.round(t.getGiaBan() * soLuong * (1 + t.getThue()) * 100.0) / 100.0;
+                                    break;
+                                } else {
+                                    soLuong -= ctt.getSoLuong();
+                                    ChiTietHoaDonDTO newCTHD = new ChiTietHoaDonDTO(
+                                            hoaDonDTO,
+                                            ctt,
+                                            ctt.getSoLuong(),
+                                            comboDonVi.getValue(),
+                                            "Thuốc Mới Khi Đổi",
+                                            t.getGiaBan() * ctt.getSoLuong()
+                                    );
+                                    chiTietHoaDon_service.themChiTietHoaDon(newCTHD);
+                                    loThuoc_service.CapNhatSoLuongChiTietThuoc(ctt.getMaLoThuoc(), -ctt.getSoLuong());
+                                    tongTienMua += Math.round(t.getGiaBan() * ctt.getSoLuong() * (1 + t.getThue()) * 100.0) / 100.0;
+                                }
+                            }
+
                             double tongTienCu = hoaDonDTO.getTongTien();
                             double tongTienTra = 0;
                             double tongTienCoKM = 0;
@@ -429,7 +503,6 @@ public class DoiThuocFormController extends DialogPane{
                                 }
                             }
                             if (hoaDonDTO.getMaKM() != null) {
-
                                 String maKM = hoaDonDTO.getMaKM().getMaKM();
                                 KhuyenMaiDTO km = khuyenMai_service.getKhuyenMaiTheoMa(maKM);
 
@@ -439,14 +512,6 @@ public class DoiThuocFormController extends DialogPane{
                             }
 
                             hoaDon_service.CapNhatTongTienHoaDon(hoaDonDTO.getMaHD(), tongTienCu - tongTienCoKM - tongTienTra + tongTienMua);
-                        } else {
-                            Alert alert = new Alert(Alert.AlertType.WARNING);
-                            alert.setTitle("Cảnh báo");
-                            alert.setHeaderText("Thông tin thuốc không hợp lệ");
-                            alert.setContentText("Vui lòng kiểm tra lại thông tin thuốc mới.");
-                            alert.showAndWait();
-                            event.consume();
-                            return;
                         }
 
                     }
@@ -513,7 +578,7 @@ public class DoiThuocFormController extends DialogPane{
         catch (SQLException e) { throw new RuntimeException(e); }
         LoThuocDTO ctt = loThuoc_service.getChiTietThuoc(chiTietHoaDonDTO.getMaLoThuocDTO().getMaLoThuoc());
         ThuocDTO t = thuoc_service.getThuocTheoMa(ctt.getMaThuocDTO().getMaThuoc());
-        Text txtMaThuoc = new Text(t.getTenThuoc());
+        Text txtMaThuoc = new Text(t == null ? "" : t.getTenThuoc());
         txtMaThuoc.setStyle("-fx-font-size: 15px;");
         Text txtSoLuong = new Text("SL " + chiTietHoaDonDTO.getSoLuong());
         txtSoLuong.setStyle("-fx-font-size: 15px;");
@@ -551,6 +616,7 @@ public class DoiThuocFormController extends DialogPane{
         hBox.setAlignment(Pos.CENTER);
         VBox vbThuoc = new VBox();
         ComboBox<ThuocDTO> comboBoxThuoc = new ComboBox<>();
+        configureThuocComboBox(comboBoxThuoc);
         comboBoxThuoc.getStylesheets().add(
                 getClass().getResource("/com/antam/app/styles/dashboard_style.css").toExternalForm()
         );
@@ -566,6 +632,7 @@ public class DoiThuocFormController extends DialogPane{
         }
         VBox vbDVT = new VBox();
         ComboBox<DonViTinhDTO> comboBoxDVT = new ComboBox<>();
+        configureDonViTinhComboBox(comboBoxDVT);
         comboBoxDVT.getStylesheets().add(
                 getClass().getResource("/com/antam/app/styles/dashboard_style.css").toExternalForm()
         );
@@ -576,8 +643,14 @@ public class DoiThuocFormController extends DialogPane{
         }
         comboBoxThuoc.setOnAction(event -> {
             comboBoxDVT.getItems().clear();
-            comboBoxDVT.getItems().add(donViTinh_service.getDVTTheoMa(comboBoxThuoc.getValue().getMaDVTCoSo().getMaDVT()));
-            comboBoxDVT.getSelectionModel().selectFirst();
+            ThuocDTO selectedThuoc = comboBoxThuoc.getValue();
+            if (selectedThuoc != null && selectedThuoc.getMaDVTCoSo() != null) {
+                DonViTinhDTO dvt = donViTinh_service.getDVTTheoMaDVT(selectedThuoc.getMaDVTCoSo().getMaDVT());
+                if (dvt != null) {
+                    comboBoxDVT.getItems().add(dvt);
+                    comboBoxDVT.getSelectionModel().selectFirst();
+                }
+            }
             tinhTongTien();
         });
         comboBoxDVT.setOnAction(event -> {
@@ -614,6 +687,48 @@ public class DoiThuocFormController extends DialogPane{
         vbSoLuong.getChildren().addAll(new Text("Số Lượng: "),spinnerSoLuong);
         hBox.getChildren().addAll(vbThuoc, vbDVT, vbSoLuong , btn);
         vbox.getChildren().add(hBox);
+    }
+
+    private void configureThuocComboBox(ComboBox<ThuocDTO> comboBox) {
+        comboBox.setConverter(new StringConverter<>() {
+            @Override
+            public String toString(ThuocDTO thuocDTO) {
+                return thuocDTO == null || thuocDTO.getTenThuoc() == null ? "" : thuocDTO.getTenThuoc();
+            }
+
+            @Override
+            public ThuocDTO fromString(String string) {
+                return null;
+            }
+        });
+        comboBox.setCellFactory(lv -> new ListCell<>() {
+            @Override
+            protected void updateItem(ThuocDTO item, boolean empty) {
+                super.updateItem(item, empty);
+                setText(empty || item == null || item.getTenThuoc() == null ? null : item.getTenThuoc());
+            }
+        });
+    }
+
+    private void configureDonViTinhComboBox(ComboBox<DonViTinhDTO> comboBox) {
+        comboBox.setConverter(new StringConverter<>() {
+            @Override
+            public String toString(DonViTinhDTO donViTinhDTO) {
+                return donViTinhDTO == null || donViTinhDTO.getTenDVT() == null ? "" : donViTinhDTO.getTenDVT();
+            }
+
+            @Override
+            public DonViTinhDTO fromString(String string) {
+                return null;
+            }
+        });
+        comboBox.setCellFactory(lv -> new ListCell<>() {
+            @Override
+            protected void updateItem(DonViTinhDTO item, boolean empty) {
+                super.updateItem(item, empty);
+                setText(empty || item == null || item.getTenDVT() == null ? null : item.getTenDVT());
+            }
+        });
     }
 
     public void tinhTongTien() {

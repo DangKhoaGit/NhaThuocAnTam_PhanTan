@@ -28,8 +28,9 @@ module com.antam.app {
     opens com.antam.app.controller.nhanvien to javafx.fxml;
     opens com.antam.app.controller.caidattaikhoan to javafx.fxml;
 
-    // cho JavaFX TableView/PropertyValueFactory đọc getter của entity
+    // cho JavaFX TableView/PropertyValueFactory đọc getter của entity/DTO
     opens com.antam.app.entity to javafx.base, org.hibernate.orm.core;
+    opens com.antam.app.dto to javafx.base;
 
     // exports nếu muốn dùng entity ở package khác
     exports com.antam.app.entity;

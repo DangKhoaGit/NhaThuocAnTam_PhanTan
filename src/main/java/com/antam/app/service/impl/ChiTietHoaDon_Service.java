@@ -139,6 +139,57 @@ public class ChiTietHoaDon_Service implements I_ChiTietHoaDon_Service {
     }
 
     /**
+     * Kiểm tra chi tiết hóa đơn đã tồn tại theo khóa chính kép (MaHD, MaLoThuoc)
+     */
+    @Override
+    public boolean tonTaiChiTietHoaDon(String maHD, int maLoThuoc) {
+        try {
+            return chiTietHoaDonDAO.tonTaiChiTietHoaDon(maHD, maLoThuoc);
+        } catch (Exception e) {
+            throw new RuntimeException("Lỗi khi kiểm tra tồn tại chi tiết hóa đơn", e);
+        }
+    }
+
+    /**
+     * Kiểm tra chi tiết hóa đơn đã tồn tại theo khóa chính kép (MaHD, MaLoThuoc, TinhTrang)
+     */
+    @Override
+    public boolean tonTaiChiTietHoaDonTheoTinhTrang(String maHD, int maLoThuoc, String tinhTrang) {
+        try {
+            return chiTietHoaDonDAO.tonTaiChiTietHoaDonTheoTinhTrang(maHD, maLoThuoc, tinhTrang);
+        } catch (Exception e) {
+            throw new RuntimeException("Lỗi khi kiểm tra tồn tại chi tiết hóa đơn theo trạng thái", e);
+        }
+    }
+
+    /**
+     * Thêm hoặc cập nhật chi tiết hóa đơn (upsert theo khóa MaHD + MaLoThuoc + TinhTrang)
+     */
+    @Override
+    public boolean themHoacCapNhatChiTietHoaDon(ChiTietHoaDonDTO cthd) {
+        try {
+            String maHD = cthd.getMaHD() != null ? cthd.getMaHD().getMaHD() : null;
+            int maLoThuoc = cthd.getMaLoThuocDTO() != null ? cthd.getMaLoThuocDTO().getMaLoThuoc() : -1;
+            String tinhTrang = cthd.getTinhTrang();
+
+            if (maHD == null || maLoThuoc <= 0 || tinhTrang == null) {
+                return false;
+            }
+
+            // Check nếu đã tồn tại theo 3 khóa (MaHD, MaLoThuoc, TinhTrang)
+            if (tonTaiChiTietHoaDonTheoTinhTrang(maHD, maLoThuoc, tinhTrang)) {
+                // Đã tồn tại: UPDATE
+                return updateChiTietHoaDon(cthd);
+            } else {
+                // Chưa tồn tại: INSERT
+                return themChiTietHoaDon(cthd);
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Lỗi khi thêm hoặc cập nhật chi tiết hóa đơn", e);
+        }
+    }
+
+    /**
      * Xóa tất cả chi tiết hóa đơn theo mã hóa đơn
      */
     @Override
@@ -158,7 +209,7 @@ public class ChiTietHoaDon_Service implements I_ChiTietHoaDon_Service {
         if (entity == null) return null;
 
         HoaDonDTO hoaDonDTO = null;
-        if (entity.getMaHD() != null) {
+        if (entity.getMaHD() != null && entity.getMaHD().getMaHD() != null) {
             hoaDonDTO = new HoaDonDTO(entity.getMaHD().getMaHD());
         }
 
@@ -166,11 +217,21 @@ public class ChiTietHoaDon_Service implements I_ChiTietHoaDon_Service {
         if (entity.getMaLoThuoc() != null) {
             loThuocDTO = new LoThuocDTO();
             loThuocDTO.setMaLoThuoc(entity.getMaLoThuoc().getMaLoThuoc());
+
+            if (entity.getMaLoThuoc().getMaThuoc() != null && entity.getMaLoThuoc().getMaThuoc().getMaThuoc() != null) {
+                ThuocDTO thuocDTO = new ThuocDTO(entity.getMaLoThuoc().getMaThuoc().getMaThuoc());
+                thuocDTO.setTenThuoc(entity.getMaLoThuoc().getMaThuoc().getTenThuoc());
+                loThuocDTO.setMaThuocDTO(thuocDTO);
+            }
         }
 
         DonViTinhDTO donViTinhDTO = null;
         if (entity.getMaDVT() != null) {
-            donViTinhDTO = new DonViTinhDTO(entity.getMaDVT().getMaDVT());
+            donViTinhDTO = new DonViTinhDTO(
+                    entity.getMaDVT().getMaDVT(),
+                    entity.getMaDVT().getTenDVT(),
+                    entity.getMaDVT().isDelete()
+            );
         }
 
         return ChiTietHoaDonDTO.builder()
@@ -191,7 +252,7 @@ public class ChiTietHoaDon_Service implements I_ChiTietHoaDon_Service {
         if (dto == null) return null;
 
         HoaDon hoaDon = null;
-        if (dto.getMaHD() != null) {
+        if (dto.getMaHD() != null && dto.getMaHD().getMaHD() != null && !dto.getMaHD().getMaHD().trim().isEmpty()) {
             hoaDon = hoaDonDAO.getHoaDonTheoMa(dto.getMaHD().getMaHD());
             if (hoaDon == null) {
                 hoaDon = new HoaDon(dto.getMaHD().getMaHD());
@@ -208,8 +269,11 @@ public class ChiTietHoaDon_Service implements I_ChiTietHoaDon_Service {
         }
 
         DonViTinh donViTinh = null;
-        if (dto.getMaDVT() != null) {
+        if (dto.getMaDVT() != null && dto.getMaDVT().getMaDVT() > 0) {
             donViTinh = donViTinhDAO.getDVTTheoMa(dto.getMaDVT().getMaDVT());
+            if (donViTinh == null) {
+                donViTinh = new DonViTinh(dto.getMaDVT().getMaDVT());
+            }
         }
 
         return ChiTietHoaDon.builder()

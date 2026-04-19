@@ -23,13 +23,14 @@ public class ThongKeDoanhThu_Service implements I_ThongKeDoanhThu_Service {
     public ArrayList<ThongKeDoanhThuDTO> getDoanhThuTheoThoiGian(LocalDate tuNgay, LocalDate denNgay, String maNV) {
         ArrayList<ThongKeDoanhThuDTO> dsThongKe = new ArrayList<>();
         StringBuilder sql = new StringBuilder(
-            "SELECT CAST(hd.NgayTao AS DATE) as Ngay, " +
+            "SELECT DATE(hd.NgayTao) as Ngay, " +
             "COUNT(hd.MaHD) as SoDonHang, " +
             "SUM(hd.TongTien) as DoanhThu, " +
             "AVG(hd.TongTien) as DonHangTB, " +
             "COUNT(DISTINCT hd.MaKH) as KhachHangMoi, " +
-            "(SELECT TOP 1 nv2.HoTen FROM NhanVien nv2 WHERE nv2.MaNV = MIN(hd.MaNV)) as NhanVien " +
+            "MIN(nv.HoTen) as NhanVien " +
             "FROM HoaDon hd " +
+            "LEFT JOIN NhanVien nv ON nv.MaNV = hd.MaNV " +
             "WHERE hd.DeleteAt = 0 AND hd.NgayTao BETWEEN ? AND ? "
         );
 
@@ -37,7 +38,7 @@ public class ThongKeDoanhThu_Service implements I_ThongKeDoanhThu_Service {
             sql.append("AND hd.MaNV = ? ");
         }
 
-        sql.append("GROUP BY CAST(hd.NgayTao AS DATE) ORDER BY Ngay ASC");
+        sql.append("GROUP BY DATE(hd.NgayTao) ORDER BY Ngay ASC");
 
         try {
             Connection con = ConnectDB.getConnection();
@@ -87,8 +88,9 @@ public class ThongKeDoanhThu_Service implements I_ThongKeDoanhThu_Service {
             "SUM(hd.TongTien) as DoanhThu, " +
             "AVG(hd.TongTien) as DonHangTB, " +
             "COUNT(DISTINCT hd.MaKH) as KhachHangMoi, " +
-            "(SELECT TOP 1 nv2.HoTen FROM NhanVien nv2 WHERE nv2.MaNV = MIN(hd.MaNV)) as NhanVien " +
+            "MIN(nv.HoTen) as NhanVien " +
             "FROM HoaDon hd " +
+            "LEFT JOIN NhanVien nv ON nv.MaNV = hd.MaNV " +
             "WHERE hd.DeleteAt = 0 AND hd.NgayTao BETWEEN ? AND ? "
         );
 
@@ -144,7 +146,7 @@ public class ThongKeDoanhThu_Service implements I_ThongKeDoanhThu_Service {
     public double getTongDoanhThu(LocalDate tuNgay, LocalDate denNgay, String maNV) {
         double tongDoanhThu = 0;
         StringBuilder sql = new StringBuilder(
-            "SELECT ISNULL(SUM(TongTien), 0) as TongDoanhThu " +
+            "SELECT COALESCE(SUM(TongTien), 0) as TongDoanhThu " +
             "FROM HoaDon WHERE DeleteAt = 0 AND NgayTao BETWEEN ? AND ? "
         );
 
@@ -264,14 +266,15 @@ public class ThongKeDoanhThu_Service implements I_ThongKeDoanhThu_Service {
     public Map<String, Integer> getTopSanPhamBanChay(LocalDate tuNgay, LocalDate denNgay, int top) {
         Map<String, Integer> topSanPham = new LinkedHashMap<>();
         String sql =
-            "SELECT TOP " + top + " t.TenThuoc, SUM(cthd.SoLuong) as TongSoLuong " +
+            "SELECT t.TenThuoc, SUM(cthd.SoLuong) as TongSoLuong " +
             "FROM ChiTietHoaDon cthd " +
             "JOIN HoaDon hd ON cthd.MaHD = hd.MaHD " +
-            "JOIN ChiTietThuoc ctt ON cthd.MaCTT = ctt.MaCTT " +
-            "JOIN Thuoc t ON ctt.MaThuoc = t.MaThuoc " +
+            "JOIN LoThuoc lt ON cthd.MaLoThuoc = lt.MaLoThuoc " +
+            "JOIN Thuoc t ON lt.MaThuoc = t.MaThuoc " +
             "WHERE hd.DeleteAt = 0 AND hd.NgayTao BETWEEN ? AND ? " +
             "GROUP BY t.TenThuoc " +
-            "ORDER BY TongSoLuong DESC";
+            "ORDER BY TongSoLuong DESC " +
+            "LIMIT ?";
 
         try {
             Connection con = ConnectDB.getConnection();
@@ -283,6 +286,7 @@ public class ThongKeDoanhThu_Service implements I_ThongKeDoanhThu_Service {
             PreparedStatement ps = con.prepareStatement(sql);
             ps.setDate(1, Date.valueOf(tuNgay));
             ps.setDate(2, Date.valueOf(denNgay));
+            ps.setInt(3, top);
 
             ResultSet rs = ps.executeQuery();
             while (rs.next()) {

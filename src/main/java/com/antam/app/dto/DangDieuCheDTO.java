@@ -46,4 +46,11 @@ public class DangDieuCheDTO {
         MaDDC = maDDC;
         setTenDDC(tenDDC);
     }
+
+    public String getDisplayText() {
+        if (MaDDC <= 0 || "Tất cả".equalsIgnoreCase(TenDDC)) {
+            return "Tất cả";
+        }
+        return MaDDC + " - " + TenDDC;
+    }
 }

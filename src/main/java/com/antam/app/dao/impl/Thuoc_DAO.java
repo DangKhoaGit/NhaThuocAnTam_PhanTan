@@ -1,5 +1,5 @@
 /*
- * @ (#) Thuoc_DAO.java   1.0 9/24/2025
+ * @ (#) Thuoc_DAO.java   1.0 19/04/2026
  *
  * Copyright (c) 2025 IUH. All rights reserved.
  */
@@ -7,306 +7,210 @@
 package com.antam.app.dao.impl;
 
 import com.antam.app.connect.ConnectDB;
+import com.antam.app.dao.I_Thuoc_DAO;
 import com.antam.app.entity.DangDieuChe;
 import com.antam.app.entity.DonViTinh;
 import com.antam.app.entity.Ke;
 import com.antam.app.entity.Thuoc;
 
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 
 /*
- * @description
- * @author: Duong Nguyen
- * @date: 9/24/2025
- * version: 1.0
+ * @description: Implementation của I_Thuoc_DAO
+ * Theo chuẩn luồng dữ liệu: Ghi UI→DTO→Service→Entity→DAO→DB
+ *                         Đọc DB→DAO→Entity→Service→DTO→UI
+ * @author: Duong Nguyen, Pham Dang Khoa
+ * @date: 19/04/2026
+ * @version: 1.0
  */
-public class Thuoc_DAO implements com.antam.app.dao.I_Thuoc_DAO {
-    /**
-     * Phương thức thao tác với bảng Thuoc trong CSDL
-     * return: ArrayList<Thuoc> - danh sách thuốc
-     */
+public class Thuoc_DAO implements I_Thuoc_DAO {
+
+    private static final String BASE_SELECT = """
+        SELECT t.MaThuoc, t.TenThuoc, t.HamLuong, t.GiaBan, t.GiaGoc, t.Thue, t.DeleteAt,
+               t.DangDieuChe, ddc.TenDDC,
+             t.MaDVTCoso, dvt.TenDVT, dvt.isDelete AS DVTDeleteAt,
+               t.MaKe, k.TenKe, k.LoaiKe, k.DeleteAt AS KeDeleteAt
+        FROM Thuoc t
+        LEFT JOIN DangDieuChe ddc ON t.DangDieuChe = ddc.MaDDC
+        LEFT JOIN DonViTinh dvt ON t.MaDVTCoso = dvt.MaDVT
+        LEFT JOIN KeThuoc k ON t.MaKe = k.MaKe
+    """;
+
     @Override
     public ArrayList<Thuoc> getAllThuoc() {
         ArrayList<Thuoc> listThuoc = new ArrayList<>();
-        String sql = """
-            SELECT t.MaThuoc, t.TenThuoc,
-                   t.HamLuong, t.GiaBan, t.GiaGoc, t.Thue, t.MaDVTCoso, t.deleteAt,
-                   ddc.MaDDC, ddc.TenDDC,
-                   k.MaKe, k.TenKe, k.LoaiKe
-            FROM Thuoc t
-            JOIN DangDieuChe ddc ON t.DangDieuChe = ddc.MaDDC
-            JOIN KeThuoc k ON t.MaKe = k.MaKe
-            WHERE t.deleteAt = 0
-        """;
+        String sql = BASE_SELECT + " WHERE t.DeleteAt = 0 ORDER BY t.MaThuoc";
+
         try {
-            ConnectDB.getInstance().connect();
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
-
-        try  {
-            Connection con = ConnectDB.getConnection();
-            if (con == null || con.isClosed()) {
-                ConnectDB.getInstance().connect();
-                con = ConnectDB.getConnection();
+            Connection con = ensureConnection();
+            try (Statement state = con.createStatement(); ResultSet rs = state.executeQuery(sql)) {
+                while (rs.next()) {
+                    listThuoc.add(mapResultSetToEntity(rs));
+                }
             }
-            Statement state = con.createStatement();
-            ResultSet rs = state.executeQuery(sql);
-
-            while (rs.next()) {
-                String maThuoc = rs.getString("MaThuoc");
-                String tenThuoc = rs.getString("TenThuoc");
-                String hamLuong = rs.getString("HamLuong");
-                double giaBan = rs.getDouble("GiaBan");
-                double giaGoc = rs.getDouble("GiaGoc");
-                float thue = rs.getFloat("Thue");
-                int maDonViTinhCoSo = rs.getInt("MaDVTCoso");
-                boolean deleteAt = rs.getBoolean("deleteAt");
-
-                // Tạo object DDC và Ke với đủ thông tin
-                DangDieuChe ddc = new DangDieuChe(rs.getInt("MaDDC"), rs.getString("TenDDC"));
-                Ke ke = new Ke(rs.getString("MaKe"), rs.getString("TenKe"), rs.getString("LoaiKe"), false);
-                DonViTinh dvt = new DonViTinh(maDonViTinhCoSo);
-
-                Thuoc thuoc = new Thuoc();
-                listThuoc.add(thuoc);
-            }
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
+        } catch (Exception e) {
+            throw new RuntimeException("Loi khi lay danh sach thuoc", e);
         }
         return listThuoc;
     }
 
-    /**
-     * Phương thức thao tác với bảng Thuoc trong CSDL
-     * return: ArrayList<Thuoc> - danh sách thuốc
-     */
     @Override
     public ArrayList<Thuoc> getAllThuocDaXoa() {
         ArrayList<Thuoc> listThuoc = new ArrayList<>();
-        String sql = """
-            SELECT t.MaThuoc, t.TenThuoc,
-                   t.HamLuong, t.GiaBan, t.GiaGoc, t.Thue, t.MaDVTCoso, t.deleteAt,
-                   ddc.MaDDC, ddc.TenDDC,
-                   k.MaKe, k.TenKe, k.LoaiKe
-            FROM Thuoc t
-            JOIN DangDieuChe ddc ON t.DangDieuChe = ddc.MaDDC
-            JOIN KeThuoc k ON t.MaKe = k.MaKe
-            WHERE t.deleteAt = 1
-        """;
+        String sql = BASE_SELECT + " WHERE t.DeleteAt = 1 ORDER BY t.MaThuoc";
+
         try {
-            ConnectDB.getInstance().connect();
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
-
-        try  {
-            Connection con = ConnectDB.getConnection();
-            if (con == null || con.isClosed()) {
-                ConnectDB.getInstance().connect();
-                con = ConnectDB.getConnection();
+            Connection con = ensureConnection();
+            try (Statement state = con.createStatement(); ResultSet rs = state.executeQuery(sql)) {
+                while (rs.next()) {
+                    listThuoc.add(mapResultSetToEntity(rs));
+                }
             }
-            Statement state = con.createStatement();
-            ResultSet rs = state.executeQuery(sql);
-
-            while (rs.next()) {
-                String maThuoc = rs.getString("MaThuoc");
-                String tenThuoc = rs.getString("TenThuoc");
-                String hamLuong = rs.getString("HamLuong");
-                double giaBan = rs.getDouble("GiaBan");
-                double giaGoc = rs.getDouble("GiaGoc");
-                float thue = rs.getFloat("Thue");
-                int maDonViTinhCoSo = rs.getInt("MaDVTCoso");
-                boolean deleteAt = rs.getBoolean("deleteAt");
-
-                // Tạo object DDC và Ke với đủ thông tin
-                DangDieuChe ddc = new DangDieuChe(rs.getInt("MaDDC"), rs.getString("TenDDC"));
-                Ke ke = new Ke(rs.getString("MaKe"), rs.getString("TenKe"), rs.getString("LoaiKe"), false);
-                DonViTinh dvt = new DonViTinh(maDonViTinhCoSo);
-
-                Thuoc thuoc = new Thuoc();
-                listThuoc.add(thuoc);
-            }
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
+        } catch (Exception e) {
+            throw new RuntimeException("Loi khi lay danh sach thuoc da xoa", e);
         }
         return listThuoc;
     }
 
-    /**
-     * Lấy thông tin thuốc theo mã thuốc
-     * @param ma
-     * @return Thuoc
-     */
     @Override
     public Thuoc getThuocTheoMa(String ma) {
-        Thuoc t = null;
-        String sql = """
-            SELECT t.MaThuoc, t.TenThuoc,
-                   t.HamLuong, t.GiaBan, t.GiaGoc, t.Thue, t.MaDVTCoso, t.deleteAt,
-                   ddc.MaDDC, ddc.TenDDC,
-                   k.MaKe, k.TenKe, k.LoaiKe
-            FROM Thuoc t
-            JOIN DangDieuChe ddc ON t.DangDieuChe = ddc.MaDDC
-            JOIN KeThuoc k ON t.MaKe = k.MaKe
-            WHERE t.MaThuoc = ? AND t.deleteAt = 0
-        """;
+        String sql = BASE_SELECT + " WHERE t.MaThuoc = ? AND t.DeleteAt = 0";
+
         try {
-            Connection con = ConnectDB.getConnection();
-            if (con == null || con.isClosed()) {
-                ConnectDB.getInstance().connect();
-                con = ConnectDB.getConnection();
+            Connection con = ensureConnection();
+            try (PreparedStatement ps = con.prepareStatement(sql)) {
+                ps.setString(1, ma);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) {
+                        return mapResultSetToEntity(rs);
+                    }
+                }
             }
-            PreparedStatement ps = con.prepareStatement(sql);
-            ps.setString(1, ma);
-            ResultSet rs = ps.executeQuery();
-            if (rs.next()) {
-                String maThuoc = rs.getString("MaThuoc");
-                String tenThuoc = rs.getString("TenThuoc");
-                String hamLuong = rs.getString("HamLuong");
-                double giaBan = rs.getDouble("GiaBan");
-                double giaGoc = rs.getDouble("GiaGoc");
-                float thue = rs.getFloat("Thue");
-                int maDonViTinhCoSo = rs.getInt("MaDVTCoso");
-                boolean deleteAt = rs.getBoolean("deleteAt");
-
-                // Tạo object DDC và Ke với đủ thông tin
-                DangDieuChe ddc = new DangDieuChe(rs.getInt("MaDDC"), rs.getString("TenDDC"));
-                Ke ke = new Ke(rs.getString("MaKe"), rs.getString("TenKe"), rs.getString("LoaiKe"), false);
-                DonViTinh dvt = new DonViTinh(maDonViTinhCoSo);
-
-                t = new Thuoc();
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
+        } catch (Exception e) {
+            throw new RuntimeException("Loi khi lay thuoc theo ma", e);
         }
-        return t;
+        return null;
     }
 
-    /**
-     * Thêm thuốc mới vào CSDL
-     * @param t
-     * @return boolean
-     */
     @Override
     public boolean themThuoc(Thuoc t) {
-        String sql = "INSERT INTO Thuoc (MaThuoc, TenThuoc, HamLuong, GiaBan, GiaGoc, Thue, DangDieuChe, MaDVTCoso, MaKe, deleteAt) " +
-                "VALUES (?,?,?,?,?,?,?,?,?,0)";
+        String sql = """
+            INSERT INTO Thuoc
+            (MaThuoc, TenThuoc, HamLuong, GiaBan, GiaGoc, Thue, DangDieuChe, MaDVTCoso, MaKe, DeleteAt)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """;
+
         try {
-            Connection con = ConnectDB.getConnection();
-            if (con == null || con.isClosed()) {
-                ConnectDB.getInstance().connect();
-                con = ConnectDB.getConnection();
+            Connection con = ensureConnection();
+            try (PreparedStatement ps = con.prepareStatement(sql)) {
+                ps.setString(1, t.getMaThuoc());
+                ps.setString(2, t.getTenThuoc());
+                ps.setString(3, t.getHamLuong());
+                ps.setDouble(4, t.getGiaBan());
+                ps.setDouble(5, t.getGiaGoc());
+                ps.setFloat(6, t.getThue());
+                ps.setInt(7, t.getDangDieuChe() != null ? t.getDangDieuChe().getMaDDC() : 0);
+                ps.setInt(8, t.getMaDVTCoSo() != null ? t.getMaDVTCoSo().getMaDVT() : 0);
+                ps.setString(9, t.getMaKe() != null ? t.getMaKe().getMaKe() : null);
+                ps.setBoolean(10, t.isDeleteAt());
+                return ps.executeUpdate() > 0;
             }
-            var ps = con.prepareStatement(sql);
-            ps.setString(1, t.getMaThuoc());
-            ps.setString(2, t.getTenThuoc());
-            ps.setString(3, t.getHamLuong());
-            ps.setDouble(4, t.getGiaBan());
-            ps.setDouble(5, t.getGiaGoc());
-            ps.setFloat(6, t.getThue());
-//            ps.setInt(7, t.getDangDieuChe().getMaDDC());
-//            ps.setInt(8, t.getMaDVTCoSo().getMaDVT());
-//            ps.setString(9, t.getMaKe().getMaKe());
-            return ps.executeUpdate() > 0;
-        } catch (SQLException e) {
-            e.printStackTrace();
+        } catch (Exception e) {
+            throw new RuntimeException("Loi khi them thuoc", e);
         }
-        return false;
     }
 
-    /**
-     * Cập nhật thông tin thuốc
-     * @param t
-     * @return boolean
-     */
     @Override
     public boolean capNhatThuoc(Thuoc t) {
-        String sql = "UPDATE Thuoc SET TenThuoc = ?, HamLuong = ?, GiaBan = ?, GiaGoc = ?, Thue = ?, DangDieuChe = ?, MaDVTCoso = ?, MaKe = ?, DeleteAt = ? WHERE MaThuoc = ?";
+        String sql = """
+            UPDATE Thuoc
+            SET TenThuoc = ?, HamLuong = ?, GiaBan = ?, GiaGoc = ?, Thue = ?,
+                DangDieuChe = ?, MaDVTCoso = ?, MaKe = ?, DeleteAt = ?
+            WHERE MaThuoc = ?
+        """;
+
         try {
-            Connection con = ConnectDB.getConnection();
-            if (con == null || con.isClosed()) {
-                ConnectDB.getInstance().connect();
-                con = ConnectDB.getConnection();
+            Connection con = ensureConnection();
+            try (PreparedStatement ps = con.prepareStatement(sql)) {
+                ps.setString(1, t.getTenThuoc());
+                ps.setString(2, t.getHamLuong());
+                ps.setDouble(3, t.getGiaBan());
+                ps.setDouble(4, t.getGiaGoc());
+                ps.setFloat(5, t.getThue());
+                ps.setInt(6, t.getDangDieuChe() != null ? t.getDangDieuChe().getMaDDC() : 0);
+                ps.setInt(7, t.getMaDVTCoSo() != null ? t.getMaDVTCoSo().getMaDVT() : 0);
+                ps.setString(8, t.getMaKe() != null ? t.getMaKe().getMaKe() : null);
+                ps.setBoolean(9, t.isDeleteAt());
+                ps.setString(10, t.getMaThuoc());
+                return ps.executeUpdate() > 0;
             }
-            var ps = con.prepareStatement(sql);
-            ps.setString(1, t.getTenThuoc());
-            ps.setString(2, t.getHamLuong());
-            ps.setDouble(3, t.getGiaBan());
-            ps.setDouble(4, t.getGiaGoc());
-            ps.setFloat(5, t.getThue());
-//            ps.setInt(6, t.getDangDieuChe().getMaDDC());
-//            ps.setInt(7, t.getMaDVTCoSo().getMaDVT());
-//            ps.setString(8, t.getMaKe().getMaKe());
-            ps.setBoolean(9, t.isDeleteAt());
-            ps.setString(10, t.getMaThuoc());
-            return ps.executeUpdate() > 0;
-        } catch (SQLException e) {
-            e.printStackTrace();
+        } catch (Exception e) {
+            throw new RuntimeException("Loi khi cap nhat thuoc", e);
         }
-        return false;
     }
 
-    /**
-     * Xóa thuốc theo mã (cập nhật DeleteAt = 1)
-     * @param ma
-     * @return boolean
-     */
     @Override
     public boolean xoaThuocTheoMa(String ma) {
-        String sql = "UPDATE Thuoc SET DeleteAt = 1 WHERE MaThuoc = ?";
-        PreparedStatement statement = null;
-        int n = 0;
-        try {
-            Connection con = ConnectDB.getConnection();
-            if (con == null || con.isClosed()) {
-                ConnectDB.getInstance().connect();
-                con = ConnectDB.getConnection();
-            }
-            statement = con.prepareStatement(sql);
-            statement.setString(1, ma);
-            n = statement.executeUpdate();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        } finally {
-            try {
-                if (statement != null) {
-                    statement.close();
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-        return n > 0;
+        return updateDeleteState(ma, true);
     }
 
     @Override
     public boolean khoiPhucThuocTheoMa(String ma) {
-        String sql = "UPDATE Thuoc SET DeleteAt = 0 WHERE MaThuoc = ?";
-        PreparedStatement statement = null;
-        int n = 0;
-        try {
-            Connection con = ConnectDB.getConnection();
-            if (con == null || con.isClosed()) {
-                ConnectDB.getInstance().connect();
-                con = ConnectDB.getConnection();
-            }
-            statement = con.prepareStatement(sql);
-            statement.setString(1, ma);
-            n = statement.executeUpdate();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        } finally {
-            try {
-                if (statement != null) {
-                    statement.close();
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-        return n > 0;
+        return updateDeleteState(ma, false);
     }
 
+    private boolean updateDeleteState(String ma, boolean deleteAt) {
+        String sql = "UPDATE Thuoc SET DeleteAt = ? WHERE MaThuoc = ?";
+        try {
+            Connection con = ensureConnection();
+            try (PreparedStatement ps = con.prepareStatement(sql)) {
+                ps.setBoolean(1, deleteAt);
+                ps.setString(2, ma);
+                return ps.executeUpdate() > 0;
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Loi khi cap nhat trang thai xoa cua thuoc", e);
+        }
+    }
+
+    private Connection ensureConnection() throws SQLException {
+        Connection con = ConnectDB.getConnection();
+        if (con == null || con.isClosed()) {
+            ConnectDB.getInstance().connect();
+            con = ConnectDB.getConnection();
+        }
+        return con;
+    }
+
+    private Thuoc mapResultSetToEntity(ResultSet rs) throws SQLException {
+        String maThuoc = rs.getString("MaThuoc");
+        String tenThuoc = rs.getString("TenThuoc");
+        String hamLuong = rs.getString("HamLuong");
+        double giaBan = rs.getDouble("GiaBan");
+        double giaGoc = rs.getDouble("GiaGoc");
+        float thue = rs.getFloat("Thue");
+        boolean deleteAt = rs.getBoolean("DeleteAt");
+
+        int maDDC = rs.getInt("DangDieuChe");
+        String tenDDC = rs.getString("TenDDC");
+        DangDieuChe dangDieuChe = new DangDieuChe(maDDC, tenDDC == null ? "" : tenDDC);
+
+        int maDVT = rs.getInt("MaDVTCoso");
+        String tenDVT = rs.getString("TenDVT");
+        boolean dvtDeleteAt = rs.getBoolean("DVTDeleteAt");
+        DonViTinh donViTinh = new DonViTinh(maDVT, tenDVT == null ? "" : tenDVT, dvtDeleteAt);
+
+        String maKe = rs.getString("MaKe");
+        String tenKe = rs.getString("TenKe");
+        String loaiKe = rs.getString("LoaiKe");
+        boolean keDeleteAt = rs.getBoolean("KeDeleteAt");
+        Ke ke = maKe == null ? new Ke() : new Ke(maKe, tenKe == null ? "" : tenKe, loaiKe == null ? "" : loaiKe, keDeleteAt);
+
+        return new Thuoc(maThuoc, tenThuoc, hamLuong, giaBan, giaGoc, thue, deleteAt, dangDieuChe, donViTinh, ke);
+    }
 }

@@ -15,7 +15,6 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.scene.control.*;
-import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.effect.DropShadow;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
@@ -23,7 +22,6 @@ import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.stage.Modality;
 
-import java.sql.Connection;
 import java.time.LocalDate;
 import java.util.ArrayList;
 
@@ -102,12 +100,16 @@ public class KhoiPhucKhuyenMaiController extends ScrollPane{
         ref.setFill(Color.WHITE);
         btnclear.setGraphic(ref);
 
+        VBox boxXoa = new VBox();
+        boxXoa.setAlignment(javafx.geometry.Pos.BOTTOM_CENTER);
+        boxXoa.getChildren().add(btnclear);
+
         filterPane.getChildren().addAll(
                 createBox("Loại khuyến mãi:", cbLoaiKhuyenMai),
                 createBox("Trạng thái:", cbTrangThai),
                 createBox("Từ ngày:", dpTuNgay),
                 createBox("Đến ngày:", dpDenNgay),
-                btnclear
+                boxXoa
         );
 
         // ========================= TÌM KIẾM =========================
@@ -132,15 +134,15 @@ public class KhoiPhucKhuyenMaiController extends ScrollPane{
         searchBox.getChildren().addAll(txtTiemKiemKhuyenMai, btnTimKiem);
 
         // ========================= TABLE =========================
-        tableKhuyenMai = new TableView();
+        tableKhuyenMai = new TableView<>();
         tableKhuyenMai.setPrefHeight(800);
 
-        colMaKhuyenMai = new TableColumn("Mã khuyến mãi");
-        colTenKhuyenMai = new TableColumn("Tên khuyến mãi");
-        colLoaiKhuyenMai = new TableColumn("Loại");
-        colSo = new TableColumn("Số (Giá trị)");
-        colSoLuongToiDa = new TableColumn("Số lượng tối đa");
-        colTinhTrang = new TableColumn("Trạng thái");
+        colMaKhuyenMai = new TableColumn<>("Mã khuyến mãi");
+        colTenKhuyenMai = new TableColumn<>("Tên khuyến mãi");
+        colLoaiKhuyenMai = new TableColumn<>("Loại");
+        colSo = new TableColumn<>("Số (Giá trị)");
+        colSoLuongToiDa = new TableColumn<>("Số lượng tối đa");
+        colTinhTrang = new TableColumn<>("Trạng thái");
 
         tableKhuyenMai.getColumns().addAll(
                 colMaKhuyenMai, colTenKhuyenMai, colLoaiKhuyenMai,
@@ -156,7 +158,7 @@ public class KhoiPhucKhuyenMaiController extends ScrollPane{
         this.setContent(root);
         /** Sự kiện **/
         try {
-            Connection con = ConnectDB.getInstance().connect();
+            ConnectDB.getInstance().connect();
         }catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -200,18 +202,14 @@ public class KhoiPhucKhuyenMaiController extends ScrollPane{
         });
 
         // cau hinh table
-        colMaKhuyenMai.setCellValueFactory(new PropertyValueFactory<>("MaKM"));
-        colTenKhuyenMai.setCellValueFactory(new PropertyValueFactory<>("TenKM"));
+        colMaKhuyenMai.setCellValueFactory(c -> new SimpleStringProperty(safeText(c.getValue().getMaKM())));
+        colTenKhuyenMai.setCellValueFactory(c -> new SimpleStringProperty(safeText(c.getValue().getTenKM())));
         colLoaiKhuyenMai.setCellValueFactory(celldata -> {
             KhuyenMaiDTO km = celldata.getValue();
-            if (km.getLoaiKhuyenMaiDTO() != null) {
-                return new SimpleStringProperty(km.getLoaiKhuyenMaiDTO().getTenLKM());
-            } else {
-                return new SimpleStringProperty("Không xác định");
-            }
+            return new SimpleStringProperty(safeTenLoai(km).isEmpty() ? "Không xác định" : safeTenLoai(km));
         });
-        colSo.setCellValueFactory(new PropertyValueFactory<>("so"));
-        colSoLuongToiDa.setCellValueFactory(new PropertyValueFactory<>("soLuongToiDa"));
+        colSo.setCellValueFactory(c -> new SimpleStringProperty(String.valueOf(c.getValue().getSo())));
+        colSoLuongToiDa.setCellValueFactory(c -> new SimpleStringProperty(String.valueOf(c.getValue().getSoLuongToiDa())));
         colTinhTrang.setCellValueFactory(cellData -> {
             KhuyenMaiDTO km = cellData.getValue();
             if (LocalDate.now().isBefore(km.getNgayBatDau())) {
@@ -285,8 +283,8 @@ public class KhoiPhucKhuyenMaiController extends ScrollPane{
         for (KhuyenMaiDTO km : arrayKhuyenMai) {
             boolean matchesLoai =
                     loaiKhuyenMai.equals("Tất cả") ||
-                            (loaiKhuyenMai.equals("Giảm theo phần trăm") && km.getLoaiKhuyenMaiDTO().getTenLKM().equals("Giảm theo phần trăm")) ||
-                            (loaiKhuyenMai.equals("Giảm theo số tiền") && km.getLoaiKhuyenMaiDTO().getTenLKM().equals("Giảm theo số tiền"));
+                            (loaiKhuyenMai.equals("Giảm theo phần trăm") && safeTenLoai(km).equals("Giảm theo phần trăm")) ||
+                            (loaiKhuyenMai.equals("Giảm theo số tiền") && safeTenLoai(km).equals("Giảm theo số tiền"));
 
             LocalDate today = LocalDate.now();
             boolean matchesTrangThai =
@@ -314,8 +312,7 @@ public class KhoiPhucKhuyenMaiController extends ScrollPane{
             }
         }
 
-        khuyenMaiList.clear();
-        khuyenMaiList.addAll(filteredList);
+        khuyenMaiList.setAll(filteredList);
         tableKhuyenMai.setItems(khuyenMaiList);
     }
 
@@ -335,4 +332,8 @@ public class KhoiPhucKhuyenMaiController extends ScrollPane{
         khuyenMaiList.addAll(arrayKhuyenMai);
         tableKhuyenMai.setItems(khuyenMaiList);
     }
-}
+
+    private String safeText(String value) { return value == null ? "" : value; }
+
+    private String safeTenLoai(KhuyenMaiDTO km) { return km.getLoaiKhuyenMaiDTO() == null || km.getLoaiKhuyenMaiDTO().getTenLKM() == null ? "" : km.getLoaiKhuyenMaiDTO().getTenLKM(); }
+ }

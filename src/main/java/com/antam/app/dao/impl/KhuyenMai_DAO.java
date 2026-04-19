@@ -14,74 +14,12 @@ public class KhuyenMai_DAO implements I_KhuyenMai_DAO {
 
     @Override
     public ArrayList<KhuyenMai> getAllKhuyenMaiChuaXoa() {
-        ArrayList<KhuyenMai> list = new ArrayList<>();
-        String sql = "SELECT km.MaKM, km.TenKM, km.NgayBatDau, km.NgayKetThuc, km.LoaiKhuyenMai, km.So, km.SoLuongToiDa, km.deleteAt, lkm.TenLKM " +
-                "FROM KhuyenMai km JOIN LoaiKhuyenMai lkm ON km.LoaiKhuyenMai = lkm.MaLKM " +
-                "WHERE km.deleteAt = 0";
-        try  {
-            Connection con = ConnectDB.getConnection();
-            if (con == null || con.isClosed()) {
-                ConnectDB.getInstance().connect();
-                con = ConnectDB.getConnection();
-            }
-            Statement st = con.createStatement();
-            ResultSet rs = st.executeQuery(sql);
-            while (rs.next()) {
-                String maKM = rs.getString("MaKM");
-                String tenKM = rs.getString("TenKM");
-                Date sqlNgayBatDau = rs.getDate("NgayBatDau");
-                LocalDate ngayBatDau = sqlNgayBatDau != null ? sqlNgayBatDau.toLocalDate() : LocalDate.now();
-                Date sqlNgayKetThuc = rs.getDate("NgayKetThuc");
-                LocalDate ngayKetThuc = sqlNgayKetThuc != null ? sqlNgayKetThuc.toLocalDate() : LocalDate.now();
-                int maLoaiKM = rs.getInt("LoaiKhuyenMai");
-                String tenLoaiKM = rs.getString("TenLKM");
-                double so = rs.getDouble("So");
-                int soLuongToiDa = rs.getInt("SoLuongToiDa");
-                boolean deleteAt = rs.getBoolean("deleteAt");
-                LoaiKhuyenMai loai = new LoaiKhuyenMai(maLoaiKM, tenLoaiKM);
-                KhuyenMai km = new KhuyenMai(maKM, tenKM, ngayBatDau, ngayKetThuc, loai, so, soLuongToiDa, deleteAt);
-                list.add(km);
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return list;
+        return loadKhuyenMai("WHERE km.deleteAt = 0");
     }
 
     @Override
     public ArrayList<KhuyenMai> getAllKhuyenMaiDaXoa() {
-        ArrayList<KhuyenMai> list = new ArrayList<>();
-        String sql = "SELECT km.MaKM, km.TenKM, km.NgayBatDau, km.NgayKetThuc, km.LoaiKhuyenMai, km.So, km.SoLuongToiDa, km.deleteAt, lkm.TenLKM " +
-                "FROM KhuyenMai km JOIN LoaiKhuyenMai lkm ON km.LoaiKhuyenMai = lkm.MaLKM " +
-                "WHERE km.deleteAt = 1";
-        try  {
-            Connection con = ConnectDB.getConnection();
-            if (con == null || con.isClosed()) {
-                ConnectDB.getInstance().connect();
-                con = ConnectDB.getConnection();
-            }
-            Statement st = con.createStatement();
-            ResultSet rs = st.executeQuery(sql);
-            while (rs.next()) {
-                String maKM = rs.getString("MaKM");
-                String tenKM = rs.getString("TenKM");
-                Date sqlNgayBatDau = rs.getDate("NgayBatDau");
-                LocalDate ngayBatDau = sqlNgayBatDau != null ? sqlNgayBatDau.toLocalDate() : LocalDate.now();
-                Date sqlNgayKetThuc = rs.getDate("NgayKetThuc");
-                LocalDate ngayKetThuc = sqlNgayKetThuc != null ? sqlNgayKetThuc.toLocalDate() : LocalDate.now();
-                int maLoaiKM = rs.getInt("LoaiKhuyenMai");
-                String tenLoaiKM = rs.getString("TenLKM");
-                double so = rs.getDouble("So");
-                int soLuongToiDa = rs.getInt("SoLuongToiDa");
-                boolean deleteAt = rs.getBoolean("deleteAt");
-                LoaiKhuyenMai loai = new LoaiKhuyenMai(maLoaiKM, tenLoaiKM);
-                KhuyenMai km = new KhuyenMai(maKM, tenKM, ngayBatDau, ngayKetThuc, loai, so, soLuongToiDa, deleteAt);
-                list.add(km);
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return list;
+        return loadKhuyenMai("WHERE km.deleteAt = 1");
     }
 
     @Override
@@ -100,45 +38,13 @@ public class KhuyenMai_DAO implements I_KhuyenMai_DAO {
 
     @Override
     public ArrayList<KhuyenMai> getAllKhuyenMai() {
-        ArrayList<KhuyenMai> list = new ArrayList<>();
-        String sql = "SELECT km.MaKM, km.TenKM, km.NgayBatDau, km.NgayKetThuc, km.LoaiKhuyenMai, km.So, km.SoLuongToiDa, km.deleteAt, lkm.TenLKM " +
-                "FROM KhuyenMai km JOIN LoaiKhuyenMai lkm ON km.LoaiKhuyenMai = lkm.MaLKM ";
-        try  {
-            Connection con = ConnectDB.getConnection();
-            if (con == null || con.isClosed()) {
-                ConnectDB.getInstance().connect();
-                con = ConnectDB.getConnection();
-            }
-            Statement st = con.createStatement();
-            ResultSet rs = st.executeQuery(sql);
-            while (rs.next()) {
-                String maKM = rs.getString("MaKM");
-                String tenKM = rs.getString("TenKM");
-                Date sqlNgayBatDau = rs.getDate("NgayBatDau");
-                LocalDate ngayBatDau = sqlNgayBatDau != null ? sqlNgayBatDau.toLocalDate() : LocalDate.now();
-                Date sqlNgayKetThuc = rs.getDate("NgayKetThuc");
-                LocalDate ngayKetThuc = sqlNgayKetThuc != null ? sqlNgayKetThuc.toLocalDate() : LocalDate.now();
-                int maLoaiKM = rs.getInt("LoaiKhuyenMai");
-                String tenLoaiKM = rs.getString("TenLKM");
-                double so = rs.getDouble("So");
-                int soLuongToiDa = rs.getInt("SoLuongToiDa");
-                boolean deleteAt = rs.getBoolean("deleteAt");
-                LoaiKhuyenMai loai = new LoaiKhuyenMai(maLoaiKM, tenLoaiKM);
-                KhuyenMai km = new KhuyenMai(maKM, tenKM, ngayBatDau, ngayKetThuc, loai, so, soLuongToiDa, deleteAt);
-                list.add(km);
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return list;
+        return loadKhuyenMai("");
     }
 
     @Override
     public KhuyenMai getKhuyenMaiTheoMa(String maKM) {
         KhuyenMai km = null;
-        String sql = "SELECT km.MaKM, km.TenKM, km.NgayBatDau, km.NgayKetThuc, km.LoaiKhuyenMai, km.So, km.SoLuongToiDa, km.deleteAt, lkm.TenLKM " +
-                "FROM KhuyenMai km JOIN LoaiKhuyenMai lkm ON km.LoaiKhuyenMai = lkm.MaLKM " +
-                "WHERE km.MaKM = ? AND km.deleteAt = 0";
+        String sql = baseSelectSql() + " WHERE km.MaKM = ? AND km.deleteAt = 0";
         try {
             Connection con = ConnectDB.getConnection();
             if (con == null || con.isClosed()) {
@@ -149,18 +55,7 @@ public class KhuyenMai_DAO implements I_KhuyenMai_DAO {
             ps.setString(1, maKM);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
-                    String tenKM = rs.getString("TenKM");
-                    Date sqlNgayBatDau = rs.getDate("NgayBatDau");
-                    LocalDate ngayBatDau = sqlNgayBatDau != null ? sqlNgayBatDau.toLocalDate() : LocalDate.now();
-                    Date sqlNgayKetThuc = rs.getDate("NgayKetThuc");
-                    LocalDate ngayKetThuc = sqlNgayKetThuc != null ? sqlNgayKetThuc.toLocalDate() : LocalDate.now();
-                    int maLoaiKM = rs.getInt("LoaiKhuyenMai");
-                    String tenLoaiKM = rs.getString("TenLKM");
-                    double so = rs.getDouble("So");
-                    int soLuongToiDa = rs.getInt("SoLuongToiDa");
-                    boolean deleteAt = rs.getBoolean("deleteAt");
-                    LoaiKhuyenMai loai = new LoaiKhuyenMai(maLoaiKM, tenLoaiKM);
-                    km = new KhuyenMai(maKM, tenKM, ngayBatDau, ngayKetThuc, loai, so, soLuongToiDa, deleteAt);
+                    km = mapResultSetToEntity(rs);
                 }
             }
         } catch (SQLException e) {
@@ -233,5 +128,47 @@ public class KhuyenMai_DAO implements I_KhuyenMai_DAO {
             e.printStackTrace();
             return false;
         }
+    }
+
+    private ArrayList<KhuyenMai> loadKhuyenMai(String whereClause) {
+        ArrayList<KhuyenMai> list = new ArrayList<>();
+        String sql = baseSelectSql() + (whereClause.isBlank() ? "" : " " + whereClause);
+        try  {
+            Connection con = ConnectDB.getConnection();
+            if (con == null || con.isClosed()) {
+                ConnectDB.getInstance().connect();
+                con = ConnectDB.getConnection();
+            }
+            Statement st = con.createStatement();
+            ResultSet rs = st.executeQuery(sql);
+            while (rs.next()) {
+                list.add(mapResultSetToEntity(rs));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
+    private String baseSelectSql() {
+        return "SELECT km.MaKM, km.TenKM, km.NgayBatDau, km.NgayKetThuc, km.LoaiKhuyenMai, km.So, km.SoLuongToiDa, km.deleteAt, " +
+                "COALESCE(lkm.TenLKM, '') AS TenLKM " +
+                "FROM KhuyenMai km LEFT JOIN LoaiKhuyenMai lkm ON km.LoaiKhuyenMai = lkm.MaLKM";
+    }
+
+    private KhuyenMai mapResultSetToEntity(ResultSet rs) throws SQLException {
+        String maKM = rs.getString("MaKM");
+        String tenKM = rs.getString("TenKM");
+        Date sqlNgayBatDau = rs.getDate("NgayBatDau");
+        LocalDate ngayBatDau = sqlNgayBatDau != null ? sqlNgayBatDau.toLocalDate() : LocalDate.now();
+        Date sqlNgayKetThuc = rs.getDate("NgayKetThuc");
+        LocalDate ngayKetThuc = sqlNgayKetThuc != null ? sqlNgayKetThuc.toLocalDate() : LocalDate.now();
+        int maLoaiKM = rs.getInt("LoaiKhuyenMai");
+        String tenLoaiKM = rs.getString("TenLKM");
+        double so = rs.getDouble("So");
+        int soLuongToiDa = rs.getInt("SoLuongToiDa");
+        boolean deleteAt = rs.getBoolean("deleteAt");
+        LoaiKhuyenMai loai = new LoaiKhuyenMai(maLoaiKM, tenLoaiKM == null ? "" : tenLoaiKM);
+        return new KhuyenMai(maKM, tenKM, ngayBatDau, ngayKetThuc, loai, so, soLuongToiDa, deleteAt);
     }
 }

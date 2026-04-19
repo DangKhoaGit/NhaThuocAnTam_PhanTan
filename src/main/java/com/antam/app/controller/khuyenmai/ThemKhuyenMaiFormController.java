@@ -159,9 +159,9 @@ public class ThemKhuyenMaiFormController extends DialogPane{
         Button applyBtn = (Button) this.lookupButton(applyButton);
 
         try {
-            Connection con = ConnectDB.getInstance().getConnection();
-        }catch (Exception e){
-            e.printStackTrace();
+            ConnectDB.getInstance().getConnection();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
 
         applyBtn.addEventFilter(ActionEvent.ACTION, e -> {

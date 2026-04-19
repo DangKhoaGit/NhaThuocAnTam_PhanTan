@@ -33,4 +33,16 @@ public class LoaiKhuyenMaiDTO {
         MaLKM = maLoaiKM;
         TenLKM = tenLoaiKM;
     }
+
+    public String getDisplayText() {
+        if (MaLKM <= 0) {
+            return TenLKM == null ? "" : TenLKM;
+        }
+        return MaLKM + " - " + (TenLKM == null ? "" : TenLKM);
+    }
+
+    @Override
+    public String toString() {
+        return getDisplayText();
+    }
 }

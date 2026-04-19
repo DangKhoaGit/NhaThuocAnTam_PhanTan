@@ -1,6 +1,9 @@
 package com.antam.app.controller.thuoc;
 
-import com.antam.app.connect.ConnectDB;
+import com.antam.app.service.I_DangDieuChe_Service;
+import com.antam.app.service.I_Ke_Service;
+import com.antam.app.service.I_LoThuoc_Service;
+import com.antam.app.service.I_Thuoc_Service;
 import com.antam.app.service.impl.LoThuoc_Service;
 import com.antam.app.service.impl.DangDieuChe_Service;
 import com.antam.app.service.impl.Ke_Service;
@@ -13,10 +16,9 @@ import javafx.collections.ObservableList;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 
-import java.sql.Connection;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Locale;
 import javafx.geometry.Insets;
 import javafx.scene.effect.DropShadow;
 import javafx.scene.layout.*;
@@ -27,10 +29,10 @@ import javafx.stage.Modality;
 
 public class TimThuocController extends ScrollPane{
 
-    private Ke_Service ke_dao;
-    private DangDieuChe_Service ddc_dao;
-    private Thuoc_Service thuoc_dao;
-    private LoThuoc_Service chiTietThuoc_dao;
+    private final I_Ke_Service keService;
+    private final I_DangDieuChe_Service dangDieuCheService;
+    private final I_Thuoc_Service thuocService;
+    private final I_LoThuoc_Service loThuocService;
     private HashMap<String, Integer> mapTonKho = new HashMap<>();
 
      private ComboBox<KeDTO> cbKe;
@@ -47,6 +49,11 @@ public class TimThuocController extends ScrollPane{
     private ArrayList<ThuocDTO> arrayThuoc = new ArrayList<>();
 
     public TimThuocController (){
+        this.keService = new Ke_Service();
+        this.dangDieuCheService = new DangDieuChe_Service();
+        this.thuocService = new Thuoc_Service();
+        this.loThuocService = new LoThuoc_Service();
+
         /** Giao diện **/
         this.setFitToHeight(true);
         this.setFitToWidth(true);
@@ -127,6 +134,8 @@ public class TimThuocController extends ScrollPane{
 
         filterPane.getChildren().addAll(boxKe, boxDang, boxTonKho, boxXoa);
 
+        configureComboBoxDisplay();
+
         // ===================== Ô TÌM KIẾM =====================
         HBox searchBox = new HBox(10);
         searchBox.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
@@ -182,22 +191,20 @@ public class TimThuocController extends ScrollPane{
         // Load tồn kho
         loadTonKho();
 
-        // Kết nối DB
-        try { Connection con = ConnectDB.getInstance().connect(); }
-        catch (SQLException e) { throw new RuntimeException(e); }
-
         // Cấu hình Table
-        colMaThuoc.setCellValueFactory(new PropertyValueFactory<>("maThuoc"));
-        colTenThuoc.setCellValueFactory(new PropertyValueFactory<>("tenThuoc"));
-        colHamLuong.setCellValueFactory(new PropertyValueFactory<>("hamLuong"));
-        colGiaBan.setCellValueFactory(new PropertyValueFactory<>("giaBan"));
+        colMaThuoc.setCellValueFactory(data -> new SimpleStringProperty(safeText(data.getValue().getMaThuoc())));
+        colTenThuoc.setCellValueFactory(data -> new SimpleStringProperty(safeText(data.getValue().getTenThuoc())));
+        colHamLuong.setCellValueFactory(data -> new SimpleStringProperty(safeText(data.getValue().getHamLuong())));
+        colGiaBan.setCellValueFactory(data -> new SimpleStringProperty(String.valueOf(data.getValue().getGiaBan())));
         colTonKho.setCellValueFactory(data -> {
             int tonKho = TinhTonKho(data.getValue());
             return new SimpleStringProperty(String.valueOf(tonKho));
         });
 
-        colDangDieuChe.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getDangDieuCheDTO().getTenDDC()));
-        colKe.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getMaKeDTO().getTenKe()));
+        colDangDieuChe.setCellValueFactory(data -> new SimpleStringProperty(
+                data.getValue().getDangDieuCheDTO() == null ? "" : safeText(data.getValue().getDangDieuCheDTO().getTenDDC())));
+        colKe.setCellValueFactory(data -> new SimpleStringProperty(
+                data.getValue().getMaKeDTO() == null ? "" : safeText(data.getValue().getMaKeDTO().getTenKe())));
 
         // Load comboBox
         addComBoBoxKe();
@@ -205,8 +212,7 @@ public class TimThuocController extends ScrollPane{
         addComboboxTonKho();
 
         // Load dữ liệu
-        thuoc_dao = new Thuoc_Service();
-        arrayThuoc = thuoc_dao.getAllThuoc();
+        arrayThuoc = thuocService.getAllThuoc();
         thuocList.addAll(arrayThuoc);
         tableThuoc.setItems(thuocList);
 
@@ -256,8 +262,7 @@ public class TimThuocController extends ScrollPane{
 
     // them value vao combobox ke
     public void addComBoBoxKe() {
-        ke_dao = new Ke_Service();
-        ArrayList<KeDTO> arrayKe = ke_dao.getTatCaKeHoatDong();
+        ArrayList<KeDTO> arrayKe = keService.getTatCaKeHoatDong();
         cbKe.getItems().clear();
         KeDTO tatCa = new KeDTO("KE0001", "Tất cả", "Tất cả", false);
         cbKe.getItems().add(tatCa);
@@ -269,8 +274,7 @@ public class TimThuocController extends ScrollPane{
 
     // them value vao combobox dang dieu che
     public void addComBoBoxDDC() {
-        ddc_dao = new DangDieuChe_Service();
-        ArrayList<DangDieuCheDTO> arrayDDC = ddc_dao.getDangDieuCheHoatDong();
+        ArrayList<DangDieuCheDTO> arrayDDC = dangDieuCheService.getDangDieuCheHoatDong();
         cbDangDieuChe.getItems().clear();
         DangDieuCheDTO Tatca = new DangDieuCheDTO(-1, "Tất cả");
         cbDangDieuChe.getItems().add(Tatca);
@@ -291,23 +295,23 @@ public class TimThuocController extends ScrollPane{
     public void updateTableThuoc(){
         thuocList.clear();
         tableThuoc.refresh();
-        thuoc_dao = new Thuoc_Service();
-        arrayThuoc = thuoc_dao.getAllThuoc();
+        arrayThuoc = thuocService.getAllThuoc();
         thuocList.addAll(arrayThuoc);
         tableThuoc.setItems(thuocList);
     }
 
     // ham loc va tim kiem thuoc
     public void filterAndSearchThuoc() {
-        String selectedKe = cbKe.getValue().getTenKe();
-        String selectedDDC = cbDangDieuChe.getValue().getTenDDC();
-        String selectedTonKho =  cbTonKho.getValue();
-        String searchText = searchNameThuoc.getText().trim().toLowerCase();
+        String selectedKe = cbKe.getValue() == null ? "Tất cả" : cbKe.getValue().getTenKe();
+        String selectedDDC = cbDangDieuChe.getValue() == null ? "Tất cả" : cbDangDieuChe.getValue().getTenDDC();
+        String selectedTonKho = cbTonKho.getValue() == null ? "Tất cả" : cbTonKho.getValue();
+        String searchText = searchNameThuoc.getText().trim().toLowerCase(Locale.ROOT);
 
         ArrayList<ThuocDTO> filteredList = new ArrayList<>();
 
         for (ThuocDTO p : arrayThuoc) { // luôn thao tác trên danh sách gốc
             boolean match = true;
+            int tonKho = TinhTonKho(p);
 
             // Filter Ke
             if (!selectedKe.equals("Tất cả") && !p.getMaKeDTO().getTenKe().equals(selectedKe)) match = false;
@@ -317,14 +321,14 @@ public class TimThuocController extends ScrollPane{
 
             // Filter TonKho
             if (!selectedTonKho.equals("Tất cả")) {
-                if (selectedTonKho.equals("Tồn kho thấp (< 50)") && TinhTonKho(p) >= 50) match = false;
-                else if (selectedTonKho.equals("Bình thường (50-200)") && TinhTonKho(p) < 50 || TinhTonKho(p) > 200) match = false;
-                else if (selectedTonKho.equals("Dồi dào (> 200)") && TinhTonKho(p) <= 200) match = false;
+                if (selectedTonKho.equals("Tồn kho thấp (< 50)") && tonKho >= 50) match = false;
+                else if (selectedTonKho.equals("Bình thường (50-200)") && (tonKho < 50 || tonKho > 200)) match = false;
+                else if (selectedTonKho.equals("Dồi dào (> 200)") && tonKho <= 200) match = false;
             }
 
 
             // Search theo tên
-            if (!searchText.isEmpty() && !p.getTenThuoc().toLowerCase().contains(searchText)) match = false;
+            if (!searchText.isEmpty() && !p.getTenThuoc().toLowerCase(Locale.ROOT).contains(searchText)) match = false;
 
             if (match) filteredList.add(p);
         }
@@ -335,13 +339,7 @@ public class TimThuocController extends ScrollPane{
 
     // ham load ton kho
     public void loadTonKho() {
-        try {
-            Connection con = ConnectDB.getInstance().connect();
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
-        chiTietThuoc_dao = new LoThuoc_Service();
-        ArrayList<LoThuocDTO> list = chiTietThuoc_dao.getAllChiTietThuoc();
+        ArrayList<LoThuocDTO> list = loThuocService.getAllChiTietThuoc();
         mapTonKho.clear();
 
         for (LoThuocDTO ct : list) {
@@ -362,6 +360,50 @@ public class TimThuocController extends ScrollPane{
     // ham tinh ton kho
     public int TinhTonKho(ThuocDTO thuocDTO) {
         return mapTonKho.getOrDefault(thuocDTO.getMaThuoc(), 0);
+    }
+
+    private void configureComboBoxDisplay() {
+        cbKe.setCellFactory(lv -> new ListCell<>() {
+            @Override
+            protected void updateItem(KeDTO item, boolean empty) {
+                super.updateItem(item, empty);
+                setText(empty || item == null ? null : formatKe(item));
+            }
+        });
+        cbKe.setButtonCell(new ListCell<>() {
+            @Override
+            protected void updateItem(KeDTO item, boolean empty) {
+                super.updateItem(item, empty);
+                setText(empty || item == null ? null : formatKe(item));
+            }
+        });
+
+        cbDangDieuChe.setCellFactory(lv -> new ListCell<>() {
+            @Override
+            protected void updateItem(DangDieuCheDTO item, boolean empty) {
+                super.updateItem(item, empty);
+                setText(empty || item == null ? null : formatDDC(item));
+            }
+        });
+        cbDangDieuChe.setButtonCell(new ListCell<>() {
+            @Override
+            protected void updateItem(DangDieuCheDTO item, boolean empty) {
+                super.updateItem(item, empty);
+                setText(empty || item == null ? null : formatDDC(item));
+            }
+        });
+    }
+
+    private String formatKe(KeDTO keDTO) {
+        return keDTO.getMaKe() + " - " + keDTO.getTenKe();
+    }
+
+    private String formatDDC(DangDieuCheDTO ddc) {
+        return ddc == null ? "" : ddc.getDisplayText();
+    }
+
+    private String safeText(String value) {
+        return value == null ? "" : value;
     }
 
 

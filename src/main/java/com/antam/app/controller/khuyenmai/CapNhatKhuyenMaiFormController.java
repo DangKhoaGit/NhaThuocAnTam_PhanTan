@@ -192,9 +192,9 @@ public class CapNhatKhuyenMaiFormController extends DialogPane{
         this.getButtonTypes().addAll(applyButtonUpdate, applyButtonDelete, closeButton);
 
         try {
-            Connection con = ConnectDB.getInstance().getConnection();
-        }catch (Exception e){
-            e.printStackTrace();
+            ConnectDB.getInstance().getConnection();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
         // su kien button
         Button applyBtnUpdate = (Button) this.lookupButton(applyButtonUpdate);

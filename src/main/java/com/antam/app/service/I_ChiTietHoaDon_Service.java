@@ -75,6 +75,32 @@ public interface I_ChiTietHoaDon_Service {
     boolean updateChiTietHoaDon(ChiTietHoaDonDTO cthd);
 
     /**
+     * Kiểm tra chi tiết hóa đơn đã tồn tại theo khóa chính kép (MaHD, MaLoThuoc)
+     * @param maHD mã hóa đơn
+     * @param maLoThuoc mã lô thuốc
+     * @return true nếu đã tồn tại, false nếu chưa
+     */
+    boolean tonTaiChiTietHoaDon(String maHD, int maLoThuoc);
+
+    /**
+     * Kiểm tra chi tiết hóa đơn đã tồn tại theo khóa chính kép (MaHD, MaLoThuoc, TinhTrang)
+     * @param maHD mã hóa đơn
+     * @param maLoThuoc mã lô thuốc
+     * @param tinhTrang trạng thái chi tiết hóa đơn
+     * @return true nếu đã tồn tại, false nếu chưa
+     */
+    boolean tonTaiChiTietHoaDonTheoTinhTrang(String maHD, int maLoThuoc, String tinhTrang);
+
+    /**
+     * Thêm hoặc cập nhật chi tiết hóa đơn (upsert theo khóa MaHD + MaLoThuoc + TinhTrang)
+     * - Nếu chưa tồn tại: INSERT
+     * - Nếu đã tồn tại: UPDATE (cập nhật SoLuong, MaDVT, ThanhTien)
+     * @param cthd chi tiết hóa đơn DTO
+     * @return true nếu thành công (insert hoặc update), false nếu thất bại
+     */
+    boolean themHoacCapNhatChiTietHoaDon(ChiTietHoaDonDTO cthd);
+
+    /**
      * Xóa tất cả chi tiết hóa đơn theo mã hóa đơn
      * @param maHD mã hóa đơn
      * @return true nếu xóa thành công, false nếu thất bại

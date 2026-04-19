@@ -1,12 +1,8 @@
 package com.antam.app.service;
 
-import com.antam.app.connect.ConnectDB;
+import com.antam.app.dao.I_DonViTinh_DAO;
 import com.antam.app.dto.DonViTinhDTO;
 
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.ArrayList;
 
 /*
@@ -17,23 +13,7 @@ import java.util.ArrayList;
  */
 public interface I_DonViTinh_Service {
     static String getHashDVT() {
-        String sql = "select top 1 MaDVT from DonViTinh order by MaDVT desc";
-        try {
-            ConnectDB.getInstance().connect();
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
-        Connection con = ConnectDB.getConnection();
-        try {
-            Statement statement = con.createStatement();
-            ResultSet rs = statement.executeQuery(sql);
-            if (rs.next()) {
-                return rs.getString("MaDVT");
-            }
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
-        return "";
+        return I_DonViTinh_DAO.getHashDVT();
     }
 
     DonViTinhDTO getDVTTheoMaDVT(int ma);

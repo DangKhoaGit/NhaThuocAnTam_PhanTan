@@ -13,20 +13,19 @@ import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcons;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.scene.control.*;
-import javafx.scene.control.cell.PropertyValueFactory;
-
-import java.sql.Connection;
-import java.time.LocalDate;
-import java.util.ArrayList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.control.*;
 import javafx.scene.effect.DropShadow;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.stage.Modality;
+
+import java.sql.Connection;
+import java.time.LocalDate;
+import java.util.ArrayList;
 
 public class ThemKhuyenMaiController extends ScrollPane{
     
@@ -115,8 +114,9 @@ public class ThemKhuyenMaiController extends ScrollPane{
         ref.setFill(Color.WHITE);
         btnclear.setGraphic(ref);
 
-        VBox boxXoa = new VBox(5);
-        boxXoa.getChildren().addAll(new Text(""), btnclear);
+        VBox boxXoa = new VBox();
+        boxXoa.setAlignment(Pos.BOTTOM_CENTER);
+        boxXoa.getChildren().add(btnclear);
 
         flow.getChildren().addAll(boxLoai, boxTrangThai, boxTuNgay, boxDenNgay, boxXoa);
 
@@ -182,8 +182,8 @@ public class ThemKhuyenMaiController extends ScrollPane{
         });
 
         // cau hinh table
-        colMaKhuyenMai.setCellValueFactory(new PropertyValueFactory<>("MaKM"));
-        colTenKhuyenMai.setCellValueFactory(new PropertyValueFactory<>("TenKM"));
+        colMaKhuyenMai.setCellValueFactory(c -> new SimpleStringProperty(safeText(c.getValue().getMaKM())));
+        colTenKhuyenMai.setCellValueFactory(c -> new SimpleStringProperty(safeText(c.getValue().getTenKM())));
         colLoaiKhuyenMai.setCellValueFactory(celldata -> {
             KhuyenMaiDTO km = celldata.getValue();
             if (km.getLoaiKhuyenMaiDTO() != null) {
@@ -192,8 +192,8 @@ public class ThemKhuyenMaiController extends ScrollPane{
                 return new SimpleStringProperty("Không xác định");
             }
         });
-        colSo.setCellValueFactory(new PropertyValueFactory<>("so"));
-        colSoLuongToiDa.setCellValueFactory(new PropertyValueFactory<>("soLuongToiDa"));
+        colSo.setCellValueFactory(c -> new SimpleStringProperty(String.valueOf(c.getValue().getSo())));
+        colSoLuongToiDa.setCellValueFactory(c -> new SimpleStringProperty(String.valueOf(c.getValue().getSoLuongToiDa())));
         colTinhTrang.setCellValueFactory(cellData -> {
             KhuyenMaiDTO km = cellData.getValue();
             if (LocalDate.now().isBefore(km.getNgayBatDau())) {
@@ -265,8 +265,8 @@ public class ThemKhuyenMaiController extends ScrollPane{
         for (KhuyenMaiDTO km : arrayKhuyenMai) {
             boolean matchesLoai =
                     loaiKhuyenMai.equals("Tất cả") ||
-                            (loaiKhuyenMai.equals("Giảm theo phần trăm") && km.getLoaiKhuyenMaiDTO().getTenLKM().equals("Giảm theo phần trăm")) ||
-                            (loaiKhuyenMai.equals("Giảm theo số tiền") && km.getLoaiKhuyenMaiDTO().getTenLKM().equals("Giảm theo số tiền"));
+                            (loaiKhuyenMai.equals("Giảm theo phần trăm") && safeTenLoai(km).equals("Giảm theo phần trăm")) ||
+                            (loaiKhuyenMai.equals("Giảm theo số tiền") && safeTenLoai(km).equals("Giảm theo số tiền"));
 
             LocalDate today = LocalDate.now();
             boolean matchesTrangThai =
@@ -294,8 +294,7 @@ public class ThemKhuyenMaiController extends ScrollPane{
             }
         }
 
-        khuyenMaiList.clear();
-        khuyenMaiList.addAll(filteredList);
+        khuyenMaiList.setAll(filteredList);
         tableKhuyenMai.setItems(khuyenMaiList);
     }
 
@@ -315,4 +314,8 @@ public class ThemKhuyenMaiController extends ScrollPane{
         khuyenMaiList.addAll(arrayKhuyenMai);
         tableKhuyenMai.setItems(khuyenMaiList);
     }
-}
+
+    private String safeText(String value) { return value == null ? "" : value; }
+
+    private String safeTenLoai(KhuyenMaiDTO km) { return km.getLoaiKhuyenMaiDTO() == null || km.getLoaiKhuyenMaiDTO().getTenLKM() == null ? "" : km.getLoaiKhuyenMaiDTO().getTenLKM(); }
+ }

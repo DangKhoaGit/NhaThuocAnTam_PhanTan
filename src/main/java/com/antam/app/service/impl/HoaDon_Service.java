@@ -211,18 +211,23 @@ public class HoaDon_Service implements I_HoaDon_Service {
 
         NhanVienDTO nhanVienDTO = null;
         if (entity.getMaNV() != null) {
-            nhanVienDTO = new NhanVienDTO(entity.getMaNV().getMaNV());
+            String maNV = entity.getMaNV().getMaNV();
+            nhanVienDTO = new NhanVienDTO(maNV == null ? "" : maNV);
             nhanVienDTO.setHoTen(entity.getMaNV().getHoTen());
         }
 
         KhachHangDTO khachHangDTO = null;
         if (entity.getMaKH() != null) {
-            khachHangDTO = new KhachHangDTO(entity.getMaKH().getMaKH());
-            khachHangDTO.setTenKH(entity.getMaKH().getTenKH());
+            String maKH = entity.getMaKH().getMaKH();
+            khachHangDTO = new KhachHangDTO(maKH == null ? "" : maKH);
+            String tenKH = entity.getMaKH().getTenKH();
+            if (tenKH != null && !tenKH.trim().isEmpty()) {
+                khachHangDTO.setTenKH(tenKH);
+            }
         }
 
         KhuyenMaiDTO khuyenMaiDTO = null;
-        if (entity.getMaKM() != null) {
+        if (entity.getMaKM() != null && entity.getMaKM().getMaKM() != null) {
             khuyenMaiDTO = new KhuyenMaiDTO(entity.getMaKM().getMaKM());
             khuyenMaiDTO.setTenKM(entity.getMaKM().getTenKM());
         }
@@ -246,7 +251,7 @@ public class HoaDon_Service implements I_HoaDon_Service {
         if (dto == null) return null;
 
         NhanVien nhanVien = null;
-        if (dto.getMaNV() != null) {
+        if (dto.getMaNV() != null && dto.getMaNV().getMaNV() != null && !dto.getMaNV().getMaNV().trim().isEmpty()) {
             nhanVien = nhanVienDAO.findNhanVienVoiMa(dto.getMaNV().getMaNV());
             if (nhanVien == null) {
                 nhanVien = new NhanVien(dto.getMaNV().getMaNV());
@@ -254,7 +259,7 @@ public class HoaDon_Service implements I_HoaDon_Service {
         }
 
         KhachHang khachHang = null;
-        if (dto.getMaKH() != null) {
+        if (dto.getMaKH() != null && dto.getMaKH().getMaKH() != null && !dto.getMaKH().getMaKH().trim().isEmpty()) {
             khachHang = khachHangDAO.getKhachHangTheoMa(dto.getMaKH().getMaKH());
             if (khachHang == null) {
                 khachHang = new KhachHang(dto.getMaKH().getMaKH());
@@ -262,8 +267,11 @@ public class HoaDon_Service implements I_HoaDon_Service {
         }
 
         KhuyenMai khuyenMai = null;
-        if (dto.getMaKM() != null) {
+        if (dto.getMaKM() != null && dto.getMaKM().getMaKM() != null && !dto.getMaKM().getMaKM().trim().isEmpty()) {
             khuyenMai = khuyenMaiDAO.getKhuyenMaiTheoMa(dto.getMaKM().getMaKM());
+            if (khuyenMai == null) {
+                khuyenMai = new KhuyenMai(dto.getMaKM().getMaKM());
+            }
         }
 
         return HoaDon.builder()

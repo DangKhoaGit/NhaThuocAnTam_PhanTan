@@ -38,14 +38,16 @@ public class ChiTietHoaDon {
     @JoinColumn(name = "MaLoThuoc")
     private LoThuoc maLoThuoc;
 
+    @Id
+    @Column(name = "TinhTrang")
+    private String tinhTrang;
+
     private int soLuong;
 
     @ManyToOne
     @JoinColumn(name = "MaDVT")
     private DonViTinh maDVT;
 
-    @Column(name = "TinhTrang")
-    private String tinhTrang;
     @Column(name = "ThanhTien")
     private double thanhTien;
 
@@ -59,5 +61,6 @@ public class ChiTietHoaDon {
     public static class ChiTietHoaDonId implements Serializable {
         private String MaHD;
         private int maLoThuoc;
+        private String tinhTrang;
     }
 }

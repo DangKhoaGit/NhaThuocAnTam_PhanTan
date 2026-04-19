@@ -380,7 +380,7 @@ public class TraThuocFormController extends DialogPane{
         }
         LoThuocDTO ctt = loThuoc_service.getChiTietThuoc(chiTietHoaDonDTO.getMaLoThuocDTO().getMaLoThuoc());
         ThuocDTO t = thuoc_service.getThuocTheoMa(ctt.getMaThuocDTO().getMaThuoc());
-        Text txtMaThuoc = new Text(t.getTenThuoc());
+        Text txtMaThuoc = new Text(getDisplayTenThuoc(t, ctt));
         txtMaThuoc.setStyle("-fx-font-size: 15px;");
         Text txtSoLuong = new Text("SL " + chiTietHoaDonDTO.getSoLuong());
         txtSoLuong.setStyle("-fx-font-size: 15px;");
@@ -401,6 +401,16 @@ public class TraThuocFormController extends DialogPane{
 
         hBox.getChildren().addAll(checkBox, txtMaThuoc, txtSoLuong, txtDonGia, btn);
         return hBox;
+    }
+
+    private String getDisplayTenThuoc(ThuocDTO thuocDTO, LoThuocDTO loThuocDTO) {
+        if (thuocDTO != null && thuocDTO.getTenThuoc() != null) {
+            return thuocDTO.getTenThuoc();
+        }
+        if (loThuocDTO != null && loThuocDTO.getMaThuocDTO() != null && loThuocDTO.getMaThuocDTO().getTenThuoc() != null) {
+            return loThuocDTO.getMaThuocDTO().getTenThuoc();
+        }
+        return "";
     }
 
     public double TinhTienKhuyenMai(double tongTien, double giaSo){

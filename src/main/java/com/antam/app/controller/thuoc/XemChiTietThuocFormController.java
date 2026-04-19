@@ -1,6 +1,6 @@
 package com.antam.app.controller.thuoc;
 
-import com.antam.app.connect.ConnectDB;
+import com.antam.app.service.I_LoThuoc_Service;
 import com.antam.app.service.impl.LoThuoc_Service;
 import com.antam.app.dto.LoThuocDTO;
 import com.antam.app.dto.ThuocDTO;
@@ -11,7 +11,6 @@ import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.scene.control.*;
 import javafx.scene.control.ButtonBar.ButtonData;
-import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.VBox;
@@ -19,8 +18,6 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 
-import java.sql.Connection;
-import java.sql.SQLException;
 import java.util.ArrayList;
 
 public class XemChiTietThuocFormController extends DialogPane {
@@ -37,7 +34,7 @@ public class XemChiTietThuocFormController extends DialogPane {
     private ObservableList<LoThuocDTO> listChiTietThuoc = FXCollections.observableArrayList();
 
     private ThuocDTO thuocDTO;
-    private LoThuoc_Service chiTietThuoc_dao = new LoThuoc_Service();
+    private final I_LoThuoc_Service loThuocService = new LoThuoc_Service();
 
     public void setThuoc(ThuocDTO thuocDTO) {
         this.thuocDTO = thuocDTO;
@@ -52,7 +49,7 @@ public class XemChiTietThuocFormController extends DialogPane {
         txtMaThuoc_CTT.setText("Mã Thuốc: " + thuocDTO.getMaThuoc());
         txtTenThuoc_CTT.setText("Tên Thuốc: " + thuocDTO.getTenThuoc());
 
-        ArrayList<LoThuocDTO> list = chiTietThuoc_dao.getAllCHiTietThuocTheoMaThuoc(thuocDTO.getMaThuoc());
+        ArrayList<LoThuocDTO> list = loThuocService.getAllCHiTietThuocTheoMaThuoc(thuocDTO.getMaThuoc());
         listChiTietThuoc.clear();
         listChiTietThuoc.addAll(list);
         tableChiTietThuoc.setItems(listChiTietThuoc);
@@ -128,13 +125,6 @@ public class XemChiTietThuocFormController extends DialogPane {
         ButtonType cancelButton = new ButtonType("Huỷ", ButtonData.CANCEL_CLOSE);
         this.getButtonTypes().add(cancelButton);
 
-        /* ========== KẾT NỐI DB ========== */
-        try {
-            Connection con = ConnectDB.getInstance().connect();
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
-
         /* ========== BIND CỘT ========== */
 
         colSTT_CTT.setCellValueFactory(
@@ -142,11 +132,23 @@ public class XemChiTietThuocFormController extends DialogPane {
         );
 
         colMaPN_CTT.setCellValueFactory(
-                c -> new SimpleStringProperty(c.getValue().getMaCTPN().get(0).getMaPN().getMaPhieuNhap())
+                c -> new SimpleStringProperty(formatDanhSachMaPN(c.getValue()))
         );
 
-        colSoLuong_CTT.setCellValueFactory(new PropertyValueFactory<>("soLuong"));
-        colNSX_CTT.setCellValueFactory(new PropertyValueFactory<>("ngaySanXuat"));
-        colNHH_CTT.setCellValueFactory(new PropertyValueFactory<>("hanSuDung"));
+        colSoLuong_CTT.setCellValueFactory(c -> new SimpleStringProperty(String.valueOf(c.getValue().getSoLuong())));
+        colNSX_CTT.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().getNgaySanXuat() == null ? "" : c.getValue().getNgaySanXuat().toString()));
+        colNHH_CTT.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().getHanSuDung() == null ? "" : c.getValue().getHanSuDung().toString()));
+    }
+
+    private String formatDanhSachMaPN(LoThuocDTO loThuocDTO) {
+        if (loThuocDTO == null || loThuocDTO.getMaCTPN() == null || loThuocDTO.getMaCTPN().isEmpty()) {
+            return "";
+        }
+        return loThuocDTO.getMaCTPN().stream()
+                .map(ctpn -> ctpn == null || ctpn.getMaPN() == null ? null : ctpn.getMaPN().getMaPhieuNhap())
+                .filter(value -> value != null && !value.isBlank())
+                .distinct()
+                .reduce((a, b) -> a + ", " + b)
+                .orElse("");
     }
 }
