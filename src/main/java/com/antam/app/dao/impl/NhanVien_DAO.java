@@ -31,14 +31,13 @@ public class NhanVien_DAO extends AbstractGenericDao<NhanVien,String> implements
      */
     @Override
     public boolean themNhanVien(NhanVien nv) {
-        NhanVien  nhanVien = getNhanVien(nv.getMaNV());
-        if (nhanVien != null && nhanVien.isDeleteAt() == false) {
-            return false;
-        }else if(nhanVien != null && nhanVien.isDeleteAt()){
-            return khoiPhucNhanVien(nhanVien.getMaNV());
-        } else{
-          return super.create(nhanVien) != null;
+        NhanVien existing = getNhanVien(nv.getMaNV());
+        if (existing == null) {
+            return super.create(nv) != null;
         }
+        return existing.isDeleteAt()
+                ? khoiPhucNhanVien(existing.getMaNV())
+                : false;
     }
 
     /**
@@ -61,7 +60,14 @@ public class NhanVien_DAO extends AbstractGenericDao<NhanVien,String> implements
      */
     @Override
     public boolean xoaNhanVienTrongDBS(String manv) {
-        return super.delete(manv);
+        return doInTransaction(em -> {
+            String query = "update NhanVien nv " +
+                    "set nv.deleteAt = true " +
+                    "where nv.id = :id";
+            return em.createQuery(query)
+                    .setParameter("id", manv)
+                    .executeUpdate() > 0;
+        });
     }
 
     /**
@@ -71,13 +77,18 @@ public class NhanVien_DAO extends AbstractGenericDao<NhanVien,String> implements
      */
     @Override
     public String getMaxHashNhanVien() {
-        String query = "select nv " +
+        String query = "select nv.id " +
                 "from NhanVien nv  " +
                 "order by nv.id desc " +
                 "limit 1";
         return doInTransaction(em ->{
-            String t = em.createQuery(query).getSingleResult().toString();
-            return t.substring(2,7);
+            List<String> result = em.createQuery(query, String.class)
+                    .setMaxResults(1)
+                    .getResultList();
+            if (result.isEmpty()) return null;
+            String maNV = result.get(0);
+            int num = Integer.parseInt(maNV.substring(2));
+            return String.format("%s", num);
         });
     }
 
@@ -112,9 +123,13 @@ public class NhanVien_DAO extends AbstractGenericDao<NhanVien,String> implements
                 "from NhanVien nv " +
                 "where nv.taiKhoan = :tk ";
         return doInTransaction(e -> {
-            return e.createQuery(sql, NhanVien.class)
-                    .setParameter("tk", tk)
-                    .getSingleResult();
+            try {
+                return e.createQuery(sql, NhanVien.class)
+                        .setParameter("tk", tk)
+                        .getSingleResult();
+            } catch (jakarta.persistence.NoResultException ex) {
+                return null;
+            }
         });
     }
     // duong
@@ -125,9 +140,13 @@ public class NhanVien_DAO extends AbstractGenericDao<NhanVien,String> implements
                 "from NhanVien nv " +
                 "where nv.id = :id ";
         return doInTransaction(e -> {
-            return e.createQuery(sql, NhanVien.class)
-                    .setParameter("id", id)
-                    .getSingleResult();
+            try {
+                return e.createQuery(sql, NhanVien.class)
+                        .setParameter("id", id)
+                        .getSingleResult();
+            } catch (jakarta.persistence.NoResultException ex) {
+                return null;
+            }
         });
     }
 
@@ -148,9 +167,13 @@ public class NhanVien_DAO extends AbstractGenericDao<NhanVien,String> implements
                 "from NhanVien nv " +
                 "where nv.id = :id ";
         return doInTransaction(e -> {
-            return e.createQuery(sql, NhanVien.class)
-                    .setParameter("id", maVN)
-                    .getSingleResult();
+            try {
+                return e.createQuery(sql, NhanVien.class)
+                        .setParameter("id", maVN)
+                        .getSingleResult();
+            } catch (jakarta.persistence.NoResultException ex) {
+                return null;
+            }
         });
     }
 }

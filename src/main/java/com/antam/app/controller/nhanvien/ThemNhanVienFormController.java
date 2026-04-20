@@ -1,4 +1,3 @@
-
 package com.antam.app.controller.nhanvien;
 /*
  * @description
@@ -138,7 +137,7 @@ public class ThemNhanVienFormController extends DialogPane{
         this.getButtonTypes().add(applyButton);
 
         Button btnThem = (Button) this.lookupButton(applyButton);
-        Button btnHuy = (Button) this.lookupButton(applyButton);
+        Button btnHuy = (Button) this.lookupButton(cancelButton);
 
         // Gán ValueFactory mặc định nếu chưa có
         if (luong.getValueFactory() == null) {
@@ -251,7 +250,7 @@ public class ThemNhanVienFormController extends DialogPane{
      */
     public String getHashMaNV(){
         String hash = nhanVienService.getMaxHashNhanVien();
-        int maxHash = Integer.parseInt(hash);
+        int maxHash = hash != null ? Integer.parseInt(hash) : 0;
         DecimalFormat deFomat = new DecimalFormat("00000");
         return String.format("NV%s",deFomat.format(++maxHash));
     }
@@ -261,7 +260,7 @@ public class ThemNhanVienFormController extends DialogPane{
      * @param message(Tin nhắn cần thông báo)
      */
     private void showAlert(String message) {
-        Alert alert = new Alert(Alert.AlertType.WARNING);
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
         alert.setTitle("Thông báo");
         alert.setHeaderText(null);
         alert.setContentText(message);
