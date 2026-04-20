@@ -131,7 +131,7 @@ public class LoThuoc_Service implements I_LoThuoc_Service {
         return result;
     }
 
-    private LoThuocDTO mapEntityToDTO(LoThuoc entity) {
+    public LoThuocDTO mapEntityToDTO(LoThuoc entity) {
         if (entity == null) {
             return null;
         }
@@ -161,7 +161,7 @@ public class LoThuoc_Service implements I_LoThuoc_Service {
                 .build();
     }
 
-    private LoThuoc mapDTOToEntity(LoThuocDTO dto) {
+    public LoThuoc mapDTOToEntity(LoThuocDTO dto) {
         if (dto == null) {
             return null;
         }

@@ -8,6 +8,7 @@ package com.antam.app.controller.phieudat;
 import com.antam.app.service.I_ChiTietPhieuDat_Service;
 import com.antam.app.service.I_NhanVien_Service;
 import com.antam.app.service.I_PhieuDat_Service;
+import com.antam.app.service.impl.ChiTietPhieuDat_Service;
 import com.antam.app.service.impl.LoThuoc_Service;
 import com.antam.app.dto.ChiTietPhieuDatThuocDTO;
 import com.antam.app.dto.LoThuocDTO;
@@ -70,7 +71,10 @@ public class CapNhatPhieuDatController extends ScrollPane{
     public LoThuoc_Service ctThuoc_dao = new LoThuoc_Service();
     private NhanVien_Service nhanVien_service = new NhanVien_Service();
 
-    private ArrayList<PhieuDatThuocDTO> listPDT = I_PhieuDat_Service.getAllPhieuDatThuocFromDBS();
+    private I_PhieuDat_Service I_PhieuDat_Service = new com.antam.app.service.impl.PhieuDat_Service();
+    private I_ChiTietPhieuDat_Service I_ChiTietPhieuDat_Service = new ChiTietPhieuDat_Service();
+
+    private List<PhieuDatThuocDTO> listPDT = I_PhieuDat_Service.getAllPhieuDatThuocFromDBS();
     private List<NhanVienDTO> listNV = nhanVien_service.getAllNhanVien();
     private ObservableList<PhieuDatThuocDTO> origin;
     private ObservableList<PhieuDatThuocDTO> filter= FXCollections.observableArrayList();
@@ -319,21 +323,21 @@ public class CapNhatPhieuDatController extends ScrollPane{
 
             try {
                 // 1. Lấy chi tiết
-                ArrayList<ChiTietPhieuDatThuocDTO> chiTietList =
+                List<ChiTietPhieuDatThuocDTO> chiTietList =
                         I_ChiTietPhieuDat_Service.getChiTietTheoPhieu(selected.getMaPhieu());
 
                 // 2. Hoàn kho
                 for (ChiTietPhieuDatThuocDTO ct : chiTietList) {
                     LoThuocDTO ctt =
-                            ctThuoc_dao.getChiTietThuoc(ct.getMaThuoc().getSoLuong());
+                            ctThuoc_dao.getChiTietThuoc(ct.getMaThuoc().getMaLoThuoc());
 
                     int soMoi = ctt.getSoLuong() + ct.getSoLuong();
 
                     boolean ok =
-                            ctThuoc_dao.CapNhatSoLuongChiTietThuoc(ctt.getSoLuong(), soMoi);
+                            ctThuoc_dao.CapNhatSoLuongChiTietThuoc(ctt.getMaLoThuoc(), soMoi);
 
                     if (!ok) {
-                        showMess("Lỗi", "Hoàn kho thất bại cho lô " + ctt.getSoLuong());
+                        showMess("Lỗi", "Hoàn kho thất bại cho lô " + ctt.getMaLoThuoc());
                         return;
                     }
                 }

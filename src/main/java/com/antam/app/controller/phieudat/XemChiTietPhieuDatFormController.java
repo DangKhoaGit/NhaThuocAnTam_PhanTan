@@ -8,6 +8,7 @@ package com.antam.app.controller.phieudat;
 import com.antam.app.service.I_ChiTietPhieuDat_Service;
 import com.antam.app.dto.ChiTietPhieuDatThuocDTO;
 import com.antam.app.dto.PhieuDatThuocDTO;
+import com.antam.app.service.impl.ChiTietPhieuDat_Service;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
@@ -21,6 +22,7 @@ import javafx.scene.text.Text;
 
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.List;
 
 import static com.antam.app.controller.phieudat.TimPhieuDatController.selectedPhieuDatThuocDTO;
 
@@ -43,7 +45,8 @@ public class XemChiTietPhieuDatFormController extends DialogPane{
     private TableView<ChiTietPhieuDatThuocDTO> tbThuoc;
 
     private PhieuDatThuocDTO select = selectedPhieuDatThuocDTO;
-    private ArrayList<ChiTietPhieuDatThuocDTO> listChiTiet = I_ChiTietPhieuDat_Service.getChiTietTheoPhieu(select.getMaPhieu());
+    private I_ChiTietPhieuDat_Service I_ChiTietPhieuDat_Service = new ChiTietPhieuDat_Service();
+    private List<ChiTietPhieuDatThuocDTO> listChiTiet = I_ChiTietPhieuDat_Service.getChiTietTheoPhieu(select.getMaPhieu());
 
     public XemChiTietPhieuDatFormController() {
         this.setPrefSize(800, 662);

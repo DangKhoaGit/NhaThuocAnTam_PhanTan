@@ -9,12 +9,14 @@ import com.antam.app.connect.ConnectDB;
 import com.antam.app.service.I_ChiTietPhieuDat_Service;
 import com.antam.app.service.I_NhanVien_Service;
 import com.antam.app.service.I_PhieuDat_Service;
+import com.antam.app.service.impl.ChiTietPhieuDat_Service;
 import com.antam.app.service.impl.LoThuoc_Service;
 import com.antam.app.dto.ChiTietPhieuDatThuocDTO;
 import com.antam.app.dto.LoThuocDTO;
 import com.antam.app.dto.NhanVienDTO;
 import com.antam.app.dto.PhieuDatThuocDTO;
 import com.antam.app.service.impl.NhanVien_Service;
+import com.antam.app.service.impl.PhieuDat_Service;
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcon;
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcons;
 import javafx.beans.property.SimpleStringProperty;
@@ -66,7 +68,9 @@ public class KhoiPhucPhieuDatController extends ScrollPane{
 
     public static PhieuDatThuocDTO selectedPDT;
 
-    ArrayList<PhieuDatThuocDTO> listPDT = I_PhieuDat_Service.getAllPhieuDatThuocFromDBS();
+    private I_PhieuDat_Service I_PhieuDat_Service = new PhieuDat_Service();
+    private ChiTietPhieuDat_Service I_ChiTietPhieuDat_Service = new ChiTietPhieuDat_Service();
+    List<PhieuDatThuocDTO> listPDT = I_PhieuDat_Service.getAllPhieuDatThuocFromDBS();
     public LoThuoc_Service ctThuoc_dao = new LoThuoc_Service();
     private NhanVien_Service nhanVien_service = new NhanVien_Service();
     List<NhanVienDTO> listNV = nhanVien_service.getAllNhanVien();
@@ -228,17 +232,19 @@ public class KhoiPhucPhieuDatController extends ScrollPane{
                 Connection con = ConnectDB.getConnection();
                 con.setAutoCommit(false); // TRANSACTION
 
+                PhieuDat_Service phieuDatService = new PhieuDat_Service();
                 // 1. Khôi phục phiếu
                 boolean kqPhieu =
-                        I_PhieuDat_Service.khoiPhucPhieuDat(selected.getMaPhieu());
+                        phieuDatService.khoiPhucPhieuDat(selected.getMaPhieu());
 
                 if (!kqPhieu) {
                     throw new RuntimeException("Không thể khôi phục phiếu đặt");
                 }
 
+                ChiTietPhieuDat_Service chiTietPhieuDatService = new ChiTietPhieuDat_Service();
                 // 2. Lấy chi tiết phiếu
-                ArrayList<ChiTietPhieuDatThuocDTO> chiTietList =
-                        I_ChiTietPhieuDat_Service.getChiTietTheoPhieu(selected.getMaPhieu());
+                List<ChiTietPhieuDatThuocDTO> chiTietList =
+                        chiTietPhieuDatService.getChiTietTheoPhieu(selected.getMaPhieu());
 
                 // 3. Trừ kho lại & khôi phục chi tiết
                 for (ChiTietPhieuDatThuocDTO ct : chiTietList) {

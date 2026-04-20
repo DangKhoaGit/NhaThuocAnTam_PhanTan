@@ -67,12 +67,13 @@ public class ThemPhieuDatFormController extends DialogPane{
     private DecimalFormat decimalFormat = new DecimalFormat("#,### đ");
     private ArrayList<ChiTietPhieuDatThuocDTO> list = new ArrayList<>();
     private ObservableList<ChiTietPhieuDatThuocDTO> obsThuoc = FXCollections.observableArrayList();
-
+    private PhieuDat_Service phieuDatDAO = new PhieuDat_Service();
+    private ChiTietPhieuDat_Service chiTietPhieuDatService = new ChiTietPhieuDat_Service();
 
     private KhachHang_Service khachHangDAO = new KhachHang_Service();
     private ArrayList<KhachHangDTO> dsKhach = khachHangDAO.getAllKhachHang();
     private KhuyenMai_Service KhuyenMai_DAO = new KhuyenMai_Service();
-    private ArrayList<KhuyenMaiDTO> dsKhuyenMai = (ArrayList<KhuyenMaiDTO>) I_KhuyenMai_Service.getAllKhuyenMaiConHieuLuc();
+    private ArrayList<KhuyenMaiDTO> dsKhuyenMai;
     private LoThuoc_Service chiTietThuoc_dao = new LoThuoc_Service();
     private HoaDon_Service hoaDon_DAO = new HoaDon_Service();
     private ObservableList<KhachHangDTO> autoKhach = FXCollections.observableArrayList(dsKhach);
@@ -299,6 +300,9 @@ public class ThemPhieuDatFormController extends DialogPane{
             throw new RuntimeException(e);
         }
 
+        // load ds khuyến mãi
+        dsKhuyenMai = (ArrayList<KhuyenMaiDTO>) I_KhuyenMai_Service.getAllKhuyenMaiConHieuLuc();
+
         //setup phụ
         txtDonGia.setEditable(false);
         cbDonVi.setDisable(true);
@@ -308,8 +312,30 @@ public class ThemPhieuDatFormController extends DialogPane{
         dsThuoc = thuoc_dao.getAllThuoc();
         cbDonVi.getItems().addAll(FXCollections.observableArrayList(dsDonViTinh));
         cbDonVi.getSelectionModel().selectFirst();
+        cbDonVi.setConverter(new javafx.util.StringConverter<DonViTinhDTO>() {
+            @Override
+            public String toString(DonViTinhDTO dvt) {
+                return dvt == null ? "" : dvt.getTenDVT();
+            }
+
+            @Override
+            public DonViTinhDTO fromString(String string) {
+                return dsDonViTinh.stream().filter(d -> d.getTenDVT().equals(string)).findFirst().orElse(null);
+            }
+        });
         // load comboBox thuốc
         cbTenThuoc.getItems().addAll(FXCollections.observableArrayList(dsThuoc));
+        cbTenThuoc.setConverter(new javafx.util.StringConverter<ThuocDTO>() {
+            @Override
+            public String toString(ThuocDTO thuoc) {
+                return thuoc == null ? "" : thuoc.getTenThuoc();
+            }
+
+            @Override
+            public ThuocDTO fromString(String string) {
+                return dsThuoc.stream().filter(t -> t.getTenThuoc().equals(string)).findFirst().orElse(null);
+            }
+        });
 
         // setup mã phiếu
         txtMa.setText(getHashPD());
@@ -320,6 +346,18 @@ public class ThemPhieuDatFormController extends DialogPane{
         KhuyenMaiDTO nothing = new KhuyenMaiDTO("None","Không áp dụng");
         cbKhuyenMai.getItems().add(nothing);
         cbKhuyenMai.getItems().addAll(FXCollections.observableArrayList(dsKhuyenMai));
+        System.out.println("dsKhuyenMai size: " + dsKhuyenMai.size());
+        cbKhuyenMai.setConverter(new javafx.util.StringConverter<KhuyenMaiDTO>() {
+            @Override
+            public String toString(KhuyenMaiDTO km) {
+                return km == null ? "" : km.getTenKM();
+            }
+
+            @Override
+            public KhuyenMaiDTO fromString(String string) {
+                return dsKhuyenMai.stream().filter(k -> k.getTenKM().equals(string)).findFirst().orElse(null);
+            }
+        });
 
         //gọi tính tổng tiền khi chạy giao diện
         loadTongTien();
@@ -619,7 +657,7 @@ public class ThemPhieuDatFormController extends DialogPane{
             con.setAutoCommit(false); // TRANSACTION
 
             // 6.1 Thêm phiếu
-            I_PhieuDat_Service.themPhieuDatThuocVaoDBS(phieu);
+            phieuDatDAO.themPhieuDatThuocVaoDBS(phieu);
 
             // 6.2 Thêm chi tiết + trừ kho
             for (ChiTietPhieuDatThuocDTO ct : tbChonThuoc.getItems()) {
@@ -632,7 +670,7 @@ public class ThemPhieuDatFormController extends DialogPane{
                 }
 
                 // Thêm chi tiết phiếu
-                I_ChiTietPhieuDat_Service.themChiTietPhieuDatVaoDBS(
+                chiTietPhieuDatService.themChiTietPhieuDatVaoDBS(
                         new ChiTietPhieuDatThuocDTO(
                                 phieu,
                                 lo,
@@ -695,11 +733,11 @@ public class ThemPhieuDatFormController extends DialogPane{
      * @return String - mã phiếu đặt mới
      */
     private String getHashPD() {
-        String hash = I_PhieuDat_Service.getMaxHash();
+        String hash = phieuDatDAO.getMaxHash();
         if (hash == null){
-            return "";
+            return "PDT001";
         }else{
-            int soThuTu = Integer.parseInt(hash) + 1;
+            int soThuTu = Integer.parseInt(hash.substring(3)) + 1;
             return String.format("PDT%03d", soThuTu);
         }
     }

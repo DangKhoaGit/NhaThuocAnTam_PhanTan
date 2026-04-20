@@ -1,5 +1,7 @@
 package com.antam.app.service.impl;
 
+import com.antam.app.entity.KhuyenMai;
+import com.antam.app.entity.LoaiKhuyenMai;
 import com.antam.app.service.I_KhuyenMai_Service;
 import com.antam.app.dto.KhuyenMaiDTO;
 import com.antam.app.dto.LoaiKhuyenMaiDTO;
@@ -169,5 +171,23 @@ public class KhuyenMai_Service implements I_KhuyenMai_Service {
         boolean deleteAt = rs.getBoolean("deleteAt");
         LoaiKhuyenMaiDTO loai = new LoaiKhuyenMaiDTO(maLoaiKM, tenLoaiKM == null ? "" : tenLoaiKM);
         return new KhuyenMaiDTO(maKM, tenKM, ngayBatDau, ngayKetThuc, loai, so, soLuongToiDa, deleteAt);
+    }
+
+    public KhuyenMaiDTO mapEntityToDTO(KhuyenMai entity) {
+        if (entity == null) return null;
+        LoaiKhuyenMaiDTO loaiDTO = null;
+        if (entity.getLoaiKhuyenMai() != null) {
+            loaiDTO = new LoaiKhuyenMaiDTO(entity.getLoaiKhuyenMai().getMaLKM(), entity.getLoaiKhuyenMai().getTenLKM());
+        }
+        return new KhuyenMaiDTO(entity.getMaKM(), entity.getTenKM(), entity.getNgayBatDau(), entity.getNgayKetThuc(), loaiDTO, entity.getSo(), entity.getSoLuongToiDa(), entity.isDeleteAt());
+    }
+
+    public KhuyenMai mapDTOToEntity(KhuyenMaiDTO dto) {
+        if (dto == null) return null;
+        LoaiKhuyenMai loai = null;
+        if (dto.getLoaiKhuyenMaiDTO() != null) {
+            loai = new LoaiKhuyenMai(dto.getLoaiKhuyenMaiDTO().getMaLKM(), dto.getLoaiKhuyenMaiDTO().getTenLKM());
+        }
+        return new KhuyenMai(dto.getMaKM(), dto.getTenKM(), dto.getNgayBatDau(), dto.getNgayKetThuc(), loai, dto.getSo(), dto.getSoLuongToiDa(), false); // assuming deleteAt false
     }
 }

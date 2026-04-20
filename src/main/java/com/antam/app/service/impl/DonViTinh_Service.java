@@ -128,14 +128,14 @@ public class DonViTinh_Service implements I_DonViTinh_Service {
         }
     }
 
-    private DonViTinhDTO mapEntityToDTO(DonViTinh entity) {
+    public DonViTinhDTO mapEntityToDTO(DonViTinh entity) {
         if (entity == null) {
             return null;
         }
         return new DonViTinhDTO(entity.getMaDVT(), entity.getTenDVT(), entity.isDelete());
     }
 
-    private DonViTinh mapDTOToEntity(DonViTinhDTO dto) {
+    public DonViTinh mapDTOToEntity(DonViTinhDTO dto) {
         if (dto == null) {
             return null;
         }

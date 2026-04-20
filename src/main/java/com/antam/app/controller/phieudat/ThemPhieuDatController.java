@@ -10,6 +10,7 @@ import com.antam.app.service.I_PhieuDat_Service;
 import com.antam.app.dto.NhanVienDTO;
 import com.antam.app.dto.PhieuDatThuocDTO;
 import com.antam.app.service.impl.NhanVien_Service;
+import com.antam.app.service.impl.PhieuDat_Service;
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcon;
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcons;
 import javafx.beans.property.SimpleStringProperty;
@@ -60,8 +61,8 @@ public class ThemPhieuDatController extends ScrollPane{
     private TableColumn<PhieuDatThuocDTO,String> colTotal = new TableColumn<>("Tổng tiền");
 
     private NhanVien_Service  nhanVienService = new NhanVien_Service();
-
-    private ArrayList<PhieuDatThuocDTO> listPDT = I_PhieuDat_Service.getAllPhieuDatThuocFromDBS();
+    private I_PhieuDat_Service I_PhieuDat_Service = new PhieuDat_Service();
+    private List<PhieuDatThuocDTO> listPDT = I_PhieuDat_Service.getAllPhieuDatThuocFromDBS();
     private List<NhanVienDTO> listNV = nhanVienService.getAllNhanVien();
     private ObservableList<PhieuDatThuocDTO> origin;
     private ObservableList<PhieuDatThuocDTO> filter= FXCollections.observableArrayList();

@@ -10,6 +10,7 @@ import java.util.List;
 
 import com.antam.app.dao.impl.HoaDon_DAO;
 import com.antam.app.entity.HoaDon;
+import com.antam.app.entity.PhieuDatThuoc;
 import com.antam.app.helper.MaKhoaMatKhau;
 import com.antam.app.service.impl.*;
 
@@ -44,9 +45,9 @@ public class Tester {
 //            System.out.println(dto);
 //        }
 
-        DonViTinh_Service service = new DonViTinh_Service();
-        List<DonViTinhDTO> dtos = service.getAllDonViTinh();
-        for (DonViTinhDTO dto : dtos) {
+        KhuyenMai_Service service = new KhuyenMai_Service();
+        List<KhuyenMaiDTO> dtos = service.getAllKhuyenMai();
+        for (KhuyenMaiDTO dto : dtos) {
             System.out.println(dto);
         }
 

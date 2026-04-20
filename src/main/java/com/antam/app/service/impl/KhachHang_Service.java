@@ -28,7 +28,7 @@ public class KhachHang_Service implements I_KhachHang_Service {
     /**
      * Chuyển đổi Entity → DTO
      */
-    private KhachHangDTO mapEntityToDTO(KhachHang entity) {
+    public KhachHangDTO mapEntityToDTO(KhachHang entity) {
         if (entity == null) return null;
 
         return KhachHangDTO.builder()
@@ -45,7 +45,7 @@ public class KhachHang_Service implements I_KhachHang_Service {
     /**
      * Chuyển đổi DTO → Entity
      */
-    private KhachHang mapDTOToEntity(KhachHangDTO dto) {
+    public KhachHang mapDTOToEntity(KhachHangDTO dto) {
         if (dto == null) return null;
 
         return KhachHang.builder()

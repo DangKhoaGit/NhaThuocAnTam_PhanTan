@@ -33,17 +33,11 @@ public interface I_PhieuDat_Service {
      *
      * @return Array[PhieuDatThuoc]
      */
-    static ArrayList<PhieuDatThuocDTO> getAllPhieuDatThuocFromDBS() {
-       return null;
-    }
+    List<PhieuDatThuocDTO> getAllPhieuDatThuocFromDBS();
 
-    static ArrayList<PhieuDatThuocDTO> getAllPhieuDatThuocDaXoa() {
-        return null;
-    }
+    ArrayList<PhieuDatThuocDTO> getAllPhieuDatThuocDaXoa();
 
-    static boolean themPhieuDatThuocVaoDBS(PhieuDatThuocDTO i) {
-        return false;
-    }
+    boolean themPhieuDatThuocVaoDBS(PhieuDatThuocDTO i);
 
     /**
      * Xoá phiếu đặt thuốc trong DBS bằng cách tắt trạng thái hoạt động.
@@ -51,34 +45,20 @@ public interface I_PhieuDat_Service {
      * @param maPDT mã phiếu đặt thuốc
      * @return true nếu cập nhật thành công. false nếu không thể cập nhật.
      */
-    static boolean xoaPhieuDatThuocTrongDBS(String maPDT) {
-        return false;
-    }
-
+    boolean xoaPhieuDatThuocTrongDBS(String maPDT);
     /**
      * Lấy mã hash lớn nhẩt trong database
      *
      * @return String - mã phiếu đặt thuốc mới nhất.
      * null nếu không có gì trong dbs.
      */
-    static String getMaxHash() {
-        return null;
-    }
+    String getMaxHash();
 
-    static void themChiTietPhieuDatVaoDBS(ChiTietPhieuDatThuocDTO ctPDT) {
+    void themChiTietPhieuDatVaoDBS(ChiTietPhieuDatThuocDTO ctPDT);
 
-    }
+    boolean capNhatThanhToanPhieuDat(String maPDT);
 
-    static boolean capNhatThanhToanPhieuDat(String maPDT) {
-        return true;
-    }
+    PhieuDatThuocDTO getPhieuDatByMaFromDBS(String maPDT);
 
-    static PhieuDatThuocDTO getPhieuDatByMaFromDBS(String maPDT) {
-        return null;
-    }
-
-    static boolean khoiPhucPhieuDat(String maPhieu) {
-
-        return true;
-    }
+    boolean khoiPhucPhieuDat(String maPhieu);
 }

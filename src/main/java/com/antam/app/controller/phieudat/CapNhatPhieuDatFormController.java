@@ -8,9 +8,11 @@ package com.antam.app.controller.phieudat;
 import com.antam.app.service.I_ChiTietPhieuDat_Service;
 import com.antam.app.service.I_PhieuDat_Service;
 import com.antam.app.service.impl.ChiTietHoaDon_Service;
+import com.antam.app.service.impl.ChiTietPhieuDat_Service;
 import com.antam.app.service.impl.HoaDon_Service;
 import com.antam.app.dto.*;
 import com.antam.app.helper.XuatHoaDonPDF;
+import com.antam.app.service.impl.PhieuDat_Service;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
@@ -23,6 +25,7 @@ import java.io.File;
 import java.text.DecimalFormat;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 import javafx.geometry.Pos;
@@ -50,7 +53,8 @@ public class CapNhatPhieuDatFormController extends DialogPane{
     private TableView<ChiTietPhieuDatThuocDTO> tbThuoc;
 
     private PhieuDatThuocDTO select = selectedPDT;
-    private ArrayList<ChiTietPhieuDatThuocDTO> listChiTiet = I_ChiTietPhieuDat_Service.getChiTietTheoPhieu(select.getMaPhieu());
+    private ChiTietPhieuDat_Service chiTietPhieuDat_Service = new ChiTietPhieuDat_Service();
+    private List<ChiTietPhieuDatThuocDTO> listChiTiet = chiTietPhieuDat_Service.getChiTietTheoPhieu(select.getMaPhieu());
     private HoaDon_Service hoaDon_dao = new HoaDon_Service();
 
     public CapNhatPhieuDatFormController() {
@@ -211,8 +215,9 @@ public class CapNhatPhieuDatFormController extends DialogPane{
         txtTongTien.setText(dinhDangTien(tongTien));
     }
 
+    PhieuDat_Service  phieuDatService = new PhieuDat_Service();
     private void thanhToanPhieuDat() {
-        boolean capNhatOK = I_PhieuDat_Service.capNhatThanhToanPhieuDat(select.getMaPhieu());
+        boolean capNhatOK = phieuDatService.capNhatThanhToanPhieuDat(select.getMaPhieu());
         if (!capNhatOK) {
             showMess("Lỗi", "Không thể cập nhật trạng thái phiếu đặt!");
             return;

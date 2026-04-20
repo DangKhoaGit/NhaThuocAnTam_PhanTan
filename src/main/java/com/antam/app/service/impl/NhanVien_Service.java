@@ -14,9 +14,8 @@ import java.util.List;
 
 public class NhanVien_Service implements I_NhanVien_Service {
 
-    private NhanVienDTO mapEntityToDTO(NhanVien entity) {
+    public NhanVienDTO mapEntityToDTO(NhanVien entity) {
         if (entity == null) return null;
-//        System.out.println(entity);
         return NhanVienDTO.builder()
                 .MaNV(entity.getMaNV())
                 .hoTen(entity.getHoTen())
@@ -31,7 +30,7 @@ public class NhanVien_Service implements I_NhanVien_Service {
                 .build();
     }
 
-    private NhanVien mapDTOToEntity(NhanVienDTO dto) {
+    public NhanVien mapDTOToEntity(NhanVienDTO dto) {
         if (dto == null) return null;
 
         return NhanVien.builder()
