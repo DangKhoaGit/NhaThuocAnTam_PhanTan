@@ -32,6 +32,7 @@ import java.text.NumberFormat;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 
 
@@ -45,7 +46,7 @@ public class CapNhatPhieuNhapController extends ScrollPane{
     private TextField tfTimPhieuNhap;
 
     private PhieuNhap_Service phieuNhap_DAO = new PhieuNhap_Service();
-    private NhanVien_Service nhanVien_DAO = new NhanVien_Service();
+    private NhanVien_Service nhanVienService = new NhanVien_Service();
 
     /* Lấy dữ liệu từ DAO */
     private ArrayList<PhieuNhapDTO> dsPhieuNhap = new ArrayList<>();
@@ -331,7 +332,7 @@ public class CapNhatPhieuNhapController extends ScrollPane{
     }
 
     public void loadDanhSachNhanVien(){
-        ArrayList<NhanVienDTO> dsNhanVien = I_NhanVien_Service.getDsNhanVienformDBS();
+        List<NhanVienDTO> dsNhanVien = nhanVienService.getAllNhanVien();
         for (NhanVienDTO nhanVienDTO : dsNhanVien){
             cbNhanVienNhap.getItems().add(nhanVienDTO);
         }

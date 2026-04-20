@@ -25,6 +25,7 @@ import java.text.NumberFormat;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 import javafx.geometry.Insets;
 import javafx.scene.effect.DropShadow;
@@ -43,7 +44,7 @@ public class TimPhieuNhapController extends ScrollPane{
     private ComboBox<String> cbKhoangGia;
     private TextField tfTimPhieuNhap;
     private Button btnXoaRong;
-
+    private NhanVien_Service nhanVien_service = new NhanVien_Service();
     private PhieuNhap_Service phieuNhap_DAO = new PhieuNhap_Service();
     private NhanVien_Service nhanVien_DAO = new NhanVien_Service();
 
@@ -274,7 +275,7 @@ public class TimPhieuNhapController extends ScrollPane{
     }
 
     public void loadDanhSachNhanVien(){
-        ArrayList<NhanVienDTO> dsNhanVien = I_NhanVien_Service.getDsNhanVienformDBS();
+        List<NhanVienDTO> dsNhanVien = nhanVien_service.getAllNhanVien();
         for (NhanVienDTO nhanVienDTO : dsNhanVien){
             cbNhanVienNhap.getItems().add(nhanVienDTO);
         }

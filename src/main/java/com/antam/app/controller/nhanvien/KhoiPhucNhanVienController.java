@@ -2,6 +2,7 @@ package com.antam.app.controller.nhanvien;
 
 import com.antam.app.service.I_NhanVien_Service;
 import com.antam.app.dto.NhanVienDTO;
+import com.antam.app.service.impl.NhanVien_Service;
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcon;
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcons;
 import javafx.beans.property.SimpleStringProperty;
@@ -17,6 +18,7 @@ import javafx.scene.text.Text;
 
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.List;
 
 public class KhoiPhucNhanVienController extends ScrollPane{
 
@@ -34,7 +36,8 @@ public class KhoiPhucNhanVienController extends ScrollPane{
     private final TableColumn<NhanVienDTO, String> colLuong;
     private final ComboBox<String> cbChucVu;
     private final ComboBox<String> cbLuongCB;
-    private ArrayList<NhanVienDTO> listNV = I_NhanVien_Service.getDsNhanVienformDBS();
+    private NhanVien_Service nhanVien_service =  new NhanVien_Service();
+    private List<NhanVienDTO> listNV = nhanVien_service.getAllNhanVien();
 
     private ObservableList<NhanVienDTO> TVNhanVien;
     private final ObservableList<NhanVienDTO> filteredList = FXCollections.observableArrayList();
@@ -181,7 +184,7 @@ public class KhoiPhucNhanVienController extends ScrollPane{
             if (nhanVienDTOSelected == null) {
                 showError("Chưa chọn nhân viên", "Vui lòng chọn nhân viên cần khôi phục.");
             }else{
-                boolean success = I_NhanVien_Service.khoiPhucNhanVien(nhanVienDTOSelected.getMaNV());
+                boolean success = nhanVien_service.khoiPhucNhanVien(nhanVienDTOSelected.getMaNV());
                 if (success) {
                     showSuccess("Khôi phục thành công", "Nhân viên đã được khôi phục thành công.");
                     loadNhanVien();
@@ -201,7 +204,7 @@ public class KhoiPhucNhanVienController extends ScrollPane{
 
                 if (canhBao("Xác nhận khôi phục", "Bạn có chắc muốn khôi phục nhân viên " + nhanVienDTOSelected.getHoTen() + " không?")) {
                     if (nhanVienDTOSelected != null) {
-                        boolean success = I_NhanVien_Service.khoiPhucNhanVien(nhanVienDTOSelected.getMaNV());
+                        boolean success = nhanVien_service.khoiPhucNhanVien(nhanVienDTOSelected.getMaNV());
                         if (success) {
                             showSuccess("Khôi phục thành công", "Nhân viên đã được khôi phục thành công.");
                             loadNhanVien();
@@ -262,7 +265,7 @@ public class KhoiPhucNhanVienController extends ScrollPane{
     }
 
     private void loadNhanVien() {
-        listNV = I_NhanVien_Service.getDsNhanVienformDBS();
+        listNV = nhanVien_service.getAllNhanVien();
         TVNhanVien = FXCollections.observableArrayList(
                 listNV.stream()
                         .filter(nv -> nv.isDeleteAt())

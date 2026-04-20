@@ -2,6 +2,7 @@ package com.antam.app.controller.nhanvien;
 
 import com.antam.app.service.I_NhanVien_Service;
 import com.antam.app.dto.NhanVienDTO;
+import com.antam.app.service.impl.NhanVien_Service;
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcon;
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcons;
 import javafx.beans.property.SimpleStringProperty;
@@ -11,6 +12,8 @@ import javafx.scene.control.*;
 
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.List;
+
 import javafx.geometry.Insets;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
@@ -34,7 +37,8 @@ public class TimNhanVienController extends ScrollPane{
     private ComboBox<String> cbChucVu, cbLuongCB;
 
     private ObservableList<NhanVienDTO> TVNhanVien;
-    private ArrayList<NhanVienDTO> listNV = I_NhanVien_Service.getDsNhanVienformDBS();
+    private NhanVien_Service nhanVien_service = new NhanVien_Service();
+    private List<NhanVienDTO> listNV = nhanVien_service.getAllNhanVien();
     private ObservableList<NhanVienDTO> filteredList = FXCollections.observableArrayList();
 
     public TimNhanVienController(){
@@ -158,7 +162,7 @@ public class TimNhanVienController extends ScrollPane{
     }
 
     private void loadNhanVien() {
-        listNV = I_NhanVien_Service.getDsNhanVienformDBS();
+        listNV = nhanVien_service.getAllNhanVien();
         TVNhanVien = FXCollections.observableArrayList(
                 listNV.stream()
                         .filter(nv -> !nv.isDeleteAt())

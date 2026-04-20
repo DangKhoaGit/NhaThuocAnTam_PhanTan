@@ -11,145 +11,146 @@ import com.antam.app.entity.NhanVien;
 
 import java.sql.*;
 import java.util.ArrayList;
+import java.util.List;
 
-public class NhanVien_DAO implements I_NhanVien_DAO {
+public class NhanVien_DAO extends AbstractGenericDao<NhanVien,String> implements I_NhanVien_DAO {
 
-    //danh sách nhân viên truy xuất trực tiếp khi vào tầng Application.
-    public static ArrayList<NhanVien> dsNhanViens = I_NhanVien_DAO.getDsNhanVienformDBS();
-
-    @Override
-    public NhanVien findNhanVienVoiMa(String maVN){
-        return dsNhanViens.stream().
-                filter(t-> t.getMaNV().equalsIgnoreCase(maVN))
-                .findFirst()
-                .orElse(null);
+    public NhanVien_DAO() {
+        super(NhanVien.class);
     }
 
+    /**
+     * thêm nhân viên mới vào DBS. Phưong thức trước tiên sẽ kiểm tra nhân viên có tồn tại trong hệ thống hay chưa.
+     * Nếu có sẽ kiểm tra tiếp đến trạng thái hoạt động, nếu vẫn đang hoạt động thì sẽ trả kết quả false và thoát chức năng.
+     * Nếu không thì sẽ cập nhật lại và bật trạng thái hoạt động của nhân viên.
+     * Nếu nhân viên chưa có trong hệ thống thì sẽ tạo mới vào trong DBS.
+     *
+     * @param nv NhanVien
+     * @return true nếu có nhân viên được thêm hoặc cập nhật.
+     * false nếu nhân viên đã tồn tại trong hệ thống
+     */
     @Override
-    public NhanVien getNhanVien(){
-        NhanVien nv = null;
-        try {
-            ConnectDB.getInstance().connect();
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
+    public boolean themNhanVien(NhanVien nv) {
+        NhanVien  nhanVien = getNhanVien(nv.getMaNV());
+        if (nhanVien != null && nhanVien.isDeleteAt() == false) {
+            return false;
+        }else if(nhanVien != null && nhanVien.isDeleteAt()){
+            return khoiPhucNhanVien(nhanVien.getMaNV());
+        } else{
+          return super.create(nhanVien) != null;
         }
-        Connection con = ConnectDB.getConnection();
-        String sql = "Select * from NhanVien";
-        try {
-            PreparedStatement state = con.prepareStatement(sql);
-            ResultSet result = state.executeQuery();
-            while (result.next()){
-                boolean isXoa = result.getBoolean("DeleteAt");
-                if (!isXoa){
-                    String maNV = result.getNString("MaNV");
-                    String hoTen = result.getNString("HoTen");
-                    String soDT = result.getNString("SoDienThoai");
-                    String email = result.getNString("Email");
-                    String diaChi = result.getNString("DiaChi");
-                    double luongCb = result.getDouble("LuongCoBan");
-                    String taiKhoan = result.getNString("TaiKhoan");
-                    String matKhau = result.getNString("MatKhau");
-                    boolean deleteAt = result.getBoolean("DeleteAt");
-                    boolean isQL = result.getBoolean("IsQuanLi");
-                    nv = new NhanVien(maNV,hoTen,soDT,email,diaChi,luongCb
-                            ,taiKhoan,matKhau,deleteAt,isQL);
+    }
 
-                }
+    /**
+     * Cập nhật nhân viên với thông tin mới.
+     *
+     * @param nv NhanVien
+     * @return true nếu có nhân viên được cập nhật.
+     * false nếu không có nhân viên nào được cập nhật hoặc nhân viên không tồn tại.
+     */
+    @Override
+    public boolean updateNhanVienTrongDBS(NhanVien nv) {
+        return super.update(nv) != null;
+    }
 
-            }
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
-        return nv;
+    /**
+     * Là phương thức sử dụng để tắt trạng thái hoạt đông trong dbs sử dụng mã nhân viên.
+     *
+     * @param manv
+     * @return true nếu có nhân viên bị cập nhật ở dbs. false nếu không có nhân viên nào cập nhật trạng thái.
+     */
+    @Override
+    public boolean xoaNhanVienTrongDBS(String manv) {
+        return super.delete(manv);
+    }
+
+    /**
+     * Lấy mã hash mã nhân viên mới nhất trong database
+     *
+     * @return String(là dãy số 5 ký tự)
+     */
+    @Override
+    public String getMaxHashNhanVien() {
+        String query = "select nv " +
+                "from NhanVien nv  " +
+                "order by nv.id desc " +
+                "limit 1";
+        return doInTransaction(em ->{
+            String t = em.createQuery(query).getSingleResult().toString();
+            return t.substring(2,7);
+        });
+    }
+
+    /**
+     * Khooi phục nhân viên đã xóa trong DBS sử dụng mã nhân viên.
+     *
+     * @param maNV - mã nhân viên
+     * @return true nếu có nhân viên bị khôi phục ở dbs. false nếu không có nhân viên nào khôi phục trạng thái.
+     */
+    @Override
+    public boolean khoiPhucNhanVien(String maNV) {
+        String query = "update NhanVien nv " +
+                "set nv.deleteAt = false " +
+                "where nv.id = :id";
+
+        return doInTransaction(em ->
+                em.createQuery(query)
+                        .setParameter("id", maNV)
+                        .executeUpdate() > 0
+        );
     }
 
     // duong
     /**
      * Lấy nhân viên theo tài khoản
-     * @param id Tài khoản
+     * @param tk Tài khoản
      * @return Nhân viên
      */
     @Override
-    public NhanVien getNhanVienTaiKhoan(String id) {
-        NhanVien nhanVien = null;
-        String sql = "SELECT * FROM NhanVien WHERE TaiKhoan = ?";
-        try {
-            Connection con = ConnectDB.getConnection();
-            PreparedStatement state = con.prepareStatement(sql);
-            state.setString(1, id);
-            ResultSet rs = state.executeQuery();
-            if (rs.next()) {
-                String maNV = rs.getString("MaNV");
-                nhanVien = new NhanVien(maNV);
-                nhanVien.setHoTen(rs.getString("HoTen"));
-                nhanVien.setSoDienThoai(rs.getString("SoDienThoai"));
-                nhanVien.setEmail(rs.getString("Email"));
-                nhanVien.setDiaChi(rs.getString("DiaChi"));
-                nhanVien.setLuongCoBan(rs.getDouble("LuongCoBan"));
-                nhanVien.setTaiKhoan(rs.getString("TaiKhoan"));
-                nhanVien.setMatKhau(rs.getString("MatKhau"));
-                nhanVien.setQuanLy(rs.getBoolean("IsQuanLi"));
-                nhanVien.setDeleteAt(rs.getBoolean("DeleteAt"));
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return nhanVien;
+    public NhanVien getNhanVienTaiKhoan(String tk) {
+        String  sql = "SELECT nv " +
+                "from NhanVien nv " +
+                "where nv.taiKhoan = :tk ";
+        return doInTransaction(e -> {
+            return e.createQuery(sql, NhanVien.class)
+                    .setParameter("tk", tk)
+                    .getSingleResult();
+        });
     }
     // duong
     // hung
     @Override
     public NhanVien getNhanVien(String id) {
-        NhanVien nhanVien = null;
-        String sql = "SELECT * FROM NhanVien WHERE TaiKhoan = ?";
-        try {
-            Connection con = ConnectDB.getConnection();
-            PreparedStatement state = con.prepareStatement(sql);
-            state.setString(1, id);
-            ResultSet rs = state.executeQuery();
-            if (rs.next()) {
-                String maNV = rs.getString("MaNV");
-                nhanVien = new NhanVien(maNV);
-                nhanVien.setHoTen(rs.getString("HoTen"));
-                nhanVien.setSoDienThoai(rs.getString("SoDienThoai"));
-                nhanVien.setEmail(rs.getString("Email"));
-                nhanVien.setDiaChi(rs.getString("DiaChi"));
-                nhanVien.setLuongCoBan(rs.getDouble("LuongCoBan"));
-                nhanVien.setTaiKhoan(rs.getString("TaiKhoan"));
-                nhanVien.setMatKhau(rs.getString("MatKhau"));
-                nhanVien.setQuanLy(rs.getBoolean("IsQuanLi"));
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return nhanVien;
+        String  sql = "SELECT nv " +
+                "from NhanVien nv " +
+                "where nv.id = :id ";
+        return doInTransaction(e -> {
+            return e.createQuery(sql, NhanVien.class)
+                    .setParameter("id", id)
+                    .getSingleResult();
+        });
     }
 
     @Override
     public ArrayList<NhanVien> getAllNhanVien() {
-        ArrayList<NhanVien> ds = new ArrayList<>();
-        String sql = "SELECT * FROM NhanVien";
-        try {
-            Connection con = ConnectDB.getConnection();
-            Statement stmt = con.createStatement();
-            ResultSet rs = stmt.executeQuery(sql);
-            while (rs.next()) {
-                String maNV = rs.getString("MaNV");
-                NhanVien nv = new NhanVien(maNV);
-                nv.setHoTen(rs.getString("HoTen"));
-                nv.setSoDienThoai(rs.getString("SoDienThoai"));
-                nv.setEmail(rs.getString("Email"));
-                nv.setDiaChi(rs.getString("DiaChi"));
-                nv.setLuongCoBan(rs.getDouble("LuongCoBan"));
-                nv.setTaiKhoan(rs.getString("TaiKhoan"));
-                nv.setMatKhau(rs.getString("MatKhau"));
-                nv.setQuanLy(rs.getBoolean("IsQuanLi"));
-                ds.add(nv);
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return ds;
+        String query = "select nv from NhanVien nv";
+        return doInTransaction(em ->
+                new ArrayList<>(
+                        em.createQuery(query, NhanVien.class)
+                                .getResultList()
+                )
+        );
     }
 
+    @Override
+    public NhanVien findNhanVienVoiMa(String maVN) {
+        String  sql = "SELECT nv " +
+                "from NhanVien nv " +
+                "where nv.id = :id ";
+        return doInTransaction(e -> {
+            return e.createQuery(sql, NhanVien.class)
+                    .setParameter("id", maVN)
+                    .getSingleResult();
+        });
+    }
 }

@@ -5,151 +5,101 @@ package com.antam.app.service.impl;/*
  * @version: 1.0
  */
 
-import com.antam.app.connect.ConnectDB;
+import com.antam.app.dao.impl.NhanVien_DAO;
+import com.antam.app.entity.NhanVien;
 import com.antam.app.service.I_NhanVien_Service;
 import com.antam.app.dto.NhanVienDTO;
 
-import java.sql.*;
-import java.util.ArrayList;
+import java.util.List;
 
 public class NhanVien_Service implements I_NhanVien_Service {
 
-    //danh sách nhân viên truy xuất trực tiếp khi vào tầng Application.
-    public static ArrayList<NhanVienDTO> dsNhanViens = I_NhanVien_Service.getDsNhanVienformDBS();
+    private NhanVienDTO mapEntityToDTO(NhanVien entity) {
+        if (entity == null) return null;
+
+        return NhanVienDTO.builder()
+                .MaNV(entity.getMaNV())
+                .hoTen(entity.getHoTen())
+                .soDienThoai(entity.getSoDienThoai())
+                .email(entity.getEmail())
+                .diaChi(entity.getDiaChi())
+                .luongCoBan(entity.getLuongCoBan())
+                .taiKhoan(entity.getTaiKhoan())
+                .matKhau(entity.getMatKhau())
+                .isQuanLy(entity.isQuanLy())
+                .deleteAt(entity.isDeleteAt())
+                .build();
+    }
+
+    private NhanVien mapDTOToEntity(NhanVienDTO dto) {
+        if (dto == null) return null;
+
+        return NhanVien.builder()
+                .MaNV(dto.getMaNV())
+                .hoTen(dto.getHoTen())
+                .soDienThoai(dto.getSoDienThoai())
+                .email(dto.getEmail())
+                .diaChi(dto.getDiaChi())
+                .luongCoBan(dto.getLuongCoBan())
+                .taiKhoan(dto.getTaiKhoan())
+                .matKhau(dto.getMatKhau())
+                .isQuanLy(dto.isQuanLy())
+                .deleteAt(dto.isDeleteAt())
+                .build();
+    }
+
+    NhanVien_DAO nhanVienDao = new NhanVien_DAO();
 
     @Override
-    public NhanVienDTO findNhanVienVoiMa(String maVN){
-        return dsNhanViens.stream().
-                filter(t-> t.getMaNV().equalsIgnoreCase(maVN))
-                .findFirst()
-                .orElse(null);
+    public boolean themNhanVien(NhanVienDTO nv) {
+        NhanVien e = mapDTOToEntity(nv);
+        return nhanVienDao.themNhanVien(e);
     }
 
     @Override
-    public NhanVienDTO getNhanVien(){
-        NhanVienDTO nv = null;
-        try {
-            ConnectDB.getInstance().connect();
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
-        Connection con = ConnectDB.getConnection();
-        String sql = "Select * from NhanVien";
-        try {
-            PreparedStatement state = con.prepareStatement(sql);
-            ResultSet result = state.executeQuery();
-            while (result.next()){
-                boolean isXoa = result.getBoolean("DeleteAt");
-                if (!isXoa){
-                    String maNV = result.getNString("MaNV");
-                    String hoTen = result.getNString("HoTen");
-                    String soDT = result.getNString("SoDienThoai");
-                    String email = result.getNString("Email");
-                    String diaChi = result.getNString("DiaChi");
-                    double luongCb = result.getDouble("LuongCoBan");
-                    String taiKhoan = result.getNString("TaiKhoan");
-                    String matKhau = result.getNString("MatKhau");
-                    boolean deleteAt = result.getBoolean("DeleteAt");
-                    boolean isQL = result.getBoolean("IsQuanLi");
-                    nv = new NhanVienDTO(maNV,hoTen,soDT,email,diaChi,luongCb
-                            ,taiKhoan,matKhau,deleteAt,isQL);
-
-                }
-
-            }
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
-        return nv;
+    public boolean updateNhanVienTrongDBS(NhanVienDTO nv) {
+        NhanVien e = mapDTOToEntity(nv);
+        return nhanVienDao.updateNhanVienTrongDBS(e);
     }
 
-    // duong
-    /**
-     * Lấy nhân viên theo tài khoản
-     * @param id Tài khoản
-     * @return Nhân viên
-     */
+    @Override
+    public boolean xoaNhanVienTrongDBS(String manv) {
+        return nhanVienDao.xoaNhanVienTrongDBS(manv);
+    }
+
+    @Override
+    public String getMaxHashNhanVien() {
+        return nhanVienDao.getMaxHashNhanVien();
+    }
+
+    @Override
+    public boolean khoiPhucNhanVien(String maNV) {
+        return  nhanVienDao.khoiPhucNhanVien(maNV);
+    }
+
+    @Override
+    public NhanVienDTO findNhanVienVoiMa(String maVN) {
+        NhanVien nv = nhanVienDao.getNhanVien(maVN);
+        return mapEntityToDTO(nv);
+    }
+
     @Override
     public NhanVienDTO getNhanVienTaiKhoan(String id) {
-        NhanVienDTO nhanVienDTO = null;
-        String sql = "SELECT * FROM NhanVien WHERE TaiKhoan = ?";
-        try {
-            Connection con = ConnectDB.getConnection();
-            PreparedStatement state = con.prepareStatement(sql);
-            state.setString(1, id);
-            ResultSet rs = state.executeQuery();
-            if (rs.next()) {
-                String maNV = rs.getString("MaNV");
-                nhanVienDTO = new NhanVienDTO(maNV);
-                nhanVienDTO.setHoTen(rs.getString("HoTen"));
-                nhanVienDTO.setSoDienThoai(rs.getString("SoDienThoai"));
-                nhanVienDTO.setEmail(rs.getString("Email"));
-                nhanVienDTO.setDiaChi(rs.getString("DiaChi"));
-                nhanVienDTO.setLuongCoBan(rs.getDouble("LuongCoBan"));
-                nhanVienDTO.setTaiKhoan(rs.getString("TaiKhoan"));
-                nhanVienDTO.setMatKhau(rs.getString("MatKhau"));
-                nhanVienDTO.setQuanLy(rs.getBoolean("IsQuanLi"));
-                nhanVienDTO.setDeleteAt(rs.getBoolean("DeleteAt"));
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return nhanVienDTO;
+        NhanVien nv = nhanVienDao.getNhanVienTaiKhoan(id);
+        return mapEntityToDTO(nv);
     }
-    // duong
-    // hung
+
     @Override
     public NhanVienDTO getNhanVien(String id) {
-        NhanVienDTO nhanVienDTO = null;
-        String sql = "SELECT * FROM NhanVien WHERE TaiKhoan = ?";
-        try {
-            Connection con = ConnectDB.getConnection();
-            PreparedStatement state = con.prepareStatement(sql);
-            state.setString(1, id);
-            ResultSet rs = state.executeQuery();
-            if (rs.next()) {
-                String maNV = rs.getString("MaNV");
-                nhanVienDTO = new NhanVienDTO(maNV);
-                nhanVienDTO.setHoTen(rs.getString("HoTen"));
-                nhanVienDTO.setSoDienThoai(rs.getString("SoDienThoai"));
-                nhanVienDTO.setEmail(rs.getString("Email"));
-                nhanVienDTO.setDiaChi(rs.getString("DiaChi"));
-                nhanVienDTO.setLuongCoBan(rs.getDouble("LuongCoBan"));
-                nhanVienDTO.setTaiKhoan(rs.getString("TaiKhoan"));
-                nhanVienDTO.setMatKhau(rs.getString("MatKhau"));
-                nhanVienDTO.setQuanLy(rs.getBoolean("IsQuanLi"));
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return nhanVienDTO;
+        NhanVien nv = nhanVienDao.getNhanVien(id);
+        return mapEntityToDTO(nv);
     }
 
     @Override
-    public ArrayList<NhanVienDTO> getAllNhanVien() {
-        ArrayList<NhanVienDTO> ds = new ArrayList<>();
-        String sql = "SELECT * FROM NhanVien";
-        try {
-            Connection con = ConnectDB.getConnection();
-            Statement stmt = con.createStatement();
-            ResultSet rs = stmt.executeQuery(sql);
-            while (rs.next()) {
-                String maNV = rs.getString("MaNV");
-                NhanVienDTO nv = new NhanVienDTO(maNV);
-                nv.setHoTen(rs.getString("HoTen"));
-                nv.setSoDienThoai(rs.getString("SoDienThoai"));
-                nv.setEmail(rs.getString("Email"));
-                nv.setDiaChi(rs.getString("DiaChi"));
-                nv.setLuongCoBan(rs.getDouble("LuongCoBan"));
-                nv.setTaiKhoan(rs.getString("TaiKhoan"));
-                nv.setMatKhau(rs.getString("MatKhau"));
-                nv.setQuanLy(rs.getBoolean("IsQuanLi"));
-                ds.add(nv);
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return ds;
+    public List<NhanVienDTO> getAllNhanVien() {
+        List<NhanVien> nhanViens = nhanVienDao.getAllNhanVien();
+        return nhanViens.stream()
+                .map(this::mapEntityToDTO)
+                .toList();
     }
-
 }

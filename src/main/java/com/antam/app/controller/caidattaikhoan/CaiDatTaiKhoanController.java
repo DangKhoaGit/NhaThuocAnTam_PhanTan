@@ -3,6 +3,7 @@ package com.antam.app.controller.caidattaikhoan;
 import com.antam.app.service.I_NhanVien_Service;
 import com.antam.app.dto.PhienNguoiDungDTO;
 import com.antam.app.helper.MaKhoaMatKhau;
+import com.antam.app.service.impl.NhanVien_Service;
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcon;
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcons;
 import javafx.scene.control.*;
@@ -21,6 +22,8 @@ public class CaiDatTaiKhoanController extends ScrollPane{
     private TextField txtMKnow, txtMKnew;
     private Button btnDoiMK;
     private Text txtTK, txtVaiTro;
+
+    NhanVien_Service nhanVienService = new NhanVien_Service();
 
     public CaiDatTaiKhoanController() {
         /** Giao diện **/
@@ -198,7 +201,7 @@ public class CaiDatTaiKhoanController extends ScrollPane{
         String hashCode = MaKhoaMatKhau.hashPassword(mkNew, 10);
         PhienNguoiDungDTO.getMaNV().setMatKhau(hashCode);
 
-        boolean result = I_NhanVien_Service.updateNhanVienTrongDBS(PhienNguoiDungDTO.getMaNV());
+        boolean result = nhanVienService.updateNhanVienTrongDBS(PhienNguoiDungDTO.getMaNV());
         if (result) {
             showAlert("Thành công", "Đổi mật khẩu thành công!");
             txtMKnow.clear();

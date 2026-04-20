@@ -9,6 +9,7 @@ package com.antam.app.controller.nhanvien;
 import com.antam.app.service.I_NhanVien_Service;
 import com.antam.app.dto.NhanVienDTO;
 import com.antam.app.helper.MaKhoaMatKhau;
+import com.antam.app.service.impl.NhanVien_Service;
 import javafx.geometry.Insets;
 import javafx.scene.control.*;
 import javafx.scene.control.ButtonBar.ButtonData;
@@ -25,7 +26,7 @@ public class ThemNhanVienFormController extends DialogPane{
     private PasswordField txtPass;
     private ComboBox<String> cbChucVu;
     private Spinner<Double> luong;
-
+    private NhanVien_Service nhanVienService =  new NhanVien_Service();
 
     public ThemNhanVienFormController() {
         this.setPrefSize(800, 600);
@@ -159,7 +160,7 @@ public class ThemNhanVienFormController extends DialogPane{
         //sự kiện thêm nhân viên
         btnThem.setOnAction(e -> {
             if (setupThemNhanVien() != null){
-                I_NhanVien_Service.themNhanVien(setupThemNhanVien());
+                nhanVienService.themNhanVien(setupThemNhanVien());
                 showAlert("Thêm nhân viên thành công!");
             }else{
 
@@ -249,7 +250,7 @@ public class ThemNhanVienFormController extends DialogPane{
      * @return String(Chuỗi mã nhân viên được tạo tự động)
      */
     public String getHashMaNV(){
-        String hash = I_NhanVien_Service.getMaxHashNhanVien();
+        String hash = nhanVienService.getMaxHashNhanVien();
         int maxHash = Integer.parseInt(hash);
         DecimalFormat deFomat = new DecimalFormat("00000");
         return String.format("NV%s",deFomat.format(++maxHash));

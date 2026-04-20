@@ -9,6 +9,7 @@ import com.antam.app.service.I_NhanVien_Service;
 import com.antam.app.service.I_PhieuDat_Service;
 import com.antam.app.dto.NhanVienDTO;
 import com.antam.app.dto.PhieuDatThuocDTO;
+import com.antam.app.service.impl.NhanVien_Service;
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcon;
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcons;
 import javafx.beans.property.SimpleStringProperty;
@@ -29,6 +30,7 @@ import java.text.DecimalFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.List;
 
 
 public class ThemPhieuDatController extends ScrollPane{
@@ -57,8 +59,10 @@ public class ThemPhieuDatController extends ScrollPane{
     private TableColumn<PhieuDatThuocDTO,String> colStatus = new TableColumn<>("Trạng thái");
     private TableColumn<PhieuDatThuocDTO,String> colTotal = new TableColumn<>("Tổng tiền");
 
+    private NhanVien_Service  nhanVienService = new NhanVien_Service();
+
     private ArrayList<PhieuDatThuocDTO> listPDT = I_PhieuDat_Service.getAllPhieuDatThuocFromDBS();
-    private ArrayList<NhanVienDTO> listNV = I_NhanVien_Service.getDsNhanVienformDBS();
+    private List<NhanVienDTO> listNV = nhanVienService.getAllNhanVien();
     private ObservableList<PhieuDatThuocDTO> origin;
     private ObservableList<PhieuDatThuocDTO> filter= FXCollections.observableArrayList();
 

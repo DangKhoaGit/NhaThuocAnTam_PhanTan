@@ -1,17 +1,16 @@
 package com.antam.app;
 
 import com.antam.app.dao.impl.HoaDon_DAO;
+import com.antam.app.dao.impl.Thuoc_DAO;
+import com.antam.app.dto.*;
 import com.antam.app.entity.HoaDon;
 
 import java.util.List;
 
 import com.antam.app.dao.impl.HoaDon_DAO;
-import com.antam.app.dto.HoaDonDTO;
-import com.antam.app.dto.KhachHangDTO;
 import com.antam.app.entity.HoaDon;
 import com.antam.app.helper.MaKhoaMatKhau;
-import com.antam.app.service.impl.HoaDon_Service;
-import com.antam.app.service.impl.KhachHang_Service;
+import com.antam.app.service.impl.*;
 
 import java.util.List;
 
@@ -23,9 +22,9 @@ import java.util.List;
  */
 public class Tester {
     public static void main(String[] args) {
-        String string = "duong";
-        String password = MaKhoaMatKhau.hashPassword(string , 10);
-        System.out.println(password);
+//        String string = "duong";
+//        String password = MaKhoaMatKhau.hashPassword(string , 10);
+//        System.out.println(password);
 
 //        KhachHang_Service khachHang_service = new KhachHang_Service();
 //        List<KhachHangDTO> dtos = khachHang_service.getAllKhachHang();
@@ -38,6 +37,9 @@ public class Tester {
 //                hoaDons.toString()
 //        );
 
+        NhanVien_Service thuoc_service = new NhanVien_Service();
+        List<NhanVienDTO> dtos = thuoc_service.getAllNhanVien();
+        dtos.forEach(System.out::println);
     }
 
 

@@ -193,7 +193,7 @@ public class TimHoaDonController extends ScrollPane{
 
         // --- Khởi tạo ComboBox nhân viên ---
         NhanVien_Service nhanVien_service = new NhanVien_Service();
-        ObservableList<NhanVienDTO> dsNhanVien = FXCollections.observableArrayList(I_NhanVien_Service.getDsNhanVienformDBS());
+        ObservableList<NhanVienDTO> dsNhanVien = FXCollections.observableArrayList(nhanVien_service.getAllNhanVien());
         // Thêm lựa chọn "Tất cả" vào đầu danh sách
         NhanVienDTO tatCaNV = new NhanVienDTO("Tất cả");
         dsNhanVien.add(0, tatCaNV);
