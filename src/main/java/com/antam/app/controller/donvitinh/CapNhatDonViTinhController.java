@@ -183,7 +183,8 @@ public class CapNhatDonViTinhController extends ScrollPane {
         });
         txtMa.setEditable(false);
         try {
-            int maxMa = Integer.parseInt(I_DonViTinh_Service.getHashDVT());
+            DonViTinh_Service donViTinhService = new DonViTinh_Service();
+            int maxMa = Integer.parseInt(donViTinhService.getHashDVT());
             txtMa.setText(String.valueOf(++maxMa));
         } catch (Exception e) {
             e.printStackTrace();

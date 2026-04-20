@@ -28,6 +28,26 @@ import java.util.ArrayList;
 public class DonViTinh_DAO implements I_DonViTinh_DAO {
 
     @Override
+    public String getHashDVT() {
+        StringBuilder hashBuilder = new StringBuilder();
+        String sql = "SELECT MaDVT, TenDVT, isDelete FROM DonViTinh ORDER BY MaDVT";
+
+        try {
+            Connection con = ensureConnection();
+            try (Statement statement = con.createStatement(); ResultSet rs = statement.executeQuery(sql)) {
+                while (rs.next()) {
+                    hashBuilder.append(rs.getInt("MaDVT"))
+                               .append(rs.getString("TenDVT"))
+                               .append(rs.getBoolean("isDelete"));
+                }
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Loi khi lay hash don vi tinh", e);
+        }
+        return hashBuilder.toString();
+    }
+
+    @Override
     public DonViTinh getDVTTheoMaDVT(int ma) {
         return getDVTTheoMa(ma);
     }

@@ -23,6 +23,14 @@ import java.util.ArrayList;
  * @version: 1.0
  */
 public class DonViTinh_Service implements I_DonViTinh_Service {
+    @Override
+    public String getHashDVT() {
+        try {
+            return donViTinhDAO.getHashDVT();
+        } catch (Exception e) {
+            throw new RuntimeException("Loi khi lay hash don vi tinh", e);
+        }
+    }
 
     private final I_DonViTinh_DAO donViTinhDAO = new DonViTinh_DAO();
 

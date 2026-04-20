@@ -12,9 +12,7 @@ import java.util.ArrayList;
  * @version: 1.0
  */
 public interface I_DonViTinh_Service {
-    static String getHashDVT() {
-        return I_DonViTinh_DAO.getHashDVT();
-    }
+    String getHashDVT();
 
     DonViTinhDTO getDVTTheoMaDVT(int ma);
 

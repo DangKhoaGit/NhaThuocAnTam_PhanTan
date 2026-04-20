@@ -38,9 +38,15 @@ public class Tester {
 //                hoaDons.toString()
 //        );
 
-        NhanVien_Service thuoc_service = new NhanVien_Service();
-        List<NhanVienDTO> dtos = thuoc_service.getAllNhanVien();
-        for (NhanVienDTO dto : dtos) {
+//        NhanVien_Service thuoc_service = new NhanVien_Service();
+//        List<NhanVienDTO> dtos = thuoc_service.getAllNhanVien();
+//        for (NhanVienDTO dto : dtos) {
+//            System.out.println(dto);
+//        }
+
+        DonViTinh_Service service = new DonViTinh_Service();
+        List<DonViTinhDTO> dtos = service.getAllDonViTinh();
+        for (DonViTinhDTO dto : dtos) {
             System.out.println(dto);
         }
 

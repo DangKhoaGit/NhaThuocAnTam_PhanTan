@@ -144,7 +144,8 @@ public class ThemDonViTinhController extends ScrollPane {
 
         txtMa.setEditable(false);
         try {
-            int maxMa = Integer.parseInt(I_DonViTinh_Service.getHashDVT());
+            I_DonViTinh_Service service = new DonViTinh_Service();
+            int maxMa = Integer.parseInt(service.getHashDVT());
             txtMa.setText(String.valueOf(++maxMa));
         } catch (Exception e) {
             e.printStackTrace();
