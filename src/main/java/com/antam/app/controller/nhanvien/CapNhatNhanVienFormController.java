@@ -5,7 +5,6 @@ package com.antam.app.controller.nhanvien;/*
  * @version: 1.0
  */
 
-import com.antam.app.service.I_NhanVien_Service;
 import com.antam.app.dto.NhanVienDTO;
 import com.antam.app.service.impl.NhanVien_Service;
 import javafx.geometry.Insets;
@@ -221,7 +220,7 @@ public class CapNhatNhanVienFormController extends DialogPane{
         if (cbChucVu.getItems().isEmpty()) {
             cbChucVu.getItems().addAll("Nhân viên", "Nhân viên quản lí");
         }
-        cbChucVu.getSelectionModel().select(select.isQuanLy() ? 1 : 0);
+        cbChucVu.getSelectionModel().select(select.isQuanLi() ? 1 : 0);
 
         SpinnerValueFactory<Double> valueFactory =
                 new SpinnerValueFactory.DoubleSpinnerValueFactory(0.0, 100_000_000.0, select.getLuongCoBan(), 500_000.0);

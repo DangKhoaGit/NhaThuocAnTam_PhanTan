@@ -16,7 +16,7 @@ public class NhanVien_Service implements I_NhanVien_Service {
 
     private NhanVienDTO mapEntityToDTO(NhanVien entity) {
         if (entity == null) return null;
-
+//        System.out.println(entity);
         return NhanVienDTO.builder()
                 .MaNV(entity.getMaNV())
                 .hoTen(entity.getHoTen())
@@ -26,8 +26,8 @@ public class NhanVien_Service implements I_NhanVien_Service {
                 .luongCoBan(entity.getLuongCoBan())
                 .taiKhoan(entity.getTaiKhoan())
                 .matKhau(entity.getMatKhau())
-                .isQuanLy(entity.isQuanLy())
-                .deleteAt(entity.isDeleteAt())
+                .quanLi(entity.isDeleteAt())
+                .deleteAt(entity.isQuanLi())
                 .build();
     }
 
@@ -43,8 +43,8 @@ public class NhanVien_Service implements I_NhanVien_Service {
                 .luongCoBan(dto.getLuongCoBan())
                 .taiKhoan(dto.getTaiKhoan())
                 .matKhau(dto.getMatKhau())
-                .isQuanLy(dto.isQuanLy())
-                .deleteAt(dto.isDeleteAt())
+                .quanLi(dto.isDeleteAt())
+                .deleteAt(dto.isQuanLi())
                 .build();
     }
 

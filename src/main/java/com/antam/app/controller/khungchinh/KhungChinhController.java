@@ -218,7 +218,7 @@ public class KhungChinhController extends BorderPane {
         });
 
         // Phân quyền người dùng
-        boolean isAdmin = PhienNguoiDungDTO.getMaNV().isQuanLy();
+        boolean isAdmin = PhienNguoiDungDTO.getMaNV().isQuanLi();
         System.out.println(isAdmin);
         if (isAdmin){
             batFullQuyenNguoiDung();

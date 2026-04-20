@@ -8,10 +8,7 @@ package com.antam.app.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.util.List;
 
@@ -25,12 +22,13 @@ import java.util.List;
 @NoArgsConstructor(force = true)
 @AllArgsConstructor
 @Builder
-
+@ToString
 @Entity
 @Table(name = "NhanVien")
 public class NhanVien {
     @Id
-    private final String MaNV;
+    @ToString.Include
+    private String MaNV;
     @Column(name = "HoTen")
     private String hoTen;
     @Column(name = "SoDienThoai")
@@ -46,22 +44,25 @@ public class NhanVien {
     @Column(name = "MatKhau")
     private String matKhau;
     @Column(name = "IsQuanLi")
-    private boolean isQuanLy;
+    private boolean quanLi;
     @Column(columnDefinition = "BOOLEAN DEFAULT FALSE")
-    private boolean deleteAt = false;
+    private boolean deleteAt;
 
 
     @OneToMany(mappedBy = "maNV")
     @JsonIgnore
+    @ToString.Exclude
     private List<PhieuNhap> phieuNhapList;
 
 
     @OneToMany(mappedBy = "maNV")
     @JsonIgnore
+    @ToString.Exclude
     private List<HoaDon> hoaDonList;
 
     @OneToMany(mappedBy = "nhanVien")
     @JsonIgnore
+    @ToString.Exclude
     private List<PhieuDatThuoc> phieuDatThuocList;
 
     public NhanVien(String MaNhanVien) {
@@ -73,7 +74,7 @@ public class NhanVien {
         luongCoBan = 0;
         taiKhoan = "";
         matKhau = "";
-        isQuanLy = false;
+        quanLi = false;
         deleteAt = false;
     }
 
@@ -86,11 +87,11 @@ public class NhanVien {
         luongCoBan = 0;
         taiKhoan = "";
         matKhau = "";
-        isQuanLy = false;
+        quanLi = false;
         deleteAt = false;
     }
 
-    public NhanVien(String maNV, String hoTen, String soDienThoai, String email, String diaChi, double luongCoBan, String taiKhoan, String matKhau, boolean isQuanLy) {
+    public NhanVien(String maNV, String hoTen, String soDienThoai, String email, String diaChi, double luongCoBan, String taiKhoan, String matKhau, boolean isQuanLi) {
         MaNV = maNV;
         setHoTen(hoTen);
         setSoDienThoai(soDienThoai);
@@ -100,7 +101,7 @@ public class NhanVien {
         setTaiKhoan(taiKhoan);
         setMatKhau(matKhau);
         this.deleteAt = false;
-        this.isQuanLy = isQuanLy;
+        this.quanLi = isQuanLi;
     }
 
     /**
@@ -117,7 +118,7 @@ public class NhanVien {
         luongCoBan = 0;
         taiKhoan = "";
         matKhau = "";
-        isQuanLy = ql;
+        quanLi = ql;
         deleteAt = false;
     }
 
@@ -132,6 +133,6 @@ public class NhanVien {
         setTaiKhoan(taiKhoan);
         setMatKhau(matKhau);
         this.deleteAt = deleteAt;
-        this.isQuanLy = isQL;
+        this.quanLi = isQL;
     }
 }

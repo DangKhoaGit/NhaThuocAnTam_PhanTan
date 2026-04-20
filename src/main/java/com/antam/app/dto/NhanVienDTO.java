@@ -6,12 +6,9 @@
 
 package com.antam.app.dto;
 
-import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import java.util.List;
 
 /*
  * @description
@@ -24,7 +21,7 @@ import java.util.List;
 @Builder
 
 public class NhanVienDTO {
-    private final String MaNV;
+    private String MaNV;
     private String hoTen;
     private String soDienThoai;
     private String email;
@@ -32,8 +29,8 @@ public class NhanVienDTO {
     private double luongCoBan;
     private String taiKhoan;
     private String matKhau;
-    private boolean isQuanLy;
-    private boolean deleteAt = false;
+    private boolean quanLi;
+    private boolean deleteAt;
 
 
     public NhanVienDTO(String MaNhanVien) {
@@ -45,7 +42,7 @@ public class NhanVienDTO {
         luongCoBan = 0;
         taiKhoan = "";
         matKhau = "";
-        isQuanLy = false;
+        quanLi = false;
         deleteAt = false;
     }
 
@@ -58,11 +55,11 @@ public class NhanVienDTO {
         luongCoBan = 0;
         taiKhoan = "";
         matKhau = "";
-        isQuanLy = false;
+        quanLi = false;
         deleteAt = false;
     }
 
-    public NhanVienDTO(String maNV, String hoTen, String soDienThoai, String email, String diaChi, double luongCoBan, String taiKhoan, String matKhau, boolean isQuanLy) {
+    public NhanVienDTO(String maNV, String hoTen, String soDienThoai, String email, String diaChi, double luongCoBan, String taiKhoan, String matKhau, boolean quanLi) {
         MaNV = maNV;
         setHoTen(hoTen);
         setSoDienThoai(soDienThoai);
@@ -72,7 +69,7 @@ public class NhanVienDTO {
         setTaiKhoan(taiKhoan);
         setMatKhau(matKhau);
         this.deleteAt = false;
-        this.isQuanLy = isQuanLy;
+        this.quanLi = quanLi;
     }
 
     /**
@@ -89,7 +86,7 @@ public class NhanVienDTO {
         luongCoBan = 0;
         taiKhoan = "";
         matKhau = "";
-        isQuanLy = ql;
+        quanLi = ql;
         deleteAt = false;
     }
 
@@ -104,6 +101,6 @@ public class NhanVienDTO {
         setTaiKhoan(taiKhoan);
         setMatKhau(matKhau);
         this.deleteAt = deleteAt;
-        this.isQuanLy = isQL;
+        this.quanLi = isQL;
     }
 }

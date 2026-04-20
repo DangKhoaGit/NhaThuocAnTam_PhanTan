@@ -155,25 +155,25 @@ VALUES
 ('KM010', 'Quà sinh nhật khách', '2025-01-01', '2025-12-31', 10, 10, 1000);
 
 -- 6) NhanVien (10)
-INSERT INTO NhanVien (MaNV, HoTen, SoDienThoai, Email, DiaChi, LuongCoBan, TaiKhoan, MatKhau, IsQuanLi)
+INSERT INTO NhanVien (MaNV, HoTen, SoDienThoai, Email, DiaChi, LuongCoBan, TaiKhoan, MatKhau, IsQuanLi, deleteAt)
 VALUES
-('NV00001', 'Nguyễn Văn A', '0901111111', 'a@demo.com', N'Hà Nội', 8000000, 'Admin001', '$2a$10$X/xFV0CNENZygt45r6Mv4uZvpzasse8vZP4JILoCIflAJe/iV1Wo.', 1),
-('NV00002', 'Trần Thị B', '0902222222', 'b@demo.com', N'Hồ Chí Minh', 7000000, 'Admin002', '$2a$10$kkpueKFVcVU8G7xt18LjFeLmA9aDVIBQkj7x09r.1/ZgynqagApRS', 0),
-('NV00003', 'Lê Văn C', '0903333333', 'c@demo.com', N'Đà Nẵng', 7500000, 'Admin003', '$2a$10$Rab1dh6FYroUgva3Uns2XO0XmTwV6GR6.hu3TntMdsdWDL5ImMyEe', 0),
-('NV00004', 'Phạm Thị D', '0904444444', 'd@demo.com', N'Hải Phòng', 6000000, 'Admin004', '$2a$10$tKCsBoJdAMnD0U7lDi3I8.wO5aCyVdgOaGWE5IbOGjCvQESLOaMU.', 0),
-('NV00005', 'Đỗ Văn E', '0905555555', 'e@demo.com', N'Cần Thơ', 9000000, 'Admin005', '$2a$10$EoEt3vVfQyjuPifUshnBp.9d2yZXD16W4hgqC7t1n8M7qNlKQYd4.', 1),
-('NV00006', 'Hoàng Văn F', '0906666666', 'f@demo.com', N'Nghệ An', 6500000, 'Admin006', '$2a$10$aSuLOsWiB8yKQtUiXq8Hb.YheuIeg.Cl5u/A7Tm4uOt7kclZ8fuSe', 0),
-('NV00007', 'Nguyễn Thị G', '0907777777', 'g@demo.com', N'Quảng Ninh', 7200000, 'Admin007', '$2a$10$E0GiCfQc1eMA1fSxxNPlhOyPyPGqjb8L.wFfMOKe3T4hMa7tqcyy.', 0),
-('NV00008', 'Trần Văn H', '0908888888', 'h@demo.com', N'Hồ Chí Minh', 8100000, 'Admin008', '$2a$10$yKREYSAWILFTrvWZqKAMaeOknKXPuAzFMNE8GLKzbsVzmfh4PxAPW', 0),
-('NV00009', 'Vũ Văn I', '0909999999', 'i@demo.com', N'Hà Nội', 5600000, 'Admin009', '$2a$10$pmvOTNGy5T9XbGx15ZaNLOu65Z204ef7PGCQIEvNgMbiGQS0DIQMi', 0),
-('NV00010', 'Lê Thị K', '0910000000', 'k@demo.com', N'Đồng Nai', 7700000, 'Admin010', '$2a$10$NBgxliiMLOwW2noPBBhUOuQkuDCx6.XXg8.5n78SZCHyPS7.ri.fK', 0);
+('NV00001', 'Nguyễn Văn A', '0901111111', 'a@demo.com', N'Hà Nội', 8000000, 'Admin001', '$2a$10$X/xFV0CNENZygt45r6Mv4uZvpzasse8vZP4JILoCIflAJe/iV1Wo.', 1 ,0),
+('NV00002', 'Trần Thị B', '0902222222', 'b@demo.com', N'Hồ Chí Minh', 7000000, 'Admin002', '$2a$10$kkpueKFVcVU8G7xt18LjFeLmA9aDVIBQkj7x09r.1/ZgynqagApRS', 0,0),
+('NV00003', 'Lê Văn C', '0903333333', 'c@demo.com', N'Đà Nẵng', 7500000, 'Admin003', '$2a$10$Rab1dh6FYroUgva3Uns2XO0XmTwV6GR6.hu3TntMdsdWDL5ImMyEe', 0,0),
+('NV00004', 'Phạm Thị D', '0904444444', 'd@demo.com', N'Hải Phòng', 6000000, 'Admin004', '$2a$10$tKCsBoJdAMnD0U7lDi3I8.wO5aCyVdgOaGWE5IbOGjCvQESLOaMU.', 0,0),
+('NV00005', 'Đỗ Văn E', '0905555555', 'e@demo.com', N'Cần Thơ', 9000000, 'Admin005', '$2a$10$EoEt3vVfQyjuPifUshnBp.9d2yZXD16W4hgqC7t1n8M7qNlKQYd4.', 1,0),
+('NV00006', 'Hoàng Văn F', '0906666666', 'f@demo.com', N'Nghệ An', 6500000, 'Admin006', '$2a$10$aSuLOsWiB8yKQtUiXq8Hb.YheuIeg.Cl5u/A7Tm4uOt7kclZ8fuSe', 0,0),
+('NV00007', 'Nguyễn Thị G', '0907777777', 'g@demo.com', N'Quảng Ninh', 7200000, 'Admin007', '$2a$10$E0GiCfQc1eMA1fSxxNPlhOyPyPGqjb8L.wFfMOKe3T4hMa7tqcyy.', 0,0),
+('NV00008', 'Trần Văn H', '0908888888', 'h@demo.com', N'Hồ Chí Minh', 8100000, 'Admin008', '$2a$10$yKREYSAWILFTrvWZqKAMaeOknKXPuAzFMNE8GLKzbsVzmfh4PxAPW', 0,0),
+('NV00009', 'Vũ Văn I', '0909999999', 'i@demo.com', N'Hà Nội', 5600000, 'Admin009', '$2a$10$pmvOTNGy5T9XbGx15ZaNLOu65Z204ef7PGCQIEvNgMbiGQS0DIQMi', 0,1),
+('NV00010', 'Lê Thị K', '0910000000', 'k@demo.com', N'Đồng Nai', 7700000, 'Admin010', '$2a$10$NBgxliiMLOwW2noPBBhUOuQkuDCx6.XXg8.5n78SZCHyPS7.ri.fK', 1,1);
 
-INSERT INTO NhanVien (MaNV, HoTen, SoDienThoai, Email, DiaChi, LuongCoBan, TaiKhoan, MatKhau, IsQuanLi)
+INSERT INTO NhanVien (MaNV, HoTen, SoDienThoai, Email, DiaChi, LuongCoBan, TaiKhoan, MatKhau, IsQuanLi,deleteAt)
 VALUES
-('NV00011', 'Nguyễn Thái Dương', '0901111111', 'a@demo.com', N'Hà Nội', 8000000, 'Duong2008', '$2a$10$BWKeZnKvmCiH0rBz8WuhwOm6E9B8XG4NI5lWXrqsUGtsRt5kaxX/m', 1),
-('NV00012', 'Trần Tuấn Hưng', '092516379', 'a@demo.com', N'Hà Nội', 8000000, 'hung', '$2a$10$6wQWTyWHn3HrYcuTeaBtOeqULklQ57UiYoSjhE9n1NPNRT1/nidGq', 1),
-('NV00013', 'Nguyễn Thành Duy', '092512345', 'a@demo.com', N'Hà Nội', 8000000, 'duy', '$2a$10$HBjmcsGo5sFCXVMogMwsIu9JxwAFVT2fvNv3WAS4PhyW46VtkRnyK/nidGq', 1),
-('NV00014', 'Phạm Đăng Khoa', '0393117635', 'a@demo.com', N'Hà Nội', 8000000, 'khoa', '$2a$10$Ly7W3J3DKk3Q6bKZ7a2oReNg/TUWAiUFTtH6GnMGED4FwRinkK2fu', 1);
+('NV00011', 'Nguyễn Thái Dương', '0901111111', 'a@demo.com', N'Hà Nội', 8000000, 'Duong2008', '$2a$10$BWKeZnKvmCiH0rBz8WuhwOm6E9B8XG4NI5lWXrqsUGtsRt5kaxX/m', 1,0),
+('NV00012', 'Trần Tuấn Hưng', '092516379', 'a@demo.com', N'Hà Nội', 8000000, 'hung', '$2a$10$6wQWTyWHn3HrYcuTeaBtOeqULklQ57UiYoSjhE9n1NPNRT1/nidGq', 1,0),
+('NV00013', 'Nguyễn Thành Duy', '092512345', 'a@demo.com', N'Hà Nội', 8000000, 'duy', '$2a$10$EgXLuLH45T9rbEU6yICX0./ttlJaPBBuD5u2SUgXDG0yMTJz17zDm', 1,0),
+('NV00014', 'Phạm Đăng Khoa', '0393117635', 'a@demo.com', N'Hà Nội', 8000000, 'khoa', '$2a$10$Ly7W3J3DKk3Q6bKZ7a2oReNg/TUWAiUFTtH6GnMGED4FwRinkK2fu', 1,0);
 
 -- 7) KhachHang (10)
 INSERT INTO KhachHang (MaKH, TenKH, SoDienThoai)

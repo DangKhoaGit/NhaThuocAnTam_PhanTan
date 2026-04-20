@@ -1,6 +1,7 @@
 package com.antam.app;
 
 import com.antam.app.dao.impl.HoaDon_DAO;
+import com.antam.app.dao.impl.NhanVien_DAO;
 import com.antam.app.dao.impl.Thuoc_DAO;
 import com.antam.app.dto.*;
 import com.antam.app.entity.HoaDon;
@@ -22,7 +23,7 @@ import java.util.List;
  */
 public class Tester {
     public static void main(String[] args) {
-//        String string = "duong";
+//        String string = "admin";
 //        String password = MaKhoaMatKhau.hashPassword(string , 10);
 //        System.out.println(password);
 
@@ -39,7 +40,10 @@ public class Tester {
 
         NhanVien_Service thuoc_service = new NhanVien_Service();
         List<NhanVienDTO> dtos = thuoc_service.getAllNhanVien();
-        dtos.forEach(System.out::println);
+        for (NhanVienDTO dto : dtos) {
+            System.out.println(dto);
+        }
+
     }
 
 

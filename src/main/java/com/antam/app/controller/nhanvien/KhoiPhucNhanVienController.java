@@ -1,6 +1,5 @@
 package com.antam.app.controller.nhanvien;
 
-import com.antam.app.service.I_NhanVien_Service;
 import com.antam.app.dto.NhanVienDTO;
 import com.antam.app.service.impl.NhanVien_Service;
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcon;
@@ -17,7 +16,6 @@ import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 
 import java.text.DecimalFormat;
-import java.util.ArrayList;
 import java.util.List;
 
 public class KhoiPhucNhanVienController extends ScrollPane{
@@ -278,7 +276,7 @@ public class KhoiPhucNhanVienController extends ScrollPane{
         colMaNV.setCellValueFactory(t -> new SimpleStringProperty(t.getValue().getMaNV()));
         colHoTen.setCellValueFactory(t -> new SimpleStringProperty(t.getValue().getHoTen()));
         colChucVu.setCellValueFactory(t -> new SimpleStringProperty(
-                t.getValue().isQuanLy() ? "Nhân viên quản lý" : "Nhân viên"));
+                t.getValue().isQuanLi() ? "Nhân viên quản lý" : "Nhân viên"));
         colSDT.setCellValueFactory(t -> new SimpleStringProperty(t.getValue().getSoDienThoai()));
         colDiaChi.setCellValueFactory(t -> new SimpleStringProperty(t.getValue().getDiaChi()));
         colEmail.setCellValueFactory(t -> new SimpleStringProperty(t.getValue().getEmail()));
@@ -322,8 +320,8 @@ public class KhoiPhucNhanVienController extends ScrollPane{
 
             boolean matchChucVu =
                     chucVu.equals("Tất cả") ||
-                            (chucVu.equals("Nhân viên") && !nv.isQuanLy()) ||
-                            (chucVu.equals("Nhân viên quản lý") && nv.isQuanLy());
+                            (chucVu.equals("Nhân viên") && !nv.isQuanLi()) ||
+                            (chucVu.equals("Nhân viên quản lý") && nv.isQuanLi());
 
             double l = nv.getLuongCoBan();
             boolean matchLuong =

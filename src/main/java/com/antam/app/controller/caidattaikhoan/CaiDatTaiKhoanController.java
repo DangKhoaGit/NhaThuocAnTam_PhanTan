@@ -1,6 +1,5 @@
 package com.antam.app.controller.caidattaikhoan;
 
-import com.antam.app.service.I_NhanVien_Service;
 import com.antam.app.dto.PhienNguoiDungDTO;
 import com.antam.app.helper.MaKhoaMatKhau;
 import com.antam.app.service.impl.NhanVien_Service;
@@ -215,7 +214,7 @@ public class CaiDatTaiKhoanController extends ScrollPane{
         if (PhienNguoiDungDTO.getMaNV() == null) return;
 
         String tk = PhienNguoiDungDTO.getMaNV().getTaiKhoan();
-        String cv = PhienNguoiDungDTO.getMaNV().isQuanLy() ? "Nhân viên quản lí" : "Nhân viên";
+        String cv = PhienNguoiDungDTO.getMaNV().isQuanLi() ? "Nhân viên quản lí" : "Nhân viên";
         txtTK.setText(tk);
         txtVaiTro.setText(cv);
     }
