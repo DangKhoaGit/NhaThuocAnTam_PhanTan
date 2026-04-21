@@ -8,13 +8,13 @@ package com.antam.app.gui;
 import java.io.IOException;
 
 import com.antam.app.controller.dangnhap.DangNhapController;
-import com.antam.app.controller.khungchinh.KhungChinhController;
+
 import javafx.application.Application;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 
-public class GiaoDienChinh extends Application {
+public class  GiaoDienChinh extends Application {
     public GiaoDienChinh() {
     }
 
