@@ -308,7 +308,7 @@ public class KhoiPhucThuocController extends ScrollPane{
     public void addComBoBoxKe() {
         ArrayList<KeDTO> arrayKe = keService.getTatCaKeHoatDong();
         cbKe.getItems().clear();
-        KeDTO tatCa = new KeDTO("KE0001", "Tất cả", "Tất cả", false);
+        KeDTO tatCa = new KeDTO("KE0000", "Tất cả", "Tất cả", false);
         cbKe.getItems().add(tatCa);
         for (KeDTO keDTO : arrayKe) {
             cbKe.getItems().add(keDTO);
