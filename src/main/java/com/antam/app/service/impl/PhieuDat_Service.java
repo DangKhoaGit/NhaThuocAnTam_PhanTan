@@ -8,9 +8,6 @@ package com.antam.app.service.impl;/*
 import java.util.ArrayList;
 import java.util.List;
 
-import com.antam.app.dao.impl.KhachHang_DAO;
-import com.antam.app.dao.impl.KhuyenMai_DAO;
-import com.antam.app.dao.impl.NhanVien_DAO;
 import com.antam.app.dao.impl.PhieuDat_DAO;
 import com.antam.app.dto.ChiTietPhieuDatThuocDTO;
 import com.antam.app.dto.KhachHangDTO;
@@ -172,4 +169,6 @@ public class PhieuDat_Service implements I_PhieuDat_Service {
     public ArrayList<KhachHangDTO> getAllKhachHangFromService() {
         return khDAO.getAllKhachHang();
     }
+
+
 }

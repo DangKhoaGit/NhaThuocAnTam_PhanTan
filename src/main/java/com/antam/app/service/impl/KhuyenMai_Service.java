@@ -127,4 +127,22 @@ public class KhuyenMai_Service implements I_KhuyenMai_Service {
         }
         return new LoaiKhuyenMai(dto.getMaLKM(), dto.getTenLKM());
     }
+
+    public KhuyenMaiDTO mapEntityToDTO(KhuyenMai entity) {
+        if (entity == null) return null;
+        LoaiKhuyenMaiDTO loaiDTO = null;
+        if (entity.getLoaiKhuyenMai() != null) {
+            loaiDTO = new LoaiKhuyenMaiDTO(entity.getLoaiKhuyenMai().getMaLKM(), entity.getLoaiKhuyenMai().getTenLKM());
+        }
+        return new KhuyenMaiDTO(entity.getMaKM(), entity.getTenKM(), entity.getNgayBatDau(), entity.getNgayKetThuc(), loaiDTO, entity.getSo(), entity.getSoLuongToiDa(), entity.isDeleteAt());
+    }
+
+    public KhuyenMai mapDTOToEntity(KhuyenMaiDTO dto) {
+        if (dto == null) return null;
+        LoaiKhuyenMai loai = null;
+        if (dto.getLoaiKhuyenMaiDTO() != null) {
+            loai = new LoaiKhuyenMai(dto.getLoaiKhuyenMaiDTO().getMaLKM(), dto.getLoaiKhuyenMaiDTO().getTenLKM());
+        }
+        return new KhuyenMai(dto.getMaKM(), dto.getTenKM(), dto.getNgayBatDau(), dto.getNgayKetThuc(), loai, dto.getSo(), dto.getSoLuongToiDa(), false); // assuming deleteAt false
+    }
 }

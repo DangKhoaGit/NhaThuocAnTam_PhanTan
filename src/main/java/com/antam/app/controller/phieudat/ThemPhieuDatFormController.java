@@ -310,6 +310,28 @@ public class ThemPhieuDatFormController extends DialogPane{
         cbDonVi.getSelectionModel().selectFirst();
         // load comboBox thuốc
         cbTenThuoc.getItems().addAll(FXCollections.observableArrayList(dsThuoc));
+        cbTenThuoc.setConverter(new javafx.util.StringConverter<ThuocDTO>() {
+            @Override
+            public String toString(ThuocDTO thuoc) {
+                return thuoc == null ? "" : thuoc.getTenThuoc();
+            }
+
+            @Override
+            public ThuocDTO fromString(String text) {
+                if (text == null) return null;
+                return cbTenThuoc.getItems().stream()
+                        .filter(t -> text.equals(t.getTenThuoc()))
+                        .findFirst()
+                        .orElse(null);
+            }
+        });
+        cbTenThuoc.setCellFactory(lv -> new ListCell<ThuocDTO>() {
+            @Override
+            protected void updateItem(ThuocDTO item, boolean empty) {
+                super.updateItem(item, empty);
+                setText(empty || item == null ? null : item.getTenThuoc());
+            }
+        });
 
         // setup mã phiếu
         txtMa.setText(getHashPD());
@@ -643,9 +665,9 @@ public class ThemPhieuDatFormController extends DialogPane{
             ConnectDB.getInstance().connect();
             Connection con = ConnectDB.getConnection();
             con.setAutoCommit(false); // TRANSACTION
-
+            PhieuDat_Service phieuDatService = new PhieuDat_Service();
             // 6.1 Thêm phiếu
-            I_PhieuDat_Service.themPhieuDatThuocVaoDBS(phieu);
+            phieuDatService.themPhieuDatThuocVaoDBS(phieu);
 
             // 6.2 Thêm chi tiết + trừ kho
             for (ChiTietPhieuDatThuocDTO ct : tbChonThuoc.getItems()) {
@@ -657,8 +679,9 @@ public class ThemPhieuDatFormController extends DialogPane{
                     throw new RuntimeException("Không đủ tồn kho cho lô " + lo.getMaLoThuoc());
                 }
 
+                ChiTietPhieuDat_Service chiTietPhieuDatService = new ChiTietPhieuDat_Service();
                 // Thêm chi tiết phiếu
-                I_ChiTietPhieuDat_Service.themChiTietPhieuDatVaoDBS(
+                chiTietPhieuDatService.themChiTietPhieuDatVaoDBS(
                         new ChiTietPhieuDatThuocDTO(
                                 phieu,
                                 lo,
@@ -721,11 +744,14 @@ public class ThemPhieuDatFormController extends DialogPane{
      * @return String - mã phiếu đặt mới
      */
     private String getHashPD() {
-        String hash = I_PhieuDat_Service.getMaxHash();
+        PhieuDat_Service phieuDatService = new PhieuDat_Service();
+        String hash = phieuDatService.getMaxHash();
         if (hash == null){
-            return "";
+            return "PDT001";
         }else{
-            int soThuTu = Integer.parseInt(hash) + 1;
+            // Extract số từ mã phiếu (ví dụ: "PDT013" -> "013" -> 13)
+            String numberPart = hash.replaceAll("[^0-9]", "");
+            int soThuTu = Integer.parseInt(numberPart) + 1;
             return String.format("PDT%03d", soThuTu);
         }
     }

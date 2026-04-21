@@ -39,17 +39,17 @@ public class Tester {
 //                hoaDons.toString()
 //        );
 
-//        NhanVien_Service thuoc_service = new NhanVien_Service();
-//        List<NhanVienDTO> dtos = thuoc_service.getAllNhanVien();
-//        for (NhanVienDTO dto : dtos) {
+        NhanVien_Service thuoc_service = new NhanVien_Service();
+        List<NhanVienDTO> dtos = thuoc_service.getAllNhanVien();
+        for (NhanVienDTO dto : dtos) {
+            System.out.println(dto.getHoTen() +"|" +dto.isQuanLi() +"|" + dto.isDeleteAt());
+        }
+
+//        KhuyenMai_Service service = new KhuyenMai_Service();
+//        List<KhuyenMaiDTO> dtos = service.getAllKhuyenMai();
+//        for (KhuyenMaiDTO dto : dtos) {
 //            System.out.println(dto);
 //        }
-
-        KhuyenMai_Service service = new KhuyenMai_Service();
-        List<KhuyenMaiDTO> dtos = service.getAllKhuyenMai();
-        for (KhuyenMaiDTO dto : dtos) {
-            System.out.println(dto);
-        }
 
     }
 
