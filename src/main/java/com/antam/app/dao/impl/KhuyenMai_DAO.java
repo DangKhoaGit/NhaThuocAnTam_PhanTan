@@ -130,6 +130,32 @@ public class KhuyenMai_DAO implements I_KhuyenMai_DAO {
         }
     }
 
+    @Override
+    public java.util.List<KhuyenMai> fetchAllKhuyenMaiConHieuLuc() {
+        ArrayList<KhuyenMai> list = new ArrayList<>();
+        String sql = baseSelectSql() + " WHERE km.deleteAt = 0 AND km.NgayBatDau <= ? AND km.NgayKetThuc >= ?";
+        LocalDate today = LocalDate.now();
+        try {
+            Connection con = ConnectDB.getConnection();
+            if (con == null || con.isClosed()) {
+                ConnectDB.getInstance().connect();
+                con = ConnectDB.getConnection();
+            }
+            try (PreparedStatement ps = con.prepareStatement(sql)) {
+                ps.setDate(1, Date.valueOf(today));
+                ps.setDate(2, Date.valueOf(today));
+                try (ResultSet rs = ps.executeQuery()) {
+                    while (rs.next()) {
+                        list.add(mapResultSetToEntity(rs));
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
     private ArrayList<KhuyenMai> loadKhuyenMai(String whereClause) {
         ArrayList<KhuyenMai> list = new ArrayList<>();
         String sql = baseSelectSql() + (whereClause.isBlank() ? "" : " " + whereClause);

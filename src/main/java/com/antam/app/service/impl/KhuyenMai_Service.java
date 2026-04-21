@@ -1,193 +1,130 @@
 package com.antam.app.service.impl;
 
+import com.antam.app.dao.I_KhuyenMai_DAO;
+import com.antam.app.dao.impl.KhuyenMai_DAO;
+import com.antam.app.dto.KhuyenMaiDTO;
+import com.antam.app.dto.LoaiKhuyenMaiDTO;
 import com.antam.app.entity.KhuyenMai;
 import com.antam.app.entity.LoaiKhuyenMai;
 import com.antam.app.service.I_KhuyenMai_Service;
-import com.antam.app.dto.KhuyenMaiDTO;
-import com.antam.app.dto.LoaiKhuyenMaiDTO;
-import java.sql.*;
 import java.time.LocalDate;
 import java.util.ArrayList;
-
-import com.antam.app.connect.ConnectDB;
+import java.util.List;
 
 public class KhuyenMai_Service implements I_KhuyenMai_Service {
+    private final I_KhuyenMai_DAO khuyenMaiDAO;
+
+    public KhuyenMai_Service() {
+        this.khuyenMaiDAO = new KhuyenMai_DAO();
+    }
+
+    @Override
+    public List<KhuyenMaiDTO> getAllKhuyenMaiConHieuLuc() {
+        List<KhuyenMai> entities = khuyenMaiDAO.fetchAllKhuyenMaiConHieuLuc();
+        ArrayList<KhuyenMaiDTO> result = new ArrayList<>();
+        for (KhuyenMai entity : entities) {
+            result.add(toDto(entity));
+        }
+        return result;
+    }
 
     @Override
     public ArrayList<KhuyenMaiDTO> getAllKhuyenMaiChuaXoa() {
-        return loadKhuyenMai("WHERE km.deleteAt = 0");
+        return toDtoList(khuyenMaiDAO.getAllKhuyenMaiChuaXoa());
     }
 
     @Override
     public ArrayList<KhuyenMaiDTO> getAllKhuyenMaiDaXoa() {
-        return loadKhuyenMai("WHERE km.deleteAt = 1");
+        return toDtoList(khuyenMaiDAO.getAllKhuyenMaiDaXoa());
     }
 
     @Override
     public boolean khoiPhucKhuyenMai(String maKM) {
-        String sql = "UPDATE KhuyenMai SET deleteAt = 0 WHERE MaKM = ?";
-        try (Connection con = ConnectDB.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
-            ps.setString(1, maKM);
-            int rowsAffected = ps.executeUpdate();
-            return rowsAffected > 0;
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return false;
-        }
+        return khuyenMaiDAO.khoiPhucKhuyenMai(maKM);
     }
 
     @Override
     public ArrayList<KhuyenMaiDTO> getAllKhuyenMai() {
-        return loadKhuyenMai("");
+        return toDtoList(khuyenMaiDAO.getAllKhuyenMai());
     }
 
     @Override
     public KhuyenMaiDTO getKhuyenMaiTheoMa(String maKM) {
-        KhuyenMaiDTO km = null;
-        String sql = baseSelectSql() + " WHERE km.MaKM = ? AND km.deleteAt = 0";
-        try {
-            Connection con = ConnectDB.getConnection();
-            if (con == null || con.isClosed()) {
-                ConnectDB.getInstance().connect();
-                con = ConnectDB.getConnection();
-            }
-            PreparedStatement ps = con.prepareStatement(sql);
-            ps.setString(1, maKM);
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    km = mapResultSetToDto(rs);
-                }
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return km;
+        return toDto(khuyenMaiDAO.getKhuyenMaiTheoMa(maKM));
     }
 
     @Override
     public boolean themKhuyenMai(String maKM, String tenKM, LoaiKhuyenMaiDTO loaiKM, double so, LocalDate ngayBatDau, LocalDate ngayKetThuc, int soLuongToiDa) {
-        String sql = "INSERT INTO KhuyenMai (MaKM, TenKM, LoaiKhuyenMai, So, NgayBatDau, NgayKetThuc, SoLuongToiDa, deleteAt) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, 0)";
-        try  {
-            Connection con = ConnectDB.getConnection();
-            if (con == null || con.isClosed()) {
-                ConnectDB.getInstance().connect();
-                con = ConnectDB.getConnection();
-            }
-            PreparedStatement ps = con.prepareStatement(sql);
-            ps.setString(1, maKM);
-            ps.setString(2, tenKM);
-            ps.setInt(3, loaiKM.getMaLKM());
-            ps.setDouble(4, so);
-            ps.setDate(5, Date.valueOf(ngayBatDau));
-            ps.setDate(6, Date.valueOf(ngayKetThuc));
-            ps.setInt(7, soLuongToiDa);
-            int rowsAffected = ps.executeUpdate();
-            return rowsAffected > 0;
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return false;
-        }
+        return khuyenMaiDAO.themKhuyenMai(
+                maKM,
+                tenKM,
+                toLoaiEntity(loaiKM),
+                so,
+                ngayBatDau,
+                ngayKetThuc,
+                soLuongToiDa
+        );
     }
 
     @Override
     public boolean capNhatKhuyenMai(KhuyenMaiDTO km) {
-        String sql = "UPDATE KhuyenMai SET TenKM = ?, LoaiKhuyenMai = ?, So = ?, NgayBatDau = ?, NgayKetThuc = ?, SoLuongToiDa = ? " +
-                "WHERE MaKM = ? AND deleteAt = 0";
-        try  {
-            Connection con = ConnectDB.getConnection();
-            if (con == null || con.isClosed()) {
-                ConnectDB.getInstance().connect();
-                con = ConnectDB.getConnection();
-            }
-            PreparedStatement ps = con.prepareStatement(sql);
-            ps.setString(1, km.getTenKM());
-            ps.setInt(2, km.getLoaiKhuyenMaiDTO().getMaLKM());
-            ps.setDouble(3, km.getSo());
-            ps.setDate(4, Date.valueOf(km.getNgayBatDau()));
-            ps.setDate(5, Date.valueOf(km.getNgayKetThuc()));
-            ps.setInt(6, km.getSoLuongToiDa());
-            ps.setString(7, km.getMaKM());
-            int rowsAffected = ps.executeUpdate();
-            return rowsAffected > 0;
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return false;
-        }
+        return khuyenMaiDAO.capNhatKhuyenMai(toEntity(km));
     }
 
     @Override
     public boolean xoaKhuyenMai(String maKM) {
-        String sql = "UPDATE KhuyenMai SET deleteAt = 1 WHERE MaKM = ?";
-        try (Connection con = ConnectDB.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
-            ps.setString(1, maKM);
-            int rowsAffected = ps.executeUpdate();
-            return rowsAffected > 0;
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return false;
+        return khuyenMaiDAO.xoaKhuyenMai(maKM);
+    }
+
+    private ArrayList<KhuyenMaiDTO> toDtoList(List<KhuyenMai> entities) {
+        ArrayList<KhuyenMaiDTO> dtos = new ArrayList<>();
+        for (KhuyenMai entity : entities) {
+            dtos.add(toDto(entity));
         }
+        return dtos;
     }
 
-    private ArrayList<KhuyenMaiDTO> loadKhuyenMai(String whereClause) {
-        ArrayList<KhuyenMaiDTO> list = new ArrayList<>();
-        String sql = baseSelectSql() + (whereClause.isBlank() ? "" : " " + whereClause);
-        try  {
-            Connection con = ConnectDB.getConnection();
-            if (con == null || con.isClosed()) {
-                ConnectDB.getInstance().connect();
-                con = ConnectDB.getConnection();
-            }
-            Statement st = con.createStatement();
-            ResultSet rs = st.executeQuery(sql);
-            while (rs.next()) {
-                list.add(mapResultSetToDto(rs));
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
+    private KhuyenMaiDTO toDto(KhuyenMai entity) {
+        if (entity == null) {
+            return null;
         }
-        return list;
+        LoaiKhuyenMai loaiEntity = entity.getLoaiKhuyenMai();
+        LoaiKhuyenMaiDTO loaiDto = loaiEntity == null
+                ? new LoaiKhuyenMaiDTO(0, "")
+                : new LoaiKhuyenMaiDTO(loaiEntity.getMaLKM(), loaiEntity.getTenLKM());
+
+        return new KhuyenMaiDTO(
+                entity.getMaKM(),
+                entity.getTenKM(),
+                entity.getNgayBatDau(),
+                entity.getNgayKetThuc(),
+                loaiDto,
+                entity.getSo(),
+                entity.getSoLuongToiDa(),
+                entity.isDeleteAt()
+        );
     }
 
-    private String baseSelectSql() {
-        return "SELECT km.MaKM, km.TenKM, km.NgayBatDau, km.NgayKetThuc, km.LoaiKhuyenMai, km.So, km.SoLuongToiDa, km.deleteAt, " +
-                "COALESCE(lkm.TenLKM, '') AS TenLKM " +
-                "FROM KhuyenMai km LEFT JOIN LoaiKhuyenMai lkm ON km.LoaiKhuyenMai = lkm.MaLKM";
-    }
-
-    private KhuyenMaiDTO mapResultSetToDto(ResultSet rs) throws SQLException {
-        String maKM = rs.getString("MaKM");
-        String tenKM = rs.getString("TenKM");
-        Date sqlNgayBatDau = rs.getDate("NgayBatDau");
-        LocalDate ngayBatDau = sqlNgayBatDau != null ? sqlNgayBatDau.toLocalDate() : LocalDate.now();
-        Date sqlNgayKetThuc = rs.getDate("NgayKetThuc");
-        LocalDate ngayKetThuc = sqlNgayKetThuc != null ? sqlNgayKetThuc.toLocalDate() : LocalDate.now();
-        int maLoaiKM = rs.getInt("LoaiKhuyenMai");
-        String tenLoaiKM = rs.getString("TenLKM");
-        double so = rs.getDouble("So");
-        int soLuongToiDa = rs.getInt("SoLuongToiDa");
-        boolean deleteAt = rs.getBoolean("deleteAt");
-        LoaiKhuyenMaiDTO loai = new LoaiKhuyenMaiDTO(maLoaiKM, tenLoaiKM == null ? "" : tenLoaiKM);
-        return new KhuyenMaiDTO(maKM, tenKM, ngayBatDau, ngayKetThuc, loai, so, soLuongToiDa, deleteAt);
-    }
-
-    public KhuyenMaiDTO mapEntityToDTO(KhuyenMai entity) {
-        if (entity == null) return null;
-        LoaiKhuyenMaiDTO loaiDTO = null;
-        if (entity.getLoaiKhuyenMai() != null) {
-            loaiDTO = new LoaiKhuyenMaiDTO(entity.getLoaiKhuyenMai().getMaLKM(), entity.getLoaiKhuyenMai().getTenLKM());
+    private KhuyenMai toEntity(KhuyenMaiDTO dto) {
+        if (dto == null) {
+            return null;
         }
-        return new KhuyenMaiDTO(entity.getMaKM(), entity.getTenKM(), entity.getNgayBatDau(), entity.getNgayKetThuc(), loaiDTO, entity.getSo(), entity.getSoLuongToiDa(), entity.isDeleteAt());
+        return new KhuyenMai(
+                dto.getMaKM(),
+                dto.getTenKM(),
+                dto.getNgayBatDau(),
+                dto.getNgayKetThuc(),
+                toLoaiEntity(dto.getLoaiKhuyenMaiDTO()),
+                dto.getSo(),
+                dto.getSoLuongToiDa(),
+                false
+        );
     }
 
-    public KhuyenMai mapDTOToEntity(KhuyenMaiDTO dto) {
-        if (dto == null) return null;
-        LoaiKhuyenMai loai = null;
-        if (dto.getLoaiKhuyenMaiDTO() != null) {
-            loai = new LoaiKhuyenMai(dto.getLoaiKhuyenMaiDTO().getMaLKM(), dto.getLoaiKhuyenMaiDTO().getTenLKM());
+    private LoaiKhuyenMai toLoaiEntity(LoaiKhuyenMaiDTO dto) {
+        if (dto == null) {
+            return new LoaiKhuyenMai(0, "");
         }
-        return new KhuyenMai(dto.getMaKM(), dto.getTenKM(), dto.getNgayBatDau(), dto.getNgayKetThuc(), loai, dto.getSo(), dto.getSoLuongToiDa(), false); // assuming deleteAt false
+        return new LoaiKhuyenMai(dto.getMaLKM(), dto.getTenLKM());
     }
 }

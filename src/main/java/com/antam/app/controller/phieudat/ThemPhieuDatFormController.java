@@ -67,13 +67,12 @@ public class ThemPhieuDatFormController extends DialogPane{
     private DecimalFormat decimalFormat = new DecimalFormat("#,### đ");
     private ArrayList<ChiTietPhieuDatThuocDTO> list = new ArrayList<>();
     private ObservableList<ChiTietPhieuDatThuocDTO> obsThuoc = FXCollections.observableArrayList();
-    private PhieuDat_Service phieuDatDAO = new PhieuDat_Service();
-    private ChiTietPhieuDat_Service chiTietPhieuDatService = new ChiTietPhieuDat_Service();
+
 
     private KhachHang_Service khachHangDAO = new KhachHang_Service();
     private ArrayList<KhachHangDTO> dsKhach = khachHangDAO.getAllKhachHang();
     private KhuyenMai_Service KhuyenMai_DAO = new KhuyenMai_Service();
-    private ArrayList<KhuyenMaiDTO> dsKhuyenMai;
+    private ArrayList<KhuyenMaiDTO> dsKhuyenMai = new ArrayList<>();
     private LoThuoc_Service chiTietThuoc_dao = new LoThuoc_Service();
     private HoaDon_Service hoaDon_DAO = new HoaDon_Service();
     private ObservableList<KhachHangDTO> autoKhach = FXCollections.observableArrayList(dsKhach);
@@ -300,9 +299,6 @@ public class ThemPhieuDatFormController extends DialogPane{
             throw new RuntimeException(e);
         }
 
-        // load ds khuyến mãi
-        dsKhuyenMai = (ArrayList<KhuyenMaiDTO>) I_KhuyenMai_Service.getAllKhuyenMaiConHieuLuc();
-
         //setup phụ
         txtDonGia.setEditable(false);
         cbDonVi.setDisable(true);
@@ -312,50 +308,42 @@ public class ThemPhieuDatFormController extends DialogPane{
         dsThuoc = thuoc_dao.getAllThuoc();
         cbDonVi.getItems().addAll(FXCollections.observableArrayList(dsDonViTinh));
         cbDonVi.getSelectionModel().selectFirst();
-        cbDonVi.setConverter(new javafx.util.StringConverter<DonViTinhDTO>() {
-            @Override
-            public String toString(DonViTinhDTO dvt) {
-                return dvt == null ? "" : dvt.getTenDVT();
-            }
-
-            @Override
-            public DonViTinhDTO fromString(String string) {
-                return dsDonViTinh.stream().filter(d -> d.getTenDVT().equals(string)).findFirst().orElse(null);
-            }
-        });
         // load comboBox thuốc
         cbTenThuoc.getItems().addAll(FXCollections.observableArrayList(dsThuoc));
-        cbTenThuoc.setConverter(new javafx.util.StringConverter<ThuocDTO>() {
-            @Override
-            public String toString(ThuocDTO thuoc) {
-                return thuoc == null ? "" : thuoc.getTenThuoc();
-            }
-
-            @Override
-            public ThuocDTO fromString(String string) {
-                return dsThuoc.stream().filter(t -> t.getTenThuoc().equals(string)).findFirst().orElse(null);
-            }
-        });
 
         // setup mã phiếu
         txtMa.setText(getHashPD());
         txtMa.setEditable(false);
 
 
+        // Load khuyen mai after services are ready.
+        dsKhuyenMai = new ArrayList<>(KhuyenMai_DAO.getAllKhuyenMaiConHieuLuc());
+
         // load ComboBox Khuyến mãi.
         KhuyenMaiDTO nothing = new KhuyenMaiDTO("None","Không áp dụng");
+        cbKhuyenMai.getItems().clear();
         cbKhuyenMai.getItems().add(nothing);
         cbKhuyenMai.getItems().addAll(FXCollections.observableArrayList(dsKhuyenMai));
-        System.out.println("dsKhuyenMai size: " + dsKhuyenMai.size());
-        cbKhuyenMai.setConverter(new javafx.util.StringConverter<KhuyenMaiDTO>() {
+        cbKhuyenMai.setConverter(new javafx.util.StringConverter<>() {
             @Override
             public String toString(KhuyenMaiDTO km) {
                 return km == null ? "" : km.getTenKM();
             }
 
             @Override
-            public KhuyenMaiDTO fromString(String string) {
-                return dsKhuyenMai.stream().filter(k -> k.getTenKM().equals(string)).findFirst().orElse(null);
+            public KhuyenMaiDTO fromString(String text) {
+                if (text == null) return null;
+                return cbKhuyenMai.getItems().stream()
+                        .filter(km -> text.equals(km.getTenKM()))
+                        .findFirst()
+                        .orElse(null);
+            }
+        });
+        cbKhuyenMai.setCellFactory(lv -> new ListCell<>() {
+            @Override
+            protected void updateItem(KhuyenMaiDTO item, boolean empty) {
+                super.updateItem(item, empty);
+                setText(empty || item == null ? null : item.getTenKM());
             }
         });
 
@@ -657,7 +645,7 @@ public class ThemPhieuDatFormController extends DialogPane{
             con.setAutoCommit(false); // TRANSACTION
 
             // 6.1 Thêm phiếu
-            phieuDatDAO.themPhieuDatThuocVaoDBS(phieu);
+            I_PhieuDat_Service.themPhieuDatThuocVaoDBS(phieu);
 
             // 6.2 Thêm chi tiết + trừ kho
             for (ChiTietPhieuDatThuocDTO ct : tbChonThuoc.getItems()) {
@@ -670,7 +658,7 @@ public class ThemPhieuDatFormController extends DialogPane{
                 }
 
                 // Thêm chi tiết phiếu
-                chiTietPhieuDatService.themChiTietPhieuDatVaoDBS(
+                I_ChiTietPhieuDat_Service.themChiTietPhieuDatVaoDBS(
                         new ChiTietPhieuDatThuocDTO(
                                 phieu,
                                 lo,
@@ -733,11 +721,11 @@ public class ThemPhieuDatFormController extends DialogPane{
      * @return String - mã phiếu đặt mới
      */
     private String getHashPD() {
-        String hash = phieuDatDAO.getMaxHash();
+        String hash = I_PhieuDat_Service.getMaxHash();
         if (hash == null){
-            return "PDT001";
+            return "";
         }else{
-            int soThuTu = Integer.parseInt(hash.substring(3)) + 1;
+            int soThuTu = Integer.parseInt(hash) + 1;
             return String.format("PDT%03d", soThuTu);
         }
     }
