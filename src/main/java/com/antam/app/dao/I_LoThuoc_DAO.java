@@ -12,6 +12,8 @@ import java.util.ArrayList;
  */
 public interface I_LoThuoc_DAO {
     boolean themChiTietThuoc(LoThuoc ctt);
+    int themChiTietThuocVaLayID(LoThuoc lo);
+
 
     ArrayList<LoThuoc> getAllChiTietThuoc();
 

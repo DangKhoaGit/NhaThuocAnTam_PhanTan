@@ -3,7 +3,6 @@ module com.antam.app {
     requires javafx.fxml;
     requires javafx.graphics;
     requires java.desktop;
-    requires java.sql;
     requires javafx.controls;
     requires jbcrypt;
     requires itextpdf;
@@ -52,5 +51,6 @@ module com.antam.app {
     requires com.fasterxml.jackson.annotation;
     requires com.fasterxml.jackson.databind;
     requires com.fasterxml.jackson.datatype.jsr310;
+    requires org.mariadb.jdbc;
 
 }

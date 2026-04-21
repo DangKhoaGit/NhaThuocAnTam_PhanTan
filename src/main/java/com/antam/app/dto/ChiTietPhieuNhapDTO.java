@@ -52,6 +52,10 @@ public class ChiTietPhieuNhapDTO {
 
 
     public void setThanhTien() {
+        if (this.loThuocDTO == null || this.loThuocDTO.getMaThuocDTO() == null) {
+            this.thanhTien = this.soLuong * this.giaNhap;
+            return;
+        }
         this.thanhTien = thanhTien();
     }
 

@@ -78,8 +78,9 @@ public class LoThuocDTO {
         this.maThuocDTO = value;
         MaLoThuoc = i;
         setSoLuong(value1);
-        setHanSuDung(value2);
         setNgaySanXuat(value3);
+        setHanSuDung(value2);
+
     }
 
 

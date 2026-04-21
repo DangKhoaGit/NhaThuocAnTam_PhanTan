@@ -26,7 +26,7 @@ import java.util.List;
 @Builder
 
 public class PhieuNhapDTO {
-    private final String MaPhieuNhap;
+    private String MaPhieuNhap;
     private String nhaCungCap;
     private LocalDate ngayNhap;
     private String diaChi;

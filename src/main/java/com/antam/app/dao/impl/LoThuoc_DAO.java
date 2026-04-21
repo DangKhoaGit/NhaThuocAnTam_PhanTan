@@ -12,6 +12,7 @@ import com.antam.app.entity.ChiTietPhieuNhap;
 import com.antam.app.entity.LoThuoc;
 import com.antam.app.entity.PhieuNhap;
 import com.antam.app.entity.Thuoc;
+import org.mariadb.jdbc.Statement;
 
 import java.sql.Connection;
 import java.sql.Date;
@@ -44,6 +45,35 @@ public class LoThuoc_DAO implements I_LoThuoc_DAO {
             GROUP BY MaLoThuoc
         ) ctpn ON ctpn.MaLoThuoc = lt.MaLoThuoc
     """;
+
+    @Override
+    public int themChiTietThuocVaLayID(LoThuoc ctt) {
+        String sql = "INSERT INTO LoThuoc (MaThuoc, HanSuDung, NgaySanXuat, TonKho) VALUES (?, ?, ?, ?)";
+        try {
+            Connection con = ensureConnection();
+            if (con == null || con.isClosed()) {
+                con = ConnectDB.getInstance().connect();
+            }
+
+            try (PreparedStatement ps = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+                ps.setString(1, ctt.getMaThuoc().getMaThuoc());
+                ps.setDate(2, java.sql.Date.valueOf(ctt.getHanSuDung()));
+                ps.setDate(3, java.sql.Date.valueOf(ctt.getNgaySanXuat()));
+                ps.setInt(4, ctt.getSoLuong());
+
+                ps.executeUpdate();
+
+                ResultSet rs = ps.getGeneratedKeys();
+                if (rs.next()) {
+                    return rs.getInt(1);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException("Loi khi them lo thuoc", e);
+        }
+        return -1;
+    }
 
     @Override
     public boolean themChiTietThuoc(LoThuoc ctt) {

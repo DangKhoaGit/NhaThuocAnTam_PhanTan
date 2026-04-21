@@ -26,7 +26,7 @@ import java.util.List;
 
 public class ThuocDTO {
 
-    private final String maThuoc;
+    private String maThuoc;
     private String TenThuoc;
     private String hamLuong;
     private double giaBan;

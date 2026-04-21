@@ -1,80 +1,95 @@
-/*
- * @ (#) ChiTietHoaDon_DAO.java   1.0 10/3/2025
- *
- * Copyright (c) 2025 IUH. All rights reserved.
- */
-
 package com.antam.app.service.impl;
 
-import com.antam.app.connect.ConnectDB;
-import com.antam.app.service.I_ChiTietPhieuNhap_Service;
+import com.antam.app.dao.I_ChiTietPhieuNhap_DAO;
+import com.antam.app.dao.I_LoThuoc_DAO;
+import com.antam.app.dao.impl.ChiTietPhieuNhap_DAO;
+import com.antam.app.dao.impl.LoThuoc_DAO;
 import com.antam.app.dto.*;
+import com.antam.app.entity.*;
+import com.antam.app.service.I_ChiTietPhieuNhap_Service;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.ArrayList;
 
-/*
- * @description
- * @author: Thanh Duy
- * @date: 10/3/2025
- * version: 1.0
- */
 public class ChiTietPhieuNhap_Service implements I_ChiTietPhieuNhap_Service {
-    /* Duy - Lấy danh sách chi tiết phiếu nhập theo mã phiếu nhập */
+
+    private final I_ChiTietPhieuNhap_DAO chiTietDAO = new ChiTietPhieuNhap_DAO();
+    private final I_LoThuoc_DAO loThuocDAO = new LoThuoc_DAO();
+
     @Override
     public ArrayList<ChiTietPhieuNhapDTO> getDanhSachChiTietPhieuNhapTheoMaPN(String maPN) {
-        ArrayList<ChiTietPhieuNhapDTO> danhSach = new ArrayList<>();
-        String sql = "SELECT ctpn.*, dvt.TenDVT\n" +
-                "    FROM ChiTietPhieuNhap ctpn\n" +
-                "    JOIN DonViTinh dvt ON ctpn.MaDVT = dvt.MaDVT\n" +
-                "    WHERE MaPN = ?";
-        try (Connection con = ConnectDB.getInstance().connect();
-             PreparedStatement ps = con.prepareStatement(sql)) {
-            ps.setString(1, maPN);
-            ResultSet rs = ps.executeQuery();
-            while (rs.next()) {
-                ChiTietPhieuNhapDTO ctpn = new ChiTietPhieuNhapDTO();
-                ctpn.setMaPN(new PhieuNhapDTO(rs.getString("MaPN")));
-                ctpn.setLoThuocDTO(new LoThuocDTO());
+        ArrayList<ChiTietPhieuNhapDTO> dsDTO = new ArrayList<>();
 
-                DonViTinhDTO dvt = new DonViTinhDTO(rs.getInt("MaDVT"));
-                dvt.setTenDVT(rs.getString("TenDVT"));
-                ctpn.setMaDVT(dvt);
+        ArrayList<ChiTietPhieuNhap> dsEntity = chiTietDAO.getDanhSachChiTietPhieuNhapTheoMaPN(maPN);
 
-                ctpn.setSoLuong(rs.getInt("SoLuong"));
-                ctpn.setGiaNhap(rs.getDouble("GiaNhap"));
-                danhSach.add(ctpn);
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
+        for (ChiTietPhieuNhap entity : dsEntity) {
+            ChiTietPhieuNhapDTO dto = new ChiTietPhieuNhapDTO();
+
+            ThuocDTO thuocDTO = new ThuocDTO();
+
+            thuocDTO.setTenThuoc(entity.getLoThuoc().getMaThuoc().getTenThuoc());
+            thuocDTO.setMaThuoc(entity.getLoThuoc().getMaThuoc().getMaThuoc());
+            thuocDTO.setThue(entity.getLoThuoc().getMaThuoc().getThue());
+
+            LoThuocDTO loDTO = new LoThuocDTO();
+            loDTO.setMaLoThuoc(entity.getLoThuoc().getMaLoThuoc());
+            loDTO.setMaThuocDTO(thuocDTO);
+
+            dto.setMaPN(new PhieuNhapDTO(entity.getMaPN().getMaPhieuNhap()));
+            dto.setLoThuocDTO(loDTO);
+
+            DonViTinhDTO dvtDTO = new DonViTinhDTO(entity.getMaDVT().getMaDVT());
+            dvtDTO.setTenDVT(entity.getMaDVT().getTenDVT());
+            dto.setMaDVT(dvtDTO);
+
+            dto.setGiaNhap(entity.getGiaNhap());
+
+            dto.setSoLuong(entity.getSoLuong());
+
+            dsDTO.add(dto);
         }
-
-        return danhSach;
+        return dsDTO;
     }
 
-
-    /* Duy- Thêm chi tiết phiếu nhập */
     @Override
-    public boolean themChiTietPhieuNhap(ChiTietPhieuNhapDTO ctpn){
-        String sql = "INSERT INTO ChiTietPhieuNhap (MaPN, MaThuoc, MaDVT, SoLuong, GiaNhap, ThanhTien) " +
-                "VALUES (?, ?, ?, ?, ?, ?)";
-        try {
-            Connection con = ConnectDB.getConnection();
-            PreparedStatement ps = con.prepareStatement(sql);
-            ps.setString(1, ctpn.getMaPN().getMaPhieuNhap());
-            ps.setString(2, ctpn.getLoThuocDTO().getMaThuocDTO().getMaThuoc());
-            ps.setInt(3, ctpn.getMaDVT().getMaDVT());
-            ps.setInt(4, ctpn.getSoLuong());
-            ps.setDouble(5, ctpn.getGiaNhap());
-            ps.setDouble(6, ctpn.thanhTien());
-            int kq = ps.executeUpdate();
-            return kq > 0;
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return false;
+    public boolean themChiTietPhieuNhap(ChiTietPhieuNhapDTO dto) {
+        // 1. Kiểm tra logic đầu vào
+        if (dto == null || dto.getLoThuocDTO() == null) return false;
+
+        // 2. Mapping DTO sang Entity cho Lô Thuốc
+        LoThuoc loEntity = new LoThuoc();
+        Thuoc thuocEntity = new Thuoc();
+        thuocEntity.setMaThuoc(dto.getLoThuocDTO().getMaThuocDTO().getMaThuoc());
+        // Quan trọng: Gán thuế để hàm thanhTien() không bị Null
+        thuocEntity.setThue(dto.getLoThuocDTO().getMaThuocDTO().getThue());
+
+        loEntity.setMaThuoc(thuocEntity);
+        loEntity.setSoLuong(dto.getLoThuocDTO().getSoLuong());
+        loEntity.setHanSuDung(dto.getLoThuocDTO().getHanSuDung());
+        loEntity.setNgaySanXuat(dto.getLoThuocDTO().getNgaySanXuat());
+
+        // 3. LƯU LÔ THUỐC TRƯỚC ĐỂ "BIẾT" MÃ LÔ
+        int maLoVuaTao = loThuocDAO.themChiTietThuocVaLayID(loEntity);
+        if (maLoVuaTao <= 0) return false;
+
+        // 4. Mapping sang Entity Chi Tiết Phiếu Nhập
+        ChiTietPhieuNhap ctpnEntity = new ChiTietPhieuNhap();
+
+        PhieuNhap pn = new PhieuNhap();
+        pn.setMaPhieuNhap(dto.getMaPN().getMaPhieuNhap());
+        ctpnEntity.setMaPN(pn);
+
+        // Dùng mã ID vừa lấy từ DB gán vào đây
+        loEntity.setMaLoThuoc(maLoVuaTao);
+        ctpnEntity.setLoThuoc(loEntity);
+
+        ctpnEntity.setSoLuong(dto.getSoLuong());
+        ctpnEntity.setGiaNhap(dto.getGiaNhap());
+
+        DonViTinh dvt = new DonViTinh();
+        dvt.setMaDVT(dto.getMaDVT().getMaDVT());
+        ctpnEntity.setMaDVT(dvt);
+
+        // 5. Lưu vào Database
+        return chiTietDAO.themChiTietPhieuNhap(ctpnEntity);
     }
 }

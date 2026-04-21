@@ -31,7 +31,7 @@ import java.util.List;
 public class DonViTinh {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private final int MaDVT;
+    private int MaDVT;
     private String TenDVT;
     @Column(columnDefinition = "BOOLEAN DEFAULT FALSE")
     private boolean isDelete = false;

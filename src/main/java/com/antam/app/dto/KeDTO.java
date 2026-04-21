@@ -47,5 +47,6 @@ public class KeDTO {
         MaKe = maKe;
         this.tenKe = tenKe;
         this.loaiKe = loaiKe;
+        this.deleteAt = deleteAt;
     }
 }

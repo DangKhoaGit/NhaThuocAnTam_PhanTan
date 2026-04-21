@@ -30,9 +30,9 @@ public class ConnectDB {
 //        String url = "jdbc:mariadb://localhost:3306/QuanLyTimThuoc";
 //        String user = "root";
 //        String password = "sapassword";
-        String url = "jdbc:mariadb://localhost:3307/QuanLyTimThuoc";
+        String url = "jdbc:mariadb://localhost:3306/QuanLyTimThuoc";
         String user = "root";
-        String password = "Duong2008";
+        String password = "admin";
         con = DriverManager.getConnection(url, user, password);
         return con;
     }

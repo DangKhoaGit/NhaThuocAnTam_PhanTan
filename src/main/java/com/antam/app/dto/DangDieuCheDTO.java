@@ -45,6 +45,7 @@ public class DangDieuCheDTO {
     public DangDieuCheDTO(int maDDC, String tenDDC, Boolean deleteAt) {
         MaDDC = maDDC;
         setTenDDC(tenDDC);
+        this.deleteAt = deleteAt;
     }
 
     public String getDisplayText() {
