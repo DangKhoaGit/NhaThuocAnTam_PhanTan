@@ -48,5 +48,6 @@ public class KeDTO implements Serializable {
         MaKe = maKe;
         this.tenKe = tenKe;
         this.loaiKe = loaiKe;
+        this.deleteAt = deleteAt;
     }
 }

@@ -31,7 +31,7 @@ import java.util.List;
 @Table(name = "PhieuNhap")
 public class PhieuNhap {
     @Id
-    private final String MaPhieuNhap;
+    private String MaPhieuNhap;
     @Column(name = "NhaCungCap")
     private String nhaCungCap;
     @Column(name = "NgayNhap")

@@ -6,6 +6,7 @@
 package com.antam.app.controller.phieunhap;
 
 import com.antam.app.connect.ConnectDB;
+import com.antam.app.dao.impl.DonViTinh_DAO;
 import com.antam.app.service.impl.*;
 import com.antam.app.service.impl.Thuoc_Service;
 import com.antam.app.dto.*;
@@ -252,15 +253,16 @@ public class ThemPhieuNhapFormController extends DialogPane{
                         Spinner<Double> spGiaNhap = (Spinner<Double>) vboxGiaNhap.getChildren().get(1);
 
                         // Nếu tất cả các trường đều hợp lệ
-                        ChiTietPhieuNhapDTO ctpt = new ChiTietPhieuNhapDTO(
-//                                new PhieuNhap(tfMaPhieuNhap.getText()), cbDanhSachThuocNhap.getValue(), cbDonViTinh.getValue(), spSoLuong.getValue(), spGiaNhap.getValue()
-                        );
                         LoThuocDTO ctt = new LoThuocDTO(
                                 -1, pn, cbDanhSachThuocNhap.getValue(), spSoLuong.getValue(), dpHanSuDung.getValue(), dpNgaySanXuat.getValue()
                         );
-                        if(kiemTraThanhCong){
-                            chiTietPhieuNhap_DAO.themChiTietPhieuNhap(ctpt);
-                            chiTietThuoc_DAO.themChiTietThuoc(ctt);
+
+                        ChiTietPhieuNhapDTO ctpt = new ChiTietPhieuNhapDTO(
+                                pn, ctt, cbDonViTinh.getValue(), spSoLuong.getValue(), spGiaNhap.getValue()
+                        );
+
+                        if (kiemTraThanhCong) {
+                            boolean result = chiTietPhieuNhap_DAO.themChiTietPhieuNhap(ctpt);
                         }
                     }
                 }
@@ -289,6 +291,17 @@ public class ThemPhieuNhapFormController extends DialogPane{
         for (ThuocDTO thuocDTO : dsThuoc){
             cbDanhSachThuocNhap.getItems().add(thuocDTO);
         }
+        cbDanhSachThuocNhap.setConverter(new StringConverter<ThuocDTO>() {
+            @Override
+            public String toString(ThuocDTO thuoc) {
+                return (thuoc == null) ? "" : thuoc.getTenThuoc();
+            }
+
+            @Override
+            public ThuocDTO fromString(String string) {
+                return null;
+            }
+        });
         VBox vbChonThuoc = new VBox();
         vbChonThuoc.getChildren().addAll(new Text("Thuốc nhập:"), cbDanhSachThuocNhap);
 
@@ -306,6 +319,17 @@ public class ThemPhieuNhapFormController extends DialogPane{
             cbDonViTinh.getItems().clear();
             cbDonViTinh.getItems().add(donViTinh_DAO.getDVTTheoMaDVT(cbDanhSachThuocNhap.getValue().getMaDVTCoSo().getMaDVT()));
             cbDonViTinh.getSelectionModel().selectFirst();
+        });
+        cbDonViTinh.setConverter(new StringConverter<DonViTinhDTO>() {
+            @Override
+            public String toString(DonViTinhDTO dvt) {
+                return (dvt == null) ? "" : dvt.getTenDVT();
+            }
+
+            @Override
+            public DonViTinhDTO fromString(String string) {
+                return null;
+            }
         });
 
         //Ngày sản xuất

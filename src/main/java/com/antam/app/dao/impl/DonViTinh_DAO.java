@@ -49,7 +49,21 @@ public class DonViTinh_DAO implements I_DonViTinh_DAO {
 
     @Override
     public DonViTinh getDVTTheoMaDVT(int ma) {
-        return getDVTTheoMa(ma);
+        String sql = "SELECT MaDVT, TenDVT, isDelete FROM DonViTinh WHERE MaDVT = ?";
+        try {
+            Connection con = ensureConnection();
+            try (PreparedStatement state = con.prepareStatement(sql)) {
+                state.setInt(1, ma);
+                try (ResultSet rs = state.executeQuery()) {
+                    if (rs.next()) {
+                        return mapResultSetToEntity(rs);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Loi khi lay don vi tinh theo ten", e);
+        }
+        return null;
     }
 
     @Override

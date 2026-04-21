@@ -32,7 +32,6 @@ import java.text.NumberFormat;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
 import java.util.Locale;
 
 public class ThemPhieuNhapController extends ScrollPane{
@@ -44,7 +43,6 @@ public class ThemPhieuNhapController extends ScrollPane{
     private ComboBox<String> cbKhoangGia;
 
     private TextField tfTimPhieuNhap;
-    private NhanVien_Service nhanVien_service = new NhanVien_Service();
 
     private PhieuNhap_Service phieuNhap_DAO = new PhieuNhap_Service();
     private NhanVien_Service nhanVien_DAO = new NhanVien_Service();
@@ -296,10 +294,37 @@ public class ThemPhieuNhapController extends ScrollPane{
     }
 
     public void loadDanhSachNhanVien(){
-        List<NhanVienDTO> dsNhanVien = nhanVien_service.getAllNhanVien();
-        for (NhanVienDTO nhanVienDTO : dsNhanVien){
-            cbNhanVienNhap.getItems().add(nhanVienDTO);
-        }
+        ArrayList<NhanVienDTO> dsNhanVienRaw = I_NhanVien_Service.getDsNhanVienformDBS();
+
+        ObservableList<NhanVienDTO> dsNhanVien = FXCollections.observableArrayList(dsNhanVienRaw);
+
+        cbNhanVienNhap.setItems(dsNhanVien);
+        cbNhanVienNhap.setPromptText("Chọn nhân viên");
+
+        cbNhanVienNhap.setCellFactory(lv -> new ListCell<NhanVienDTO>() {
+            @Override
+            protected void updateItem(NhanVienDTO item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setText(null);
+                } else {
+                    // Hiển thị "Tất cả" nếu mã là "Tất cả", ngược lại hiện Họ tên
+                    setText("Tất cả".equals(item.getMaNV()) ? "Tất cả" : item.getHoTen());
+                }
+            }
+        });
+
+        cbNhanVienNhap.setButtonCell(new ListCell<NhanVienDTO>() {
+            @Override
+            protected void updateItem(NhanVienDTO item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setText(null);
+                } else {
+                    setText("Tất cả".equals(item.getMaNV()) ? "Tất cả" : item.getHoTen());
+                }
+            }
+        });
     }
 
     public void loadKhoangGia(){

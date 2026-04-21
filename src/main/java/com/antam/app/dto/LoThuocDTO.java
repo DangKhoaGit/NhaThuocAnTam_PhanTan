@@ -79,8 +79,9 @@ public class LoThuocDTO implements Serializable {
         this.maThuocDTO = value;
         MaLoThuoc = i;
         setSoLuong(value1);
-        setHanSuDung(value2);
         setNgaySanXuat(value3);
+        setHanSuDung(value2);
+
     }
 
 

@@ -32,7 +32,7 @@ public class Thuoc {
 
     @Id
     @Column(name = "MaThuoc")
-    private final String maThuoc;
+    private String maThuoc;
     @Column(name = "TenThuoc")
     private String TenThuoc;
     @Column(name = "HamLuong")

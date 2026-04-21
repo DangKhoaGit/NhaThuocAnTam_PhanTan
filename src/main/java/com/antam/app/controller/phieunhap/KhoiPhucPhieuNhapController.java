@@ -31,7 +31,6 @@ import java.text.NumberFormat;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
 import java.util.Locale;
 
 
@@ -305,10 +304,37 @@ public class KhoiPhucPhieuNhapController extends ScrollPane{
     }
 
     public void loadDanhSachNhanVien(){
-        List<NhanVienDTO> dsNhanVien = nhanVien_DAO.getAllNhanVien();
-        for (NhanVienDTO nhanVienDTO : dsNhanVien){
-            cbNhanVienNhap.getItems().add(nhanVienDTO);
-        }
+        ArrayList<NhanVienDTO> dsNhanVienRaw = I_NhanVien_Service.getDsNhanVienformDBS();
+
+        ObservableList<NhanVienDTO> dsNhanVien = FXCollections.observableArrayList(dsNhanVienRaw);
+
+        cbNhanVienNhap.setItems(dsNhanVien);
+        cbNhanVienNhap.setPromptText("Chọn nhân viên");
+
+        cbNhanVienNhap.setCellFactory(lv -> new ListCell<NhanVienDTO>() {
+            @Override
+            protected void updateItem(NhanVienDTO item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setText(null);
+                } else {
+                    // Hiển thị "Tất cả" nếu mã là "Tất cả", ngược lại hiện Họ tên
+                    setText("Tất cả".equals(item.getMaNV()) ? "Tất cả" : item.getHoTen());
+                }
+            }
+        });
+
+        cbNhanVienNhap.setButtonCell(new ListCell<NhanVienDTO>() {
+            @Override
+            protected void updateItem(NhanVienDTO item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setText(null);
+                } else {
+                    setText("Tất cả".equals(item.getMaNV()) ? "Tất cả" : item.getHoTen());
+                }
+            }
+        });
     }
 
     public void loadKhoangGia(){

@@ -39,6 +39,7 @@ public class DangDieuChe_Service implements I_DangDieuChe_Service {
     public boolean xoaDangDieuChe(int maDDC) {
         try {
             return dangDieuCheDAO.xoaDangDieuChe(maDDC);
+
         } catch (Exception e) {
             throw new RuntimeException("Loi khi xoa dang dieu che", e);
         }

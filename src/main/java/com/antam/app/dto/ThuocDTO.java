@@ -27,7 +27,7 @@ import java.util.List;
 
 public class ThuocDTO implements Serializable {
 
-    private final String maThuoc;
+    private String maThuoc;
     private String TenThuoc;
     private String hamLuong;
     private double giaBan;
