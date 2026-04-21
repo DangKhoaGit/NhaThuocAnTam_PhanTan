@@ -18,6 +18,7 @@ import com.antam.app.dto.KhuyenMaiDTO;
 import com.antam.app.dto.NhanVienDTO;
 import com.antam.app.dto.PhieuDatThuocDTO;
 import com.antam.app.service.impl.PhieuDat_Service;
+import com.antam.app.service.impl.KhuyenMai_Service;
 
 /*
  * @description:
@@ -52,7 +53,7 @@ public interface I_PhieuDat_Service {
         ) {
             ArrayList<NhanVienDTO> nvList = I_NhanVien_Service.getDsNhanVienformDBS();
             ArrayList<KhachHangDTO> khList = new PhieuDat_Service().getAllKhachHangFromService();
-            List<KhuyenMaiDTO> kmList = I_KhuyenMai_Service.getAllKhuyenMaiConHieuLuc();
+            List<KhuyenMaiDTO> kmList = new KhuyenMai_Service().getAllKhuyenMaiConHieuLuc();
 
             Map<String, NhanVienDTO> mapNV = nvList.stream()
                     .collect(Collectors.toMap(NhanVienDTO::getMaNV, x -> x));
@@ -111,7 +112,7 @@ public interface I_PhieuDat_Service {
         ) {
             ArrayList<NhanVienDTO> nvList = I_NhanVien_Service.getDsNhanVienformDBS();
             ArrayList<KhachHangDTO> khList = new PhieuDat_Service().getAllKhachHangFromService();
-            List<KhuyenMaiDTO> kmList = I_KhuyenMai_Service.getAllKhuyenMaiConHieuLuc();
+            List<KhuyenMaiDTO> kmList = new KhuyenMai_Service().getAllKhuyenMaiConHieuLuc();
 
             Map<String, NhanVienDTO> mapNV = nvList.stream()
                     .collect(Collectors.toMap(NhanVienDTO::getMaNV, x -> x));

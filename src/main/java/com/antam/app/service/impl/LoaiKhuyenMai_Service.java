@@ -6,13 +6,11 @@
 
 package com.antam.app.service.impl;
 
-import com.antam.app.connect.ConnectDB;
-import com.antam.app.service.I_LoaiKhuyenMai_Service;
+import com.antam.app.dao.I_LoaiKhuyenMai_DAO;
+import com.antam.app.dao.impl.LoaiKhuyenMai_DAO;
 import com.antam.app.dto.LoaiKhuyenMaiDTO;
-
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.Statement;
+import com.antam.app.entity.LoaiKhuyenMai;
+import com.antam.app.service.I_LoaiKhuyenMai_Service;
 import java.util.ArrayList;
 
 /*
@@ -22,29 +20,17 @@ import java.util.ArrayList;
  * version: 1.0
  */
 public class LoaiKhuyenMai_Service implements I_LoaiKhuyenMai_Service {
+    private final I_LoaiKhuyenMai_DAO loaiKhuyenMaiDAO;
+
+    public LoaiKhuyenMai_Service() {
+        this.loaiKhuyenMaiDAO = new LoaiKhuyenMai_DAO();
+    }
+
     @Override
     public ArrayList<LoaiKhuyenMaiDTO> getAllLoaiKhuyenMai() {
         ArrayList<LoaiKhuyenMaiDTO> list = new ArrayList<>();
-        String sql = "SELECT * FROM LoaiKhuyenMai";
-        try  {
-            Connection con = ConnectDB.getConnection();
-            try {
-                if (con == null || con.isClosed()) {
-                    con = ConnectDB.getInstance().connect();
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-            Statement st = con.createStatement();
-            ResultSet rs = st.executeQuery(sql);
-            while (rs.next()) {
-                int maLKM = rs.getInt("MaLKM");
-                String tenLKM = rs.getString("TenLKM");
-                LoaiKhuyenMaiDTO lkm = new LoaiKhuyenMaiDTO(maLKM, tenLKM);
-                list.add(lkm);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
+        for (LoaiKhuyenMai entity : loaiKhuyenMaiDAO.getAllLoaiKhuyenMai()) {
+            list.add(new LoaiKhuyenMaiDTO(entity.getMaLKM(), entity.getTenLKM()));
         }
         return list;
     }

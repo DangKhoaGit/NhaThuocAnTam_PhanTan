@@ -324,7 +324,7 @@ public class ThemHoaDonFormController extends DialogPane {
 
         // Load khuyến mãi vào cb_promotion
         KhuyenMai_Service khuyenMai_service = new KhuyenMai_Service();
-        var dsKhuyenMai = I_KhuyenMai_Service.getAllKhuyenMaiConHieuLuc();
+        List<KhuyenMaiDTO> dsKhuyenMai = khuyenMai_service.getAllKhuyenMaiConHieuLuc();
         cb_promotion.setItems(FXCollections.observableArrayList(dsKhuyenMai));
         cb_promotion.setConverter(new javafx.util.StringConverter<>() {
             @Override

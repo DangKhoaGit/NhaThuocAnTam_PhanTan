@@ -72,7 +72,7 @@ public class ThemPhieuDatFormController extends DialogPane{
     private KhachHang_Service khachHangDAO = new KhachHang_Service();
     private ArrayList<KhachHangDTO> dsKhach = khachHangDAO.getAllKhachHang();
     private KhuyenMai_Service KhuyenMai_DAO = new KhuyenMai_Service();
-    private ArrayList<KhuyenMaiDTO> dsKhuyenMai = (ArrayList<KhuyenMaiDTO>) I_KhuyenMai_Service.getAllKhuyenMaiConHieuLuc();
+    private ArrayList<KhuyenMaiDTO> dsKhuyenMai = new ArrayList<>();
     private LoThuoc_Service chiTietThuoc_dao = new LoThuoc_Service();
     private HoaDon_Service hoaDon_DAO = new HoaDon_Service();
     private ObservableList<KhachHangDTO> autoKhach = FXCollections.observableArrayList(dsKhach);
@@ -316,10 +316,36 @@ public class ThemPhieuDatFormController extends DialogPane{
         txtMa.setEditable(false);
 
 
+        // Load khuyen mai after services are ready.
+        dsKhuyenMai = new ArrayList<>(KhuyenMai_DAO.getAllKhuyenMaiConHieuLuc());
+
         // load ComboBox Khuyến mãi.
         KhuyenMaiDTO nothing = new KhuyenMaiDTO("None","Không áp dụng");
+        cbKhuyenMai.getItems().clear();
         cbKhuyenMai.getItems().add(nothing);
         cbKhuyenMai.getItems().addAll(FXCollections.observableArrayList(dsKhuyenMai));
+        cbKhuyenMai.setConverter(new javafx.util.StringConverter<>() {
+            @Override
+            public String toString(KhuyenMaiDTO km) {
+                return km == null ? "" : km.getTenKM();
+            }
+
+            @Override
+            public KhuyenMaiDTO fromString(String text) {
+                if (text == null) return null;
+                return cbKhuyenMai.getItems().stream()
+                        .filter(km -> text.equals(km.getTenKM()))
+                        .findFirst()
+                        .orElse(null);
+            }
+        });
+        cbKhuyenMai.setCellFactory(lv -> new ListCell<>() {
+            @Override
+            protected void updateItem(KhuyenMaiDTO item, boolean empty) {
+                super.updateItem(item, empty);
+                setText(empty || item == null ? null : item.getTenKM());
+            }
+        });
 
         //gọi tính tổng tiền khi chạy giao diện
         loadTongTien();
