@@ -154,6 +154,15 @@ VALUES
 ('KM009', 'Ưu đãi thành viên VIP', '2025-02-25', '2025-12-25', 9, 5, 500),
 ('KM010', 'Quà sinh nhật khách', '2025-01-01', '2025-12-31', 10, 10, 1000);
 
+-- Thêm khuyến mãi mới từ 2026-04-21 đến 2026-12-31
+INSERT INTO KhuyenMai (MaKM, TenKM, NgayBatDau, NgayKetThuc, LoaiKhuyenMai, So, SoLuongToiDa)
+VALUES
+('KM011', 'Giảm giá 15% cho tất cả sản phẩm', '2026-04-21', '2026-12-31', 1, 15, 500),
+('KM012', 'Giảm 30k cho hóa đơn >300k', '2026-04-21', '2026-12-31', 2, 30000, 200),
+('KM013', 'Flash sale giảm 50% cuối tuần', '2026-04-21', '2026-12-31', 9, 50, 100),
+('KM014', 'Mua 2 tặng 1 vitamin', '2026-04-21', '2026-12-31', 4, 10000, 150),
+('KM015', 'Ưu đãi thành viên giảm 20%', '2026-04-21', '2026-12-31', 7, 20, 300);
+
 -- 6) NhanVien (10)
 INSERT INTO NhanVien (MaNV, HoTen, SoDienThoai, Email, DiaChi, LuongCoBan, TaiKhoan, MatKhau, IsQuanLi, deleteAt)
 VALUES
