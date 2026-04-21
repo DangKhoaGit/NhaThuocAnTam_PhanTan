@@ -8,6 +8,7 @@ package com.antam.app.dto;
 
 import lombok.*;
 
+import java.io.Serializable;
 import java.time.LocalDate;
 
 /*
@@ -23,7 +24,7 @@ import java.time.LocalDate;
 
 @Builder
 
-public class PhieuDatThuocDTO {
+public class PhieuDatThuocDTO implements Serializable {
     private final String maPhieu;
     private LocalDate ngayTao;
     private boolean isThanhToan;

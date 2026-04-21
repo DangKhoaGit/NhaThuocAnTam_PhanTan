@@ -11,6 +11,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.io.Serializable;
 import java.util.List;
 
 /*
@@ -24,7 +25,7 @@ import java.util.List;
 @NoArgsConstructor(force = true)
 @Builder
 
-public class KeDTO {
+public class KeDTO implements Serializable {
     private final String MaKe;
     private String tenKe;
     private String loaiKe;

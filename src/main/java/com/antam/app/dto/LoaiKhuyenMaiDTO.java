@@ -11,6 +11,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.io.Serializable;
+
 /*
  * @description
  * @author: Duong Nguyen
@@ -23,7 +25,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Builder
 
-public class LoaiKhuyenMaiDTO {
+public class LoaiKhuyenMaiDTO implements Serializable {
     private final int MaLKM;
     private String TenLKM;
 

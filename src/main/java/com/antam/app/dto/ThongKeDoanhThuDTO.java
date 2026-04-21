@@ -1,11 +1,12 @@
 package com.antam.app.dto;
 
+import java.io.Serializable;
 import java.time.LocalDate;
 
 /**
  * Entity class cho thống kê doanh thu
  */
-public class ThongKeDoanhThuDTO {
+public class ThongKeDoanhThuDTO implements Serializable {
     private LocalDate ngay;
     private int soDonHang;
     private double doanhThu;

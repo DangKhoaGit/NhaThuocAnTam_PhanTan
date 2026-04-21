@@ -11,6 +11,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.io.Serializable;
 import java.util.List;
 
 /*
@@ -24,7 +25,7 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 
-public class ThuocDTO {
+public class ThuocDTO implements Serializable {
 
     private final String maThuoc;
     private String TenThuoc;

@@ -11,6 +11,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.io.Serializable;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -25,7 +26,7 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 
-public class HoaDonDTO {
+public class HoaDonDTO implements Serializable {
     private final String MaHD;
     private LocalDate ngayTao;
     private double tongTien;

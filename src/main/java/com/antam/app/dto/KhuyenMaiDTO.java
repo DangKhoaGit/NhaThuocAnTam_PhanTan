@@ -11,6 +11,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.io.Serializable;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -25,7 +26,7 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 
-public class KhuyenMaiDTO {
+public class KhuyenMaiDTO implements Serializable {
     private final String MaKM;
     private String TenKM;
     private LocalDate NgayBatDau;

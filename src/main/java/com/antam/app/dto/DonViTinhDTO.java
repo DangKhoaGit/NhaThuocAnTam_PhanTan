@@ -11,6 +11,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.io.Serializable;
 import java.util.List;
 
 /*
@@ -24,7 +25,7 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 
-public class DonViTinhDTO {
+public class DonViTinhDTO implements Serializable {
     private final int MaDVT;
     private String TenDVT;
     private boolean isDelete = false;

@@ -6,13 +6,15 @@
 
 package com.antam.app.dto;
 
+import java.io.Serializable;
+
 /*
  * @description
  * @author: Duong Nguyen
  * @date: 10/1/2025
  * version: 1.0
  */
-public class PhienNguoiDungDTO {
+public class PhienNguoiDungDTO implements Serializable {
     private static NhanVienDTO maNV;
 
     // Phương thức để lưu tên đăng nhập

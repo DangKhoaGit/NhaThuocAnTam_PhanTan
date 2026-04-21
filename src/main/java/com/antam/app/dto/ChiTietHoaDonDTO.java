@@ -24,7 +24,7 @@ import java.io.Serializable;
 
 @Builder
 
-public class ChiTietHoaDonDTO {
+public class ChiTietHoaDonDTO implements Serializable{
 
     private HoaDonDTO MaHD;
 

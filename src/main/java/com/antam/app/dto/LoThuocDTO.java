@@ -12,6 +12,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.io.Serializable;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -26,7 +27,7 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 
-public class LoThuocDTO {
+public class LoThuocDTO implements Serializable {
     @Id
     @Column(name = "MaLoThuoc")
     @GeneratedValue(strategy = GenerationType.IDENTITY)

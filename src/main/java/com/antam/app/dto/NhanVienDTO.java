@@ -10,6 +10,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.io.Serializable;
+
 /*
  * @description
  * @author: Duong Nguyen
@@ -20,7 +22,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(force = true)
 @Builder
 
-public class NhanVienDTO {
+public class NhanVienDTO implements Serializable {
     private String MaNV;
     private String hoTen;
     private String soDienThoai;

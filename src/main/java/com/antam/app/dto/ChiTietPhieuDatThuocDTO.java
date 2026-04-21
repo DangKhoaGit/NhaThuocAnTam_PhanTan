@@ -8,6 +8,8 @@ package com.antam.app.dto;
 
 import lombok.*;
 
+import java.io.Serializable;
+
 /*
  * @description
  * @author: Duong Nguyen
@@ -20,7 +22,7 @@ import lombok.*;
 @ToString
 @Builder
 
-public class ChiTietPhieuDatThuocDTO {
+public class ChiTietPhieuDatThuocDTO implements Serializable {
     private PhieuDatThuocDTO maPhieu;
     private LoThuocDTO maThuoc;
     private int soLuong;

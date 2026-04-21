@@ -11,6 +11,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.io.Serializable;
 import java.util.List;
 
 /*
@@ -25,7 +26,7 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 
-public class DangDieuCheDTO {
+public class DangDieuCheDTO implements Serializable {
     private final int MaDDC;
     private String TenDDC;
     private boolean deleteAt;
