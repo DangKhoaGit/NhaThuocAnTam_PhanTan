@@ -5,28 +5,6 @@
 
 package com.antam.app.controller.hoadon;
 
-import com.antam.app.service.*;
-import com.antam.app.service.impl.*;
-import com.antam.app.dto.*;
-import com.antam.app.helper.XuatHoaDonPDF;
-import javafx.application.Platform;
-import javafx.collections.FXCollections;
-import javafx.geometry.Insets;
-import javafx.geometry.Pos;
-import javafx.scene.control.*;
-import javafx.scene.control.Button;
-import javafx.scene.control.ButtonBar.ButtonData;
-import javafx.scene.control.ScrollPane;
-import javafx.scene.control.TextField;
-import javafx.scene.layout.*;
-import javafx.scene.paint.Color;
-import javafx.scene.text.Font;
-import javafx.scene.text.FontWeight;
-import javafx.scene.text.Text;
-import javafx.stage.FileChooser;
-import javafx.stage.Stage;
-import javafx.stage.Window;
-
 import java.io.File;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
@@ -36,6 +14,52 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+
+import com.antam.app.dto.ChiTietHoaDonDTO;
+import com.antam.app.dto.DonViTinhDTO;
+import com.antam.app.dto.HoaDonDTO;
+import com.antam.app.dto.KhachHangDTO;
+import com.antam.app.dto.KhuyenMaiDTO;
+import com.antam.app.dto.LoThuocDTO;
+import com.antam.app.dto.NhanVienDTO;
+import com.antam.app.dto.PhienNguoiDungDTO;
+import com.antam.app.dto.ThuocDTO;
+import com.antam.app.helper.XuatHoaDonPDF;
+import com.antam.app.service.I_KhuyenMai_Service;
+import com.antam.app.service.impl.ChiTietHoaDon_Service;
+import com.antam.app.service.impl.DonViTinh_Service;
+import com.antam.app.service.impl.HoaDon_Service;
+import com.antam.app.service.impl.KhachHang_Service;
+import com.antam.app.service.impl.KhuyenMai_Service;
+import com.antam.app.service.impl.LoThuoc_Service;
+import com.antam.app.service.impl.NhanVien_Service;
+import com.antam.app.service.impl.Thuoc_Service;
+
+import javafx.application.Platform;
+import javafx.collections.FXCollections;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Button;
+import javafx.scene.control.ButtonBar.ButtonData;
+import javafx.scene.control.ButtonType;
+import javafx.scene.control.ComboBox;
+import javafx.scene.control.DialogPane;
+import javafx.scene.control.ScrollPane;
+import javafx.scene.control.TextField;
+import javafx.scene.layout.ColumnConstraints;
+import javafx.scene.layout.FlowPane;
+import javafx.scene.layout.GridPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
+import javafx.scene.text.Font;
+import javafx.scene.text.FontWeight;
+import javafx.scene.text.Text;
+import javafx.stage.FileChooser;
+import javafx.stage.Stage;
+import javafx.stage.Window;
 
 public class ThemHoaDonFormController extends DialogPane {
     private TextField txtMaHoaDon;

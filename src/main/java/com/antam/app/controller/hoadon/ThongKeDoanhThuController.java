@@ -1,43 +1,54 @@
 package com.antam.app.controller.hoadon;
 
 
-import com.antam.app.service.impl.ThongKeDoanhThu_Service;
-import com.antam.app.service.impl.ThongKeTrangChinh_Service;
-import com.antam.app.dto.NhanVienDTO;
-import com.antam.app.dto.ThongKeDoanhThuDTO;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
-import javafx.event.ActionEvent;
-import javafx.scene.Node;
-import javafx.scene.chart.BarChart;
-import javafx.scene.chart.LineChart;
-import javafx.scene.chart.XYChart;
-import javafx.scene.control.*;
-import javafx.scene.control.cell.PropertyValueFactory;
-import javafx.scene.text.Text;
-import javafx.stage.FileChooser;
-
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.net.URL;
 import java.text.DecimalFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Map;
-import java.util.ResourceBundle;
+
+import com.antam.app.dto.NhanVienDTO;
+import com.antam.app.dto.ThongKeDoanhThuDTO;
+import com.antam.app.service.impl.ThongKeDoanhThu_Service;
+import com.antam.app.service.impl.ThongKeTrangChinh_Service;
 
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcon;
-import javafx.geometry.Pos;
-import javafx.scene.chart.*;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.effect.DropShadow;
-import javafx.scene.layout.*;
-import javafx.scene.text.Font;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.event.ActionEvent;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
+import javafx.scene.Node;
+import javafx.scene.chart.BarChart;
+import javafx.scene.chart.CategoryAxis;
+import javafx.scene.chart.LineChart;
+import javafx.scene.chart.NumberAxis;
+import javafx.scene.chart.XYChart;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Button;
+import javafx.scene.control.ComboBox;
+import javafx.scene.control.Label;
+import javafx.scene.control.ScrollPane;
+import javafx.scene.control.TableCell;
+import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableView;
+import javafx.scene.control.Tooltip;
+import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.effect.DropShadow;
+import javafx.scene.layout.AnchorPane;
+import javafx.scene.layout.FlowPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.Region;
+import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
+import javafx.scene.text.Font;
+import javafx.scene.text.Text;
+import javafx.stage.FileChooser;
 
 
 public class ThongKeDoanhThuController extends ScrollPane {
@@ -465,19 +476,30 @@ public class ThongKeDoanhThuController extends ScrollPane {
     }
 
     private void loadTongQuan() {
-        double tongDoanhThu = thongKe_service.getTongDoanhThu(tuNgay, denNgay, selectedNhanVien);
-        int tongDonHang = thongKe_service.getTongDonHang(tuNgay, denNgay, selectedNhanVien);
-        int soKhachHang = thongKe_service.getSoKhachHangMoi(tuNgay, denNgay, selectedNhanVien);
-        double donHangTB = tongDonHang > 0 ? tongDoanhThu / tongDonHang : 0;
+        try {
+            double tongDoanhThu = thongKe_service.getTongDoanhThu(tuNgay, denNgay, selectedNhanVien);
+            int tongDonHang = thongKe_service.getTongDonHang(tuNgay, denNgay, selectedNhanVien);
+            int soKhachHang = thongKe_service.getSoKhachHangMoi(tuNgay, denNgay, selectedNhanVien);
+            double donHangTB = tongDonHang > 0 ? tongDoanhThu / tongDonHang : 0;
 
-        // Cập nhật text
-        txtDoanhThuKy.setText(formatCurrency(tongDoanhThu));
-        txtSoDonHang.setText(String.valueOf(tongDonHang));
-        txtDonHangTB.setText(formatCurrency(donHangTB));
-        txtSoKhachHang.setText(String.valueOf(soKhachHang));
+            // Cập nhật text
+            txtDoanhThuKy.setText(formatCurrency(tongDoanhThu));
+            txtSoDonHang.setText(String.valueOf(tongDonHang));
+            txtDonHangTB.setText(formatCurrency(donHangTB));
+            txtSoKhachHang.setText(String.valueOf(soKhachHang));
 
-        // Tính % thay đổi so với kỳ trước (đơn giản hóa - có thể cải thiện)
-        calculateChange();
+            // Tính % thay đổi so với kỳ trước (đơn giản hóa - có thể cải thiện)
+            calculateChange();
+        } catch (Exception e) {
+            System.err.println("Lỗi loadTongQuan: " + e.getMessage());
+            e.printStackTrace();
+            
+            // Hiển thị giá trị mặc định
+            txtDoanhThuKy.setText("0");
+            txtSoDonHang.setText("0");
+            txtDonHangTB.setText("0");
+            txtSoKhachHang.setText("0");
+        }
     }
 
     /*
@@ -528,23 +550,29 @@ public class ThongKeDoanhThuController extends ScrollPane {
     }
 
     private void loadChartDoanhThu() {
-        chartDoanhThu.getData().clear();
+        try {
+            chartDoanhThu.getData().clear();
 
-        // Kiểm tra xem có phải hiển thị theo tháng không (cho khoảng thời gian dài như năm)
-        String thoiGian = cmbThoiGian.getValue();
-        boolean hienThiTheoThang = "Năm nay".equals(thoiGian);
+            // Kiểm tra xem có phải hiển thị theo tháng không (cho khoảng thời gian dài như năm)
+            String thoiGian = cmbThoiGian.getValue();
+            boolean hienThiTheoThang = "Năm nay".equals(thoiGian);
 
-        ArrayList<ThongKeDoanhThuDTO> dsThongKe;
-        if (hienThiTheoThang) {
-            // Lấy dữ liệu theo tháng
-            dsThongKe = thongKe_service.getDoanhThuTheoThang(tuNgay, denNgay, selectedNhanVien);
-        } else {
-            // Lấy dữ liệu theo ngày
-            dsThongKe = thongKe_service.getDoanhThuTheoThoiGian(tuNgay, denNgay, selectedNhanVien);
-        }
+            ArrayList<ThongKeDoanhThuDTO> dsThongKe;
+            if (hienThiTheoThang) {
+                // Lấy dữ liệu theo tháng
+                dsThongKe = thongKe_service.getDoanhThuTheoThang(tuNgay, denNgay, selectedNhanVien);
+            } else {
+                // Lấy dữ liệu theo ngày
+                dsThongKe = thongKe_service.getDoanhThuTheoThoiGian(tuNgay, denNgay, selectedNhanVien);
+            }
 
-        XYChart.Series<String, Number> series = new XYChart.Series<>();
-        series.setName("Doanh thu");
+            if (dsThongKe == null || dsThongKe.isEmpty()) {
+                System.out.println("Không có dữ liệu doanh thu cho khoảng thời gian này");
+                return;
+            }
+
+            XYChart.Series<String, Number> series = new XYChart.Series<>();
+            series.setName("Doanh thu");
 
         DateTimeFormatter dateFormatter = hienThiTheoThang
                 ? DateTimeFormatter.ofPattern("MM/yyyy")
@@ -699,6 +727,17 @@ public class ThongKeDoanhThuController extends ScrollPane {
         // Tùy chỉnh style cho LineChart
         chartDoanhThu.setCreateSymbols(true);
         chartDoanhThu.setLegendVisible(true);
+        } catch (Exception e) {
+            System.err.println("Lỗi loadChartDoanhThu: " + e.getMessage());
+            e.printStackTrace();
+            
+            // Hiển thị alert lỗi cho người dùng
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("Lỗi tải dữ liệu");
+            alert.setHeaderText("Không thể tải biểu đồ doanh thu");
+            alert.setContentText("Lỗi: " + e.getMessage());
+            alert.showAndWait();
+        }
     }
 
     /**
@@ -710,7 +749,8 @@ public class ThongKeDoanhThuController extends ScrollPane {
 
         try {
             // *** CHỈNH SỐ SẢN PHẨM: Thay đổi số 5 để hiển thị nhiều/ít sản phẩm hơn ***
-            Map<String, Integer> topProducts = thongKeTrangChinh_service.getTopSanPhamBanChay(5);
+            // Sử dụng dữ liệu lọc theo khoảng thời gian người dùng chọn
+            Map<String, Integer> topProducts = thongKe_service.getTopSanPhamBanChay(tuNgay, denNgay, 5);
 
             XYChart.Series<String, Number> series = new XYChart.Series<>();
             series.setName("Số lượng bán");
@@ -777,13 +817,42 @@ public class ThongKeDoanhThuController extends ScrollPane {
 
         } catch (Exception e) {
             System.err.println("Error loading top products chart: " + e.getMessage());
+            e.printStackTrace();
+            
+            // Hiển thị alert lỗi cho người dùng
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("Lỗi tải dữ liệu");
+            alert.setHeaderText("Không thể tải biểu đồ sản phẩm bán chạy");
+            alert.setContentText("Lỗi: " + e.getMessage());
+            alert.showAndWait();
         }
     }
 
     private void loadTableData() {
-        ArrayList<ThongKeDoanhThuDTO> dsThongKe = thongKe_service.getDoanhThuTheoThoiGian(tuNgay, denNgay, selectedNhanVien);
-        ObservableList<ThongKeDoanhThuDTO> data = FXCollections.observableArrayList(dsThongKe);
-        tableChiTiet.setItems(data);
+        try {
+            ArrayList<ThongKeDoanhThuDTO> dsThongKe = thongKe_service.getDoanhThuTheoThoiGian(tuNgay, denNgay, selectedNhanVien);
+            if (dsThongKe == null || dsThongKe.isEmpty()) {
+                System.out.println("Không có dữ liệu chi tiết doanh thu");
+                tableChiTiet.setItems(FXCollections.observableArrayList());
+                return;
+            }
+            
+            ObservableList<ThongKeDoanhThuDTO> data = FXCollections.observableArrayList(dsThongKe);
+            tableChiTiet.setItems(data);
+        } catch (Exception e) {
+            System.err.println("Lỗi loadTableData: " + e.getMessage());
+            e.printStackTrace();
+            
+            // Xóa dữ liệu cũ
+            tableChiTiet.setItems(FXCollections.observableArrayList());
+            
+            // Hiển thị alert lỗi cho người dùng
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("Lỗi tải dữ liệu");
+            alert.setHeaderText("Không thể tải bảng chi tiết doanh thu");
+            alert.setContentText("Lỗi: " + e.getMessage());
+            alert.showAndWait();
+        }
     }
 
 
