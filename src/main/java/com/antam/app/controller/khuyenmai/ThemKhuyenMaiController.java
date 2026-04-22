@@ -7,6 +7,7 @@ package com.antam.app.controller.khuyenmai;
 
 import com.antam.app.connect.ConnectDB;
 import com.antam.app.network.ClientManager;
+import com.antam.app.dto.LoaiKhuyenMaiDTO;
 import com.antam.app.service.impl.KhuyenMai_Service;
 import com.antam.app.dto.KhuyenMaiDTO;
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcon;
@@ -236,7 +237,15 @@ public class ThemKhuyenMaiController extends ScrollPane{
     }
 
     public void addCombobox() {
-        cbLoaiKhuyenMai.getItems().addAll("Tất cả", "Giảm theo phần trăm", "Giảm theo số tiền");
+        cbLoaiKhuyenMai.getItems().clear();
+        cbLoaiKhuyenMai.getItems().add("Tất cả");
+
+        for (LoaiKhuyenMaiDTO loaiKhuyenMai : clientManager.getLoaiKhuyenMaiList()) {
+            String tenLoai = safeText(loaiKhuyenMai.getTenLKM());
+            if (!tenLoai.isBlank() && !cbLoaiKhuyenMai.getItems().contains(tenLoai)) {
+                cbLoaiKhuyenMai.getItems().add(tenLoai);
+            }
+        }
         cbLoaiKhuyenMai.getSelectionModel().selectFirst();
 
         cbTrangThai.getItems().addAll("Tất cả", "Chưa bắt đầu", "Đang diễn ra", "Đã kết thúc");
@@ -265,10 +274,7 @@ public class ThemKhuyenMaiController extends ScrollPane{
         ObservableList<KhuyenMaiDTO> filteredList = FXCollections.observableArrayList();
 
         for (KhuyenMaiDTO km : arrayKhuyenMai) {
-            boolean matchesLoai =
-                    loaiKhuyenMai.equals("Tất cả") ||
-                            (loaiKhuyenMai.equals("Giảm theo phần trăm") && safeTenLoai(km).equals("Giảm theo phần trăm")) ||
-                            (loaiKhuyenMai.equals("Giảm theo số tiền") && safeTenLoai(km).equals("Giảm theo số tiền"));
+            boolean matchesLoai = loaiKhuyenMai.equals("Tất cả") || safeTenLoai(km).equals(loaiKhuyenMai);
 
             LocalDate today = LocalDate.now();
             boolean matchesTrangThai =
