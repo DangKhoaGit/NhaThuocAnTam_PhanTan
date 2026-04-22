@@ -6,6 +6,7 @@
 package com.antam.app.controller.khuyenmai;
 
 import com.antam.app.connect.ConnectDB;
+import com.antam.app.network.ClientManager;
 import com.antam.app.service.impl.KhuyenMai_Service;
 import com.antam.app.dto.KhuyenMaiDTO;
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcon;
@@ -35,10 +36,12 @@ public class KhoiPhucKhuyenMaiController extends ScrollPane{
     private TableView<KhuyenMaiDTO> tableKhuyenMai;
 
     private TableColumn<KhuyenMaiDTO, String> colMaKhuyenMai, colTenKhuyenMai, colLoaiKhuyenMai, colSo, colSoLuongToiDa, colTinhTrang;
+    private final ClientManager clientManager;
     private ObservableList<KhuyenMaiDTO> khuyenMaiList = FXCollections.observableArrayList();
     private ArrayList<KhuyenMaiDTO> arrayKhuyenMai = new ArrayList<>();
     private KhuyenMai_Service khuyenMai_dao = new KhuyenMai_Service();
     public KhoiPhucKhuyenMaiController() {
+        this.clientManager = ClientManager.getInstance();
         /** Giao diện **/
         this.setFitToHeight(true);
         this.setFitToWidth(true);
@@ -175,7 +178,7 @@ public class KhoiPhucKhuyenMaiController extends ScrollPane{
 
                 alert.showAndWait().ifPresent(response -> {
                     if (response == ButtonType.OK) {
-                        boolean success = khuyenMai_dao.khoiPhucKhuyenMai(selectedKM.getMaKM());
+                        boolean success = clientManager.restoreKhuyenMai(selectedKM.getMaKM());
                         if (success) {
                             Alert successAlert = new Alert(Alert.AlertType.INFORMATION);
                             successAlert.setTitle("Thành công");
@@ -221,8 +224,7 @@ public class KhoiPhucKhuyenMaiController extends ScrollPane{
             }
         });
         // load du lieu
-        khuyenMai_dao = new KhuyenMai_Service();
-        arrayKhuyenMai = khuyenMai_dao.getAllKhuyenMaiDaXoa();
+        arrayKhuyenMai = new ArrayList<>(clientManager.getKhuyenMaiDeletedList());
         khuyenMaiList.setAll(arrayKhuyenMai);
         tableKhuyenMai.setItems(khuyenMaiList);
         // them combobox
@@ -328,7 +330,7 @@ public class KhoiPhucKhuyenMaiController extends ScrollPane{
     public void updateTableKhuyenMai(){
         khuyenMaiList.clear();
         tableKhuyenMai.refresh();
-        arrayKhuyenMai = khuyenMai_dao.getAllKhuyenMaiDaXoa();
+        arrayKhuyenMai = new ArrayList<>(clientManager.getKhuyenMaiDeletedList());
         khuyenMaiList.addAll(arrayKhuyenMai);
         tableKhuyenMai.setItems(khuyenMaiList);
     }

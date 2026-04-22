@@ -55,4 +55,9 @@ public class DangDieuCheDTO implements Serializable {
         }
         return MaDDC + " - " + TenDDC;
     }
+
+    @Override
+    public String toString() {
+        return getDisplayText();
+    }
 }

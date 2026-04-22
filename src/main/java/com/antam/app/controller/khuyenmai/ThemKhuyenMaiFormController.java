@@ -6,8 +6,10 @@
 package com.antam.app.controller.khuyenmai;
 
 import com.antam.app.connect.ConnectDB;
+import com.antam.app.network.ClientManager;
 import com.antam.app.service.impl.KhuyenMai_Service;
 import com.antam.app.service.impl.LoaiKhuyenMai_Service;
+import com.antam.app.dto.KhuyenMaiDTO;
 import com.antam.app.dto.LoaiKhuyenMaiDTO;
 import javafx.event.ActionEvent;
 import javafx.scene.control.*;
@@ -32,8 +34,10 @@ public class ThemKhuyenMaiFormController extends DialogPane{
     private Text txtThongBao;
     private KhuyenMai_Service khuyenMai_dao = new KhuyenMai_Service();
     private LoaiKhuyenMai_Service loaiKhuyenMai_dao = new LoaiKhuyenMai_Service();
+    private final ClientManager clientManager;
 
     public ThemKhuyenMaiFormController() {
+        this.clientManager = ClientManager.getInstance();
         this.setPrefSize(800, 600);
         FlowPane header = new FlowPane();
         header.setAlignment(Pos.CENTER);
@@ -176,13 +180,15 @@ public class ThemKhuyenMaiFormController extends DialogPane{
                 LocalDate ngayKetThuc = dpNgayKetThuc.getValue();
                 int soLuongToiDa = spSoLuongToiDa.getValue();
 
-                boolean success = khuyenMai_dao.themKhuyenMai(maKM, tenKM, loaiKM, so, ngayBatDau, ngayKetThuc, soLuongToiDa);
+                KhuyenMaiDTO khuyenMaiDTO = new KhuyenMaiDTO(maKM, tenKM, ngayBatDau, ngayKetThuc, loaiKM, so, soLuongToiDa, false);
+                boolean success = clientManager.createKhuyenMai(khuyenMaiDTO);
                 if (success) {
                     txtThongBao.setStyle("-fx-fill: green;");
                     txtThongBao.setText("Thêm khuyến mãi thành công");
                 } else {
                     txtThongBao.setStyle("-fx-fill: red;");
                     txtThongBao.setText("Thêm khuyến mãi thất bại");
+                    e.consume();
                 }
             }
         });
@@ -212,7 +218,7 @@ public class ThemKhuyenMaiFormController extends DialogPane{
     }
 
     public void loadLoaiKhuyenMai(){
-        ArrayList<LoaiKhuyenMaiDTO> listLoaiKhuyenMai = loaiKhuyenMai_dao.getAllLoaiKhuyenMai();
+        ArrayList<LoaiKhuyenMaiDTO> listLoaiKhuyenMai = new ArrayList<>(clientManager.getLoaiKhuyenMaiList());
         cbLoaiKhuyenMai.getItems().clear();
         cbLoaiKhuyenMai.getItems().addAll(listLoaiKhuyenMai);
         cbLoaiKhuyenMai.getSelectionModel().selectFirst();
@@ -270,7 +276,8 @@ public class ThemKhuyenMaiFormController extends DialogPane{
 
     public String taoMaKhuyenMai(){
         ArrayList<String> listMaKM = new ArrayList<>();
-        khuyenMai_dao.getAllKhuyenMai().forEach(khuyenMai -> listMaKM.add(khuyenMai.getMaKM()));
+        clientManager.getKhuyenMaiList().forEach(khuyenMai -> listMaKM.add(khuyenMai.getMaKM()));
+        clientManager.getKhuyenMaiDeletedList().forEach(khuyenMai -> listMaKM.add(khuyenMai.getMaKM()));
         int max = 0;
         for (String ma : listMaKM) {
             if (ma != null && ma.matches("KM\\d+")) {

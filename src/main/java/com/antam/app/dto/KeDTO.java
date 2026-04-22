@@ -6,13 +6,11 @@
 
 package com.antam.app.dto;
 
-import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
-import java.util.List;
 
 /*
  * @description
@@ -34,14 +32,14 @@ public class KeDTO implements Serializable {
 
     public KeDTO(String maKe) {
         MaKe = maKe;
-        tenKe = "";
-        loaiKe = "";
+        this.tenKe = "";
+        this.loaiKe = "";
     }
 
     public KeDTO(String maKe, String tenKe, String loaiKe) {
         MaKe = maKe;
-        tenKe = tenKe;
-        loaiKe = loaiKe;
+        this.tenKe = tenKe;
+        this.loaiKe = loaiKe;
     }
 
     public KeDTO(String maKe, String tenKe, String loaiKe, boolean deleteAt) {
@@ -49,5 +47,13 @@ public class KeDTO implements Serializable {
         this.tenKe = tenKe;
         this.loaiKe = loaiKe;
         this.deleteAt = deleteAt;
+    }
+
+    @Override
+    public String toString() {
+        if (MaKe == null || MaKe.isBlank()) {
+            return tenKe == null ? "" : tenKe;
+        }
+        return MaKe + " - " + (tenKe == null ? "" : tenKe);
     }
 }

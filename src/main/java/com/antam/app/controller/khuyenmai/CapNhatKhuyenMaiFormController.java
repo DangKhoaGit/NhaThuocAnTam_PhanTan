@@ -7,6 +7,7 @@
 package com.antam.app.controller.khuyenmai;
 
 import com.antam.app.connect.ConnectDB;
+import com.antam.app.network.ClientManager;
 import com.antam.app.service.impl.KhuyenMai_Service;
 import com.antam.app.service.impl.LoaiKhuyenMai_Service;
 import com.antam.app.dto.KhuyenMaiDTO;
@@ -39,6 +40,7 @@ public class CapNhatKhuyenMaiFormController extends DialogPane{
     private KhuyenMai_Service khuyenMai_dao = new KhuyenMai_Service();
     private LoaiKhuyenMai_Service loaiKhuyenMai_dao = new LoaiKhuyenMai_Service();
     private KhuyenMaiDTO khuyenMaiDTO;
+    private final ClientManager clientManager;
 
     public void setKhuyenMai(KhuyenMaiDTO khuyenMaiDTO) {
         this.khuyenMaiDTO = khuyenMaiDTO;
@@ -67,6 +69,7 @@ public class CapNhatKhuyenMaiFormController extends DialogPane{
         }
     }
     public CapNhatKhuyenMaiFormController() {
+        this.clientManager = ClientManager.getInstance();
         this.setPrefSize(800, 600);
         FlowPane header = new FlowPane();
         header.setAlignment(javafx.geometry.Pos.CENTER);
@@ -213,7 +216,7 @@ public class CapNhatKhuyenMaiFormController extends DialogPane{
                 java.time.LocalDate ngayKetThuc = dpNgayKetThuc.getValue();
 
                 KhuyenMaiDTO updatedKhuyenMaiDTO = new KhuyenMaiDTO(maKM, tenKM, ngayBatDau, ngayKetThuc, loaiKM, so, soLuongToiDa, false);
-                boolean success = khuyenMai_dao.capNhatKhuyenMai(updatedKhuyenMaiDTO);
+                boolean success = clientManager.updateKhuyenMai(updatedKhuyenMaiDTO);
                 if (success) {
                     txtThongBao.setText("Cập nhật khuyến mãi thành công");
                     khuyenMaiDTO = updatedKhuyenMaiDTO;
@@ -234,7 +237,7 @@ public class CapNhatKhuyenMaiFormController extends DialogPane{
                 e.consume();
             } else {
                 String maKM = txtMaKhuyenMai.getText().trim();
-                boolean success = khuyenMai_dao.xoaKhuyenMai(maKM);
+                boolean success = clientManager.deleteKhuyenMai(maKM);
                 if (success) {
                     txtThongBao.setText("Xóa khuyến mãi thành công");
                 } else {
@@ -276,7 +279,7 @@ public class CapNhatKhuyenMaiFormController extends DialogPane{
     }
 
     public void loadLoaiKhuyenMai(){
-        ArrayList<LoaiKhuyenMaiDTO> listLoaiKhuyenMai = loaiKhuyenMai_dao.getAllLoaiKhuyenMai();
+        ArrayList<LoaiKhuyenMaiDTO> listLoaiKhuyenMai = new ArrayList<>(clientManager.getLoaiKhuyenMaiList());
         cbLoaiKhuyenMai.getItems().clear();
         cbLoaiKhuyenMai.getItems().addAll(listLoaiKhuyenMai);
         cbLoaiKhuyenMai.getSelectionModel().selectFirst();

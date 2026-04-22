@@ -1,9 +1,8 @@
 package com.antam.app.controller.thuoc;
 
-import com.antam.app.service.I_LoThuoc_Service;
-import com.antam.app.service.impl.LoThuoc_Service;
 import com.antam.app.dto.LoThuocDTO;
 import com.antam.app.dto.ThuocDTO;
+import com.antam.app.network.ClientManager;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
@@ -34,7 +33,7 @@ public class XemChiTietThuocFormController extends DialogPane {
     private ObservableList<LoThuocDTO> listChiTietThuoc = FXCollections.observableArrayList();
 
     private ThuocDTO thuocDTO;
-    private final I_LoThuoc_Service loThuocService = new LoThuoc_Service();
+    private final ClientManager clientManager = ClientManager.getInstance();
 
     public void setThuoc(ThuocDTO thuocDTO) {
         this.thuocDTO = thuocDTO;
@@ -49,7 +48,7 @@ public class XemChiTietThuocFormController extends DialogPane {
         txtMaThuoc_CTT.setText("Mã Thuốc: " + thuocDTO.getMaThuoc());
         txtTenThuoc_CTT.setText("Tên Thuốc: " + thuocDTO.getTenThuoc());
 
-        ArrayList<LoThuocDTO> list = loThuocService.getAllCHiTietThuocTheoMaThuoc(thuocDTO.getMaThuoc());
+        ArrayList<LoThuocDTO> list = new ArrayList<>(clientManager.getLoThuocByThuocId(thuocDTO.getMaThuoc()));
         listChiTietThuoc.clear();
         listChiTietThuoc.addAll(list);
         tableChiTietThuoc.setItems(listChiTietThuoc);

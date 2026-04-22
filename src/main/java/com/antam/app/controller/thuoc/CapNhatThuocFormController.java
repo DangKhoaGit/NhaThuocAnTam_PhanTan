@@ -1,14 +1,7 @@
 package com.antam.app.controller.thuoc;
 
-import com.antam.app.service.I_DangDieuChe_Service;
-import com.antam.app.service.I_DonViTinh_Service;
-import com.antam.app.service.I_Ke_Service;
-import com.antam.app.service.I_Thuoc_Service;
-import com.antam.app.service.impl.DangDieuChe_Service;
-import com.antam.app.service.impl.DonViTinh_Service;
-import com.antam.app.service.impl.Ke_Service;
-import com.antam.app.service.impl.Thuoc_Service;
 import com.antam.app.dto.*;
+import com.antam.app.network.ClientManager;
 import javafx.event.ActionEvent;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -32,10 +25,7 @@ public class CapNhatThuocFormController extends DialogPane{
     private ComboBox<DonViTinhDTO> cbDUDVCS;
     private ComboBox<DangDieuCheDTO> cbDUDangDieuChe;
     private ComboBox<KeDTO> cbDUKe;
-    private final I_DangDieuChe_Service dangDieuCheService = new DangDieuChe_Service();
-    private final I_DonViTinh_Service donViTinhService = new DonViTinh_Service();
-    private final I_Thuoc_Service thuocService = new Thuoc_Service();
-    private final I_Ke_Service keService = new Ke_Service();
+    private final ClientManager clientManager = ClientManager.getInstance();
 
     public void setThuoc(ThuocDTO thuocDTO) {
         this.thuocDTO = thuocDTO;
@@ -56,7 +46,7 @@ public class CapNhatThuocFormController extends DialogPane{
         txtDUHamLuong.setText(t.getHamLuong());
         cbDUKe.setValue(t.getMaKeDTO());
         cbDUDVCS.setValue(t.getMaDVTCoSo());
-        txtDUGiaByDV.setText(donViTinhService.getDVTTheoMa(t.getMaDVTCoSo().getMaDVT()).getTenDVT());
+        txtDUGiaByDV.setText(t.getMaDVTCoSo() == null ? "" : t.getMaDVTCoSo().getTenDVT());
     }
 
     public CapNhatThuocFormController(){
@@ -201,7 +191,11 @@ public class CapNhatThuocFormController extends DialogPane{
                 KeDTO keDTO = cbDUKe.getValue();
                 ThuocDTO thuocDTO = new ThuocDTO(maThuoc, tenThuoc, hamLuong, giaBan, giaGoc, thue.floatValue(), false,
                         dangDieuCheDTO, donViCoSo, keDTO);
-                boolean success = thuocService.capNhatThuoc(thuocDTO);
+                boolean success = clientManager.updateThuoc(thuocDTO);
+                if (!success) {
+                    notification_DUThuoc.setText("Cập nhật thuốc thất bại!");
+                    event.consume();
+                }
 
             }
 
@@ -214,7 +208,7 @@ public class CapNhatThuocFormController extends DialogPane{
             if (!isValid) {
                 event.consume();
             } else {
-                if (thuocService.xoaThuocTheoMa(getThuoc().getMaThuoc()) == false) {
+                if (!clientManager.deleteThuoc(getThuoc().getMaThuoc())) {
                     notification_DUThuoc.setText("Xóa thuốc thất bại!");
                     event.consume();
                 }
@@ -414,7 +408,7 @@ public class CapNhatThuocFormController extends DialogPane{
 
     // them value vao combobox ke
     public void addComBoBoxKe() {
-        ArrayList<KeDTO> arrayKe = keService.getTatCaKeHoatDong();
+        ArrayList<KeDTO> arrayKe = new ArrayList<>(clientManager.getActiveKeList());
         cbDUKe.getItems().clear();
         for (KeDTO keDTO : arrayKe) {
             cbDUKe.getItems().add(keDTO);
@@ -424,7 +418,7 @@ public class CapNhatThuocFormController extends DialogPane{
 
     // Them value vao combobox dang dieu che
     public void addComBoBoxDDC() {
-        ArrayList<DangDieuCheDTO> arrayDDC = dangDieuCheService.getDangDieuCheHoatDong();
+        ArrayList<DangDieuCheDTO> arrayDDC = new ArrayList<>(clientManager.getActiveDangDieuCheList());
         cbDUDangDieuChe.getItems().clear();
         for (DangDieuCheDTO ddc : arrayDDC){
             cbDUDangDieuChe.getItems().add(ddc);
@@ -434,7 +428,7 @@ public class CapNhatThuocFormController extends DialogPane{
 
     // Them value vao combobox don vi tinh
     public void addComBoBoxDVCS() {
-        ArrayList<DonViTinhDTO> arrayDVT = donViTinhService.getAllDonViTinh();
+        ArrayList<DonViTinhDTO> arrayDVT = new ArrayList<>(clientManager.getDonViTinhList());
         cbDUDVCS.getItems().clear();
         arrayDVT.forEach(dvt -> cbDUDVCS.getItems().add(dvt));
         cbDUDVCS.getSelectionModel().selectFirst();

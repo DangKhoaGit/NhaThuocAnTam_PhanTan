@@ -1,25 +1,14 @@
 package com.antam.app.controller.thuoc;
 
-import com.antam.app.service.I_DangDieuChe_Service;
-import com.antam.app.service.I_Ke_Service;
-import com.antam.app.service.I_LoThuoc_Service;
-import com.antam.app.service.I_Thuoc_Service;
-import com.antam.app.service.impl.LoThuoc_Service;
-import com.antam.app.service.impl.DangDieuChe_Service;
-import com.antam.app.service.impl.Ke_Service;
-import com.antam.app.service.impl.Thuoc_Service;
 import com.antam.app.dto.*;
+import com.antam.app.network.ClientManager;
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcon;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.geometry.Insets;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Locale;
-import javafx.geometry.Insets;
 import javafx.scene.effect.DropShadow;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
@@ -27,12 +16,13 @@ import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.stage.Modality;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Locale;
+
 public class TimThuocController extends ScrollPane{
 
-    private final I_Ke_Service keService;
-    private final I_DangDieuChe_Service dangDieuCheService;
-    private final I_Thuoc_Service thuocService;
-    private final I_LoThuoc_Service loThuocService;
+    private final ClientManager clientManager;
     private HashMap<String, Integer> mapTonKho = new HashMap<>();
 
      private ComboBox<KeDTO> cbKe;
@@ -49,10 +39,7 @@ public class TimThuocController extends ScrollPane{
     private ArrayList<ThuocDTO> arrayThuoc = new ArrayList<>();
 
     public TimThuocController (){
-        this.keService = new Ke_Service();
-        this.dangDieuCheService = new DangDieuChe_Service();
-        this.thuocService = new Thuoc_Service();
-        this.loThuocService = new LoThuoc_Service();
+        this.clientManager = ClientManager.getInstance();
 
         /** Giao diện **/
         this.setFitToHeight(true);
@@ -212,7 +199,7 @@ public class TimThuocController extends ScrollPane{
         addComboboxTonKho();
 
         // Load dữ liệu
-        arrayThuoc = thuocService.getAllThuoc();
+        arrayThuoc = new ArrayList<>(clientManager.getThuocList());
         thuocList.addAll(arrayThuoc);
         tableThuoc.setItems(thuocList);
 
@@ -262,7 +249,7 @@ public class TimThuocController extends ScrollPane{
 
     // them value vao combobox ke
     public void addComBoBoxKe() {
-        ArrayList<KeDTO> arrayKe = keService.getTatCaKeHoatDong();
+        ArrayList<KeDTO> arrayKe = new ArrayList<>(clientManager.getActiveKeList());
         cbKe.getItems().clear();
         KeDTO tatCa = new KeDTO("KE0000", "Tất cả", "Tất cả", false);
         cbKe.getItems().add(tatCa);
@@ -274,7 +261,7 @@ public class TimThuocController extends ScrollPane{
 
     // them value vao combobox dang dieu che
     public void addComBoBoxDDC() {
-        ArrayList<DangDieuCheDTO> arrayDDC = dangDieuCheService.getDangDieuCheHoatDong();
+        ArrayList<DangDieuCheDTO> arrayDDC = new ArrayList<>(clientManager.getActiveDangDieuCheList());
         cbDangDieuChe.getItems().clear();
         DangDieuCheDTO Tatca = new DangDieuCheDTO(-1, "Tất cả");
         cbDangDieuChe.getItems().add(Tatca);
@@ -295,7 +282,7 @@ public class TimThuocController extends ScrollPane{
     public void updateTableThuoc(){
         thuocList.clear();
         tableThuoc.refresh();
-        arrayThuoc = thuocService.getAllThuoc();
+        arrayThuoc = new ArrayList<>(clientManager.getThuocList());
         thuocList.addAll(arrayThuoc);
         tableThuoc.setItems(thuocList);
     }
@@ -339,7 +326,7 @@ public class TimThuocController extends ScrollPane{
 
     // ham load ton kho
     public void loadTonKho() {
-        ArrayList<LoThuocDTO> list = loThuocService.getAllChiTietThuoc();
+        ArrayList<LoThuocDTO> list = new ArrayList<>(clientManager.getLoThuocList());
         mapTonKho.clear();
 
         for (LoThuocDTO ct : list) {

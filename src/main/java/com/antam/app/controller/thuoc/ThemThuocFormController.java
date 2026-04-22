@@ -5,15 +5,8 @@
 
 package com.antam.app.controller.thuoc;
 
-import com.antam.app.service.I_DangDieuChe_Service;
-import com.antam.app.service.I_DonViTinh_Service;
-import com.antam.app.service.I_Ke_Service;
-import com.antam.app.service.I_Thuoc_Service;
-import com.antam.app.service.impl.DangDieuChe_Service;
-import com.antam.app.service.impl.DonViTinh_Service;
-import com.antam.app.service.impl.Ke_Service;
-import com.antam.app.service.impl.Thuoc_Service;
 import com.antam.app.dto.*;
+import com.antam.app.network.ClientManager;
 import javafx.event.ActionEvent;
 import javafx.scene.control.*;
 import javafx.scene.control.ButtonBar.ButtonData;
@@ -31,10 +24,7 @@ import javafx.scene.layout.*;
 import javafx.scene.text.Font;
 
 public class ThemThuocFormController extends DialogPane{
-    private final I_DangDieuChe_Service dangDieuCheService;
-    private final I_DonViTinh_Service donViTinhService;
-    private final I_Thuoc_Service thuocService;
-    private final I_Ke_Service keService;
+    private final ClientManager clientManager;
 
     private TextField txtAddMaThuoc, txtAddTenThuoc, txtAddHamLuong;
 
@@ -50,10 +40,7 @@ public class ThemThuocFormController extends DialogPane{
 
 
     public ThemThuocFormController() {
-        this.dangDieuCheService = new DangDieuChe_Service();
-        this.donViTinhService = new DonViTinh_Service();
-        this.thuocService = new Thuoc_Service();
-        this.keService = new Ke_Service();
+        this.clientManager = ClientManager.getInstance();
 
         this.setPrefSize(800, 600);
 
@@ -198,7 +185,7 @@ public class ThemThuocFormController extends DialogPane{
 
                 ThuocDTO thuocDTO = new ThuocDTO(maThuoc, tenThuoc, hamLuong, giaBan, giaGoc, thue.floatValue(), false,
                         dangDieuCheDTO, donViCoSo, keDTO);
-                boolean check = thuocService.themThuoc(thuocDTO);
+                boolean check = clientManager.createThuoc(thuocDTO);
                 if (!check) {
                     notification_addThuoc.setText("Thêm thuốc thất bại!");
                     event.consume();
@@ -296,6 +283,17 @@ public class ThemThuocFormController extends DialogPane{
                 setText(empty || item == null ? null : formatKe(item));
             }
         });
+        cbAddKe.setConverter(new StringConverter<>() {
+            @Override
+            public String toString(KeDTO keDTO) {
+                return formatKe(keDTO);
+            }
+
+            @Override
+            public KeDTO fromString(String string) {
+                return null;
+            }
+        });
 
         cbAddDangDieuChe.setCellFactory(lv -> new ListCell<>() {
             @Override
@@ -309,6 +307,17 @@ public class ThemThuocFormController extends DialogPane{
             protected void updateItem(DangDieuCheDTO item, boolean empty) {
                 super.updateItem(item, empty);
                 setText(empty || item == null ? null : formatDDC(item));
+            }
+        });
+        cbAddDangDieuChe.setConverter(new StringConverter<>() {
+            @Override
+            public String toString(DangDieuCheDTO ddc) {
+                return formatDDC(ddc);
+            }
+
+            @Override
+            public DangDieuCheDTO fromString(String string) {
+                return null;
             }
         });
 
@@ -329,15 +338,15 @@ public class ThemThuocFormController extends DialogPane{
     }
 
     private String formatKe(KeDTO keDTO) {
-        return keDTO.getMaKe() + " - " + keDTO.getTenKe();
+        return keDTO == null ? "" : keDTO.getMaKe() + " - " + keDTO.getTenKe();
     }
 
     private String formatDDC(DangDieuCheDTO ddc) {
-        return ddc.getMaDDC() + " - " + ddc.getTenDDC();
+        return ddc == null ? "" : ddc.getDisplayText();
     }
 
     private String formatDVT(DonViTinhDTO dvt) {
-        return dvt.getMaDVT() + " - " + dvt.getTenDVT();
+        return dvt == null ? "" : dvt.getMaDVT() + " - " + dvt.getTenDVT();
     }
 
     // ham validate kiem tra du lieu truyen vao dung hay ko
@@ -357,7 +366,7 @@ public class ThemThuocFormController extends DialogPane{
             return false;
         }else{
             if (maThuoc.matches("^VN-\\d{5}-\\d{2}$")) {
-                if (thuocService.getThuocTheoMa(maThuoc) != null){
+                if (clientManager.getThuocById(maThuoc) != null){
                     notification_addThuoc.setText("Mã thuốc đã tồn tại!");
                     return false;
                 }
@@ -422,7 +431,7 @@ public class ThemThuocFormController extends DialogPane{
 
     // them value vao combobox ke
     public void addComBoBoxKe() {
-        ArrayList<KeDTO> arrayKe = keService.getTatCaKeHoatDong();
+        ArrayList<KeDTO> arrayKe = new ArrayList<>(clientManager.getActiveKeList());
         cbAddKe.getItems().clear();
         for (KeDTO keDTO : arrayKe) {
             cbAddKe.getItems().add(keDTO);
@@ -432,7 +441,7 @@ public class ThemThuocFormController extends DialogPane{
 
     // Them value vao combobox dang dieu che
     public void addComBoBoxDDC() {
-        ArrayList<DangDieuCheDTO> arrayDDC = dangDieuCheService.getDangDieuCheHoatDong();
+        ArrayList<DangDieuCheDTO> arrayDDC = new ArrayList<>(clientManager.getActiveDangDieuCheList());
         cbAddDangDieuChe.getItems().clear();
         for (DangDieuCheDTO ddc : arrayDDC){
             cbAddDangDieuChe.getItems().add(ddc);
@@ -442,7 +451,7 @@ public class ThemThuocFormController extends DialogPane{
 
     // Them value vao combobox don vi tinh
     public void addComBoBoxDVCS() {
-        ArrayList<DonViTinhDTO> arrayDVT = donViTinhService.getAllDonViTinh();
+        ArrayList<DonViTinhDTO> arrayDVT = new ArrayList<>(clientManager.getDonViTinhList());
         cbAddDVCS.getItems().clear();
         arrayDVT.forEach(dvt -> cbAddDVCS.getItems().add(dvt));
         cbAddDVCS.getSelectionModel().selectFirst();
