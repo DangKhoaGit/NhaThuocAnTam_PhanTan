@@ -40,6 +40,7 @@ import com.antam.app.controller.trangchinh.ThongKeTrangChinhController;
 import com.antam.app.dto.PhienNguoiDungDTO;
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcon;
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcons;
+import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -59,13 +60,16 @@ import javafx.stage.Stage;
 
 public class KhungChinhController extends BorderPane {
 
+    @FXML
     private Button btnTrangChinh, btnHoaDon, btnPhieuDat, btnThuoc, btnKeThuoc, btnDangDieuChe,
             btnDonViTinh, btnKhuyenMai, btnPhieuNhap, btnKhachHang, btnNhanVien, btnCaiDat, btnDangXuat;
 
+    @FXML
     private VBox subMenuHoaDon, subMenuPhieuDat, subMenuThuoc, subMenuKeThuoc, subMenuDangDieuChe,
             subMenuDonViTinh, subMenuKhuyenMai, subMenuPhieuNhap, subMenuKhachHang, subMenuNhanVien, subMenuCaiDat;
 
-    private StackPane paneContent = new StackPane();
+    @FXML
+    private AnchorPane paneContent = new AnchorPane();
 
     public KhungChinhController() {
         /** Giao diện **/
@@ -218,8 +222,9 @@ public class KhungChinhController extends BorderPane {
         });
 
         // Phân quyền người dùng
-        boolean isAdmin = PhienNguoiDungDTO.getMaNV().isQuanLi();
-        System.out.println(isAdmin);
+        boolean isAdmin = PhienNguoiDungDTO.getMaNV() != null
+                && PhienNguoiDungDTO.getMaNV().isQuanLi();
+
         if (isAdmin){
             batFullQuyenNguoiDung();
         } else {

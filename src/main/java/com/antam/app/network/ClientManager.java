@@ -21,6 +21,7 @@ import java.util.logging.Logger;
  * @date: 21/04/2026
  * @version: 1.0
  */
+
 public class ClientManager {
     private static final Logger LOGGER = Logger.getLogger(ClientManager.class.getName());
     private static ClientManager instance;
@@ -693,6 +694,186 @@ public class ClientManager {
     }
 
     /**
+     * === ThongKe Operations ===
+     */
+
+    public int getTongSoThuoc() {
+        try {
+            Command command = Command.builder()
+                    .type(CommandType.GET_THONGKE_TRANGCHINH)
+                    .payload(Map.of("type", "TONG_SO_THUOC"))
+                    .sessionId(sessionId)
+                    .timestamp(System.currentTimeMillis())
+                    .build();
+
+            Response response = sendCommandWithAutoConnect(command);
+            if (response.isSuccess() && response.getData() instanceof Integer) {
+                return (Integer) response.getData();
+            }
+
+            LOGGER.warning("Failed to get TongSoThuoc: " + response.getMessage());
+            return 0;
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Error getting TongSoThuoc", e);
+            return 0;
+        }
+    }
+
+    public int getTongSoNhanVien() {
+        try {
+            Command command = Command.builder()
+                    .type(CommandType.GET_THONGKE_TRANGCHINH)
+                    .payload(Map.of("type", "TONG_SO_NHANVIEN"))
+                    .sessionId(sessionId)
+                    .timestamp(System.currentTimeMillis())
+                    .build();
+
+            Response response = sendCommandWithAutoConnect(command);
+            if (response.isSuccess() && response.getData() instanceof Integer) {
+                return (Integer) response.getData();
+            }
+
+            LOGGER.warning("Failed to get TongSoNhanVien: " + response.getMessage());
+            return 0;
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Error getting TongSoNhanVien", e);
+            return 0;
+        }
+    }
+
+    public int getSoHoaDonHomNay() {
+        try {
+            Command command = Command.builder()
+                    .type(CommandType.GET_THONGKE_TRANGCHINH)
+                    .payload(Map.of("type", "SO_HOADON_HOMNAY"))
+                    .sessionId(sessionId)
+                    .timestamp(System.currentTimeMillis())
+                    .build();
+
+            Response response = sendCommandWithAutoConnect(command);
+            if (response.isSuccess() && response.getData() instanceof Integer) {
+                return (Integer) response.getData();
+            }
+
+            LOGGER.warning("Failed to get SoHoaDonHomNay: " + response.getMessage());
+            return 0;
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Error getting SoHoaDonHomNay", e);
+            return 0;
+        }
+    }
+
+    public int getSoKhuyenMaiApDung() {
+        try {
+            Command command = Command.builder()
+                    .type(CommandType.GET_THONGKE_TRANGCHINH)
+                    .payload(Map.of("type", "SO_KHUYENMAI_APDUNG"))
+                    .sessionId(sessionId)
+                    .timestamp(System.currentTimeMillis())
+                    .build();
+
+            Response response = sendCommandWithAutoConnect(command);
+            if (response.isSuccess() && response.getData() instanceof Integer) {
+                return (Integer) response.getData();
+            }
+
+            LOGGER.warning("Failed to get SoKhuyenMaiApDung: " + response.getMessage());
+            return 0;
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Error getting SoKhuyenMaiApDung", e);
+            return 0;
+        }
+    }
+
+    public Map<String, Double> getDoanhThu7NgayGanNhat() {
+        try {
+            Command command = Command.builder()
+                    .type(CommandType.GET_THONGKE_TRANGCHINH)
+                    .payload(Map.of("type", "DOANHTHU_7NGAY"))
+                    .sessionId(sessionId)
+                    .timestamp(System.currentTimeMillis())
+                    .build();
+
+            Response response = sendCommandWithAutoConnect(command);
+            if (response.isSuccess() && response.getData() instanceof Map) {
+                return (Map<String, Double>) response.getData();
+            }
+
+            LOGGER.warning("Failed to get DoanhThu7NgayGanNhat: " + response.getMessage());
+            return new HashMap<>();
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Error getting DoanhThu7NgayGanNhat", e);
+            return new HashMap<>();
+        }
+    }
+
+    public Map<String, Integer> getTopSanPhamBanChay(int limit) {
+        try {
+            Command command = Command.builder()
+                    .type(CommandType.GET_THONGKE_TRANGCHINH)
+                    .payload(Map.of("type", "TOP_SANPHAM", "limit", limit))
+                    .sessionId(sessionId)
+                    .timestamp(System.currentTimeMillis())
+                    .build();
+
+            Response response = sendCommandWithAutoConnect(command);
+            if (response.isSuccess() && response.getData() instanceof Map) {
+                return (Map<String, Integer>) response.getData();
+            }
+
+            LOGGER.warning("Failed to get TopSanPhamBanChay: " + response.getMessage());
+            return new HashMap<>();
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Error getting TopSanPhamBanChay", e);
+            return new HashMap<>();
+        }
+    }
+
+    public List<Map<String, Object>> getThuocSapHetHan() {
+        try {
+            Command command = Command.builder()
+                    .type(CommandType.GET_THONGKE_TRANGCHINH)
+                    .payload(Map.of("type", "THUOC_SAP_HETHAN"))
+                    .sessionId(sessionId)
+                    .timestamp(System.currentTimeMillis())
+                    .build();
+
+            Response response = sendCommandWithAutoConnect(command);
+            if (response.isSuccess() && response.getData() instanceof List) {
+                return (List<Map<String, Object>>) response.getData();
+            }
+
+            LOGGER.warning("Failed to get ThuocSapHetHan: " + response.getMessage());
+            return new ArrayList<>();
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Error getting ThuocSapHetHan", e);
+            return new ArrayList<>();
+        }
+    }
+
+    public List<Map<String, Object>> getThuocTonKhoThap() {
+        try {
+            Command command = Command.builder()
+                    .type(CommandType.GET_THONGKE_TRANGCHINH)
+                    .payload(Map.of("type", "THUOC_TONKHO_THAP"))
+                    .sessionId(sessionId)
+                    .timestamp(System.currentTimeMillis())
+                    .build();
+
+            Response response = sendCommandWithAutoConnect(command);
+            if (response.isSuccess() && response.getData() instanceof List) {
+                return (List<Map<String, Object>>) response.getData();
+            }
+
+            LOGGER.warning("Failed to get ThuocTonKhoThap: " + response.getMessage());
+            return new ArrayList<>();
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Error getting ThuocTonKhoThap", e);
+            return new ArrayList<>();
+        }
+    }
+
+    /**
      * === Internal Helpers ===
      */
 
@@ -705,8 +886,9 @@ public class ClientManager {
                     .build();
 
             Response response = sendCommandWithAutoConnect(command);
-            if (response.isSuccess() && response.getData() instanceof ArrayList) {
-                return (ArrayList<T>) response.getData();
+
+            if (response.isSuccess() && response.getData() instanceof List<?>) {
+                return (List<T>) response.getData();
             }
 
             LOGGER.warning(logMessage + ": " + response.getMessage());
@@ -833,12 +1015,28 @@ public class ClientManager {
             return new ArrayList<>();
         }
     }
-
     private Response sendCommandWithAutoConnect(Command command) throws IOException {
-        if (!isConnected() && !connectToServer()) {
-            throw new IOException("Cannot connect to server");
+        if (!isConnected()) {
+            // đảm bảo clean connection cũ trước khi reconnect
+            if (client != null) {
+                client.disconnect();
+            }
+
+            if (!connectToServer()) {
+                throw new IOException("Cannot connect to server");
+            }
         }
         return sendCommand(command);
+    }
+
+    private void reconnect() throws IOException {
+        if (client != null) {
+            client.disconnect();
+        }
+
+        if (!connectToServer()) {
+            throw new IOException("Reconnect failed");
+        }
     }
 
     private Response sendCommand(Command command) throws IOException {
@@ -860,5 +1058,82 @@ public class ClientManager {
      */
     public void setSessionId(String sessionId) {
         this.sessionId = sessionId;
+    }
+
+    /**
+     * Đăng nhập
+     */
+    public Boolean login(String username, String password) {
+        try {
+            Command command = RequestBuilder.buildLoginCommand(username, password);
+
+            Response response = sendCommandWithAutoConnect(command);
+
+            if (response.isSuccess()) {
+                // Lưu sessionId nếu login thành công
+                if (response.getData() instanceof String) {
+                    this.sessionId = (String) response.getData();
+                }
+                return true;
+            } else {
+                LOGGER.warning("Login failed: " + response.getMessage());
+                return false;
+            }
+
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Error during login", e);
+            return false;
+        }
+    }
+
+    /**
+     * Đăng xuất
+     */
+    public boolean logout() {
+        try {
+            Command command = RequestBuilder.buildLogoutCommand(sessionId);
+
+            Response response = sendCommandWithAutoConnect(command);
+
+            if (response.isSuccess()) {
+                this.sessionId = null; // Clear session
+                return true;
+            } else {
+                LOGGER.warning("Logout failed: " + response.getMessage());
+                return false;
+            }
+
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Error during logout", e);
+            return false;
+        }
+    }
+
+    public NhanVienDTO getNhanVienByTaiKhoan(String username) {
+        try {
+            Map<String, Object> payload = new HashMap<>();
+            payload.put("taiKhoan", username);
+
+            Command command = Command.builder()
+                    .type(CommandType.GET_NHANVIEN_TAIKHOAN)
+                    .payload(payload)
+                    .sessionId(sessionId)
+                    .timestamp(System.currentTimeMillis())
+                    .build();
+
+            Response response = sendCommandWithAutoConnect(command);
+
+            if (response.isSuccess() && response.getData() instanceof NhanVienDTO) {
+                System.out.println("Successfully retrieved NhanVienDTO for username: " + username);
+                return (NhanVienDTO) response.getData();
+            }
+
+            LOGGER.warning("Failed to get NhanVienTaiKhoan: " + response.getMessage());
+            return null;
+
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Error getting NhanVienTaiKhoan", e);
+            return null;
+        }
     }
 }

@@ -5,11 +5,14 @@
 
 package com.antam.app.controller.dangnhap;
 
-import com.antam.app.connect.ConnectDB;
 import com.antam.app.controller.khungchinh.KhungChinhController;
-import com.antam.app.service.impl.NhanVien_Service;
+import com.antam.app.dto.NhanVienDTO;
 import com.antam.app.dto.PhienNguoiDungDTO;
-import com.antam.app.helper.MaKhoaMatKhau;
+import com.antam.app.network.ClientManager;
+import com.antam.app.service.impl.NhanVien_Service;
+import javafx.application.Platform;
+import javafx.concurrent.Task;
+import javafx.fxml.FXMLLoader;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -25,11 +28,7 @@ import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
 
-import java.sql.Connection;
-import java.sql.SQLException;
-
 public class DangNhapController extends StackPane {
-    private NhanVien_Service nv_dao = new NhanVien_Service();
     private Button btnLogin = new Button("Đăng nhập");
     private TextField txtname_login = new TextField();
     private PasswordField txtpass_login = new PasswordField();
@@ -126,38 +125,82 @@ public class DangNhapController extends StackPane {
 
     protected void onLoginButtonClick() {
         if (checklogin()) {
-            if (checktnhanvien()) {
-                PhienNguoiDungDTO.setMaNV(nv_dao.getNhanVienTaiKhoan(txtname_login.getText()));
-                // rào cho trường hợp đăng xuất xong đăng nhập lại
-                if (PhienNguoiDungDTO.getMaNV() == null){
-                    notification_login.setText("Tài khoản không hợp lệ");
-                    return;
+
+            notification_login.setText("Đang đăng nhập...");
+            notification_login.setFill(Color.BLUE);
+            btnLogin.setDisable(true);
+
+            Task<Boolean> loginTask = new Task<>() {
+                @Override
+                protected Boolean call() throws Exception {
+                    return ClientManager.getInstance()
+                            .login(txtname_login.getText(), txtpass_login.getText());
                 }
-                Scene scene = new Scene(new KhungChinhController());
-                Stage stage = (Stage) this.getScene().getWindow();
-                stage.setScene(scene);
-                stage.setMaximized(true);
-                stage.show();
-            }
+            };
+
+            loginTask.setOnSucceeded(e -> {
+                boolean loginSuccess = loginTask.getValue();
+
+                if (loginSuccess) {
+                    try {
+                        System.out.println("Đăng nhập thành công...");
+
+                        // 🔥 Lấy thông tin nhân viên từ session
+                        NhanVienDTO nv = ClientManager.getInstance().getNhanVienByTaiKhoan(txtname_login.getText());
+
+//                        System.out.println("Thông tin nhân viên: " + nv);
+                        if (nv == null) {
+                            notification_login.setText("Không lấy được thông tin người dùng");
+                            notification_login.setFill(Color.RED);
+                            btnLogin.setDisable(false);
+                            return;
+                        }
+
+                        // 🔥 Gán vào phiên người dùng
+                        PhienNguoiDungDTO.setMaNV(nv);
+
+                        // 🔥 Check lại
+                        if (PhienNguoiDungDTO.getMaNV() == null) {
+                            notification_login.setText("Tài khoản không hợp lệ");
+                            notification_login.setFill(Color.RED);
+                            btnLogin.setDisable(false);
+                            return;
+                        }
+
+                        // 🔥 Load UI đúng chuẩn
+                        Scene scene = new Scene(new KhungChinhController());
+
+                        Stage stage = (Stage) DangNhapController.this.getScene().getWindow();
+                        stage.setScene(scene);
+                        stage.setMaximized(true);
+                        stage.show();
+
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+                        notification_login.setText("Lỗi khi tải giao diện chính");
+                        notification_login.setFill(Color.RED);
+                        btnLogin.setDisable(false);
+                    }
+
+                } else {
+                    notification_login.setText("Tên đăng nhập hoặc mật khẩu không đúng");
+                    notification_login.setFill(Color.RED);
+                    btnLogin.setDisable(false);
+                }
+            });
+
+            loginTask.setOnFailed(e -> {
+                notification_login.setText("Không thể kết nối tới server. Vui lòng thử lại.");
+                notification_login.setFill(Color.RED);
+                btnLogin.setDisable(false);
+            });
+
+            Thread thread = new Thread(loginTask);
+            thread.setDaemon(true);
+            thread.start();
         }
-        //Dùng để tắt chức năng đăng nhập
-//        try {
-//            FXMLLoader fxmlLoader = new FXMLLoader(GiaoDienChinh.class.getResource("/com/antam/app/views/dashboard.fxml"));
-//            Parent root = (Parent) fxmlLoader.load();
-//            Stage newStage = new Stage();
-//            newStage.setTitle("");
-//            newStage.setScene(new Scene(root));
-//            newStage.setMaximized(true);
-//            newStage.initStyle(StageStyle.DECORATED);
-//            newStage.show();
-//            Stage oldStage = (Stage) this.btnLogin.getScene().getWindow();
-//            oldStage.close();
-//            PhienNguoiDung.setMaNV(nv_dao.getNhanVienTaiKhoan("Admin001"));
-//        } catch (Exception var5) {
-//            Exception e = var5;
-//            e.printStackTrace();
-//        }
     }
+
     private boolean checklogin(){
         // Kiểm tra tên đăng nhập
         if (txtname_login.getText().isEmpty()){
@@ -189,26 +232,6 @@ public class DangNhapController extends StackPane {
         }
 
         notification_login.setText("");
-        return true;
-    }
-
-    private boolean checktnhanvien(){
-        try {
-            Connection con = ConnectDB.getInstance().connect();
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
-        nv_dao = new NhanVien_Service();
-        String id = txtname_login.getText();
-        String pass = txtpass_login.getText();
-        if (nv_dao.getNhanVienTaiKhoan(id) == null){
-            notification_login.setText("Tên đăng nhập không tồn tại");
-            return false;
-        }else if (!MaKhoaMatKhau.verifyPassword(pass,nv_dao.getNhanVienTaiKhoan(id).getMatKhau())) {
-            System.out.println("false");
-            notification_login.setText("Mật khẩu không đúng");
-            return false;
-        }
         return true;
     }
 

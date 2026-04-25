@@ -9,6 +9,7 @@ import java.io.IOException;
 
 import com.antam.app.controller.dangnhap.DangNhapController;
 
+import com.antam.app.controller.khungchinh.KhungChinhController;
 import javafx.application.Application;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
@@ -21,6 +22,7 @@ public class  GiaoDienChinh extends Application {
     public void start(Stage stage) throws IOException {
         stage.initStyle(StageStyle.DECORATED);
         stage.setMaximized(true);
+//        stage.setScene(new Scene(new KhungChinhController(), 800, 800));
         stage.setScene(new Scene(new DangNhapController(), 800, 800));
         stage.show();
     }

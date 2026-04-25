@@ -34,6 +34,7 @@ public enum CommandType {
     // === NhanVien Operations ===
     GET_NHANVIEN_LIST,
     GET_NHANVIEN_BY_ID,
+    GET_NHANVIEN_TAIKHOAN,
     CREATE_NHANVIEN,
     UPDATE_NHANVIEN,
     DELETE_NHANVIEN,

@@ -25,6 +25,7 @@ public class ServiceLocator {
     private final PhieuDat_Service phieuDatService;
     private final DangDieuChe_Service dangDieuCheService;
     private final Ke_Service keService;
+    private final ThongKeTrangChinh_Service thongKeTrangChinhService;
 
     private ServiceLocator() {
         this.hoaDonService = new HoaDon_Service();
@@ -40,6 +41,7 @@ public class ServiceLocator {
         this.phieuDatService = new PhieuDat_Service();
         this.dangDieuCheService = new DangDieuChe_Service();
         this.keService = new Ke_Service();
+        this.thongKeTrangChinhService = new ThongKeTrangChinh_Service();
     }
 
     public static synchronized ServiceLocator getInstance() {
@@ -100,5 +102,9 @@ public class ServiceLocator {
 
     public Ke_Service getKeService() {
         return keService;
+    }
+
+    public ThongKeTrangChinh_Service getThongKeTrangChinhService() {
+        return thongKeTrangChinhService;
     }
 }
