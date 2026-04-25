@@ -62,6 +62,8 @@ public class ThemHoaDonController extends ScrollPane{
     private DatePicker cbFirstDate;
     private DatePicker cbEndDate;
 
+    private ClientManager clientManager;
+
     // Định dạng tiền tệ kiểu Việt Nam: 1.000đ, 10.000đ
     private static final DecimalFormat VND_FORMAT;
     static {
@@ -185,7 +187,7 @@ public class ThemHoaDonController extends ScrollPane{
             Task<List<HoaDonDTO>> refreshTask = new Task<List<HoaDonDTO>>() {
                 @Override
                 protected List<HoaDonDTO> call() {
-                    return ClientManager.getInstance().getHoaDonList();
+                    return (List<HoaDonDTO>) clientManager.getHoaDonList();
                 }
             };
             refreshTask.setOnSucceeded(e1 -> {
@@ -244,7 +246,7 @@ public class ThemHoaDonController extends ScrollPane{
         Task<List<HoaDonDTO>> loadTask = new Task<List<HoaDonDTO>>() {
             @Override
             protected List<HoaDonDTO> call() {
-                return ClientManager.getInstance().getHoaDonList();
+                return (List<HoaDonDTO>) clientManager.getHoaDonList();
             }
         };
         loadTask.setOnSucceeded(e -> {
@@ -261,7 +263,7 @@ public class ThemHoaDonController extends ScrollPane{
         Task<List<NhanVienDTO>> loadNVTask = new Task<List<NhanVienDTO>>() {
             @Override
             protected List<NhanVienDTO> call() {
-                return ClientManager.getInstance().getNhanVienList();
+                return (List<NhanVienDTO>) clientManager.getNhanVienList();
             }
         };
         loadNVTask.setOnSucceeded(e -> {
@@ -319,7 +321,7 @@ public class ThemHoaDonController extends ScrollPane{
 
         // --- Hàm lọc hóa đơn theo nhân viên, trạng thái, khoảng giá, ngày ---
         Runnable filterInvoices = () -> {
-            List<HoaDonDTO> allHoaDon = ClientManager.getInstance().getHoaDonList();
+            List<HoaDonDTO> allHoaDon = (List<HoaDonDTO>) clientManager.getHoaDonList();
             NhanVienDTO selectedNV = cbEmployee.getValue();
             String selectedStatus = cbStatus.getValue();
             String selectedPrice = cbPrice.getValue();
@@ -396,7 +398,7 @@ public class ThemHoaDonController extends ScrollPane{
 
         // Lắng nghe thay đổi nội dung ô tìm kiếm để search realtime
         txtSearchInvoice.textProperty().addListener((observable, oldValue, newValue) -> {
-            List<HoaDonDTO> allHoaDon = ClientManager.getInstance().getHoaDonList();
+            List<HoaDonDTO> allHoaDon = (List<HoaDonDTO>) clientManager.getHoaDonList();
             if (newValue == null || newValue.trim().isEmpty()) {
                 // Nếu ô tìm kiếm rỗng, load lại toàn bộ hóa đơn
                 table_invoice.setItems(FXCollections.observableArrayList(allHoaDon));
@@ -410,7 +412,7 @@ public class ThemHoaDonController extends ScrollPane{
         });
         // Sự kiện cho nút tìm kiếm vẫn giữ lại để người dùng có thể bấm nút
         btnSearchInvoice.setOnAction(e -> {
-            List<HoaDonDTO> allHoaDon = ClientManager.getInstance().getHoaDonList();
+            List<HoaDonDTO> allHoaDon = (List<HoaDonDTO>) clientManager.getHoaDonList();
             String maHd = txtSearchInvoice.getText();
             if (maHd == null || maHd.trim().isEmpty()) {
                 table_invoice.setItems(FXCollections.observableArrayList(allHoaDon));
@@ -458,7 +460,7 @@ public class ThemHoaDonController extends ScrollPane{
             if (cbFirstDate != null) cbFirstDate.setValue(null);
             if (cbEndDate != null) cbEndDate.setValue(null);
             // Load lại toàn bộ hóa đơn
-            List<HoaDonDTO> allHoaDon = ClientManager.getInstance().getHoaDonList();
+            List<HoaDonDTO> allHoaDon = (List<HoaDonDTO>) clientManager.getHoaDonList();
             table_invoice.setItems(FXCollections.observableArrayList(allHoaDon));
         });
     }

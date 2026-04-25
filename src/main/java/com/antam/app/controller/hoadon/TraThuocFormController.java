@@ -24,6 +24,8 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.Collection;
+
 import javafx.geometry.Insets;
 import javafx.scene.control.Button;
 import javafx.scene.control.ScrollPane;
@@ -53,8 +55,8 @@ public class TraThuocFormController extends DialogPane{
 
     // Hiển thị thông tin hóa đơn và chi tiết hóa đơn
     public void showData(HoaDonDTO hoaDonDTO) {
-        HoaDonDTO hd = clientManager.getHoaDonById(hoaDonDTO.getMaHD());
-        ArrayList<ChiTietHoaDonDTO> chiTietHoaDons = new ArrayList<>(clientManager.getChiTietHoaDonByHoaDonId(hoaDonDTO.getMaHD()));
+        HoaDonDTO hd = (HoaDonDTO) clientManager.getHoaDonById(hoaDonDTO.getMaHD());
+        ArrayList<ChiTietHoaDonDTO> chiTietHoaDons = new ArrayList<ChiTietHoaDonDTO>((Collection<? extends ChiTietHoaDonDTO>) clientManager.getChiTietHoaDon(hoaDonDTO.getMaHD()));
         txtMaHoaDonTra.setText(hoaDonDTO.getMaHD());
         vbListChiTietHoaDon.getChildren().clear();
         selectedItems.clear();
@@ -247,7 +249,7 @@ public class TraThuocFormController extends DialogPane{
 
                 }
                 if (clientManager.getChiTietHoaDonConBanByHoaDonId(hoaDonDTO.getMaHD()).isEmpty()) {
-                    clientManager.softDeleteHoaDon(hoaDonDTO.getMaHD());
+                    clientManager.deleteHoaDon(hoaDonDTO.getMaHD());
                     clientManager.updateHoaDonTongTien(hoaDonDTO.getMaHD(), 0);
                 } else {
                     double tongTienCu = hoaDonDTO.getTongTien();
@@ -363,7 +365,7 @@ public class TraThuocFormController extends DialogPane{
             tinhTongTienTra();
         });
 
-        LoThuocDTO ctt = clientManager.getLoThuocById(chiTietHoaDonDTO.getMaLoThuocDTO().getMaLoThuoc());
+        LoThuocDTO ctt = clientManager.getLoThuocByLoThuocId(chiTietHoaDonDTO.getMaLoThuocDTO().getMaLoThuoc());
         ThuocDTO t = ctt == null || ctt.getMaThuocDTO() == null ? null : clientManager.getThuocById(ctt.getMaThuocDTO().getMaThuoc());
         Text txtMaThuoc = new Text(getDisplayTenThuoc(t, ctt));
         txtMaThuoc.setStyle("-fx-font-size: 15px;");

@@ -48,7 +48,7 @@ public class XemChiTietThuocFormController extends DialogPane {
         txtMaThuoc_CTT.setText("Mã Thuốc: " + thuocDTO.getMaThuoc());
         txtTenThuoc_CTT.setText("Tên Thuốc: " + thuocDTO.getTenThuoc());
 
-        ArrayList<LoThuocDTO> list = new ArrayList<>(clientManager.getLoThuocByThuocId(thuocDTO.getMaThuoc()));
+        ArrayList<LoThuocDTO> list = new ArrayList<>(clientManager.getLoThuocFefoByThuocId(thuocDTO.getMaThuoc()));
         listChiTietThuoc.clear();
         listChiTietThuoc.addAll(list);
         tableChiTietThuoc.setItems(listChiTietThuoc);
