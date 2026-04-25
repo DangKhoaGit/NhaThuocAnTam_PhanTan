@@ -38,7 +38,7 @@ import javafx.scene.layout.*;
 import javafx.scene.text.Font;
 import javafx.scene.text.TextFlow;
 
-public class ThemPhieuDatFormController extends DialogPane{
+public class ThemPhieuDatFormController extends DialogPane {
     private TextField txtMa;
     private TextField txtTenKhach;
     private TextField txtSoDienThoai;
@@ -50,11 +50,11 @@ public class ThemPhieuDatFormController extends DialogPane{
     private Button btnThem;
     private ComboBox<KhuyenMaiDTO> cbKhuyenMai;
     private TableView<ChiTietPhieuDatThuocDTO> tbChonThuoc;
-    private TableColumn<ChiTietPhieuDatThuocDTO,String> colTenThuoc;
-    private TableColumn<ChiTietPhieuDatThuocDTO,String> colDonVi;
-    private TableColumn<ChiTietPhieuDatThuocDTO,String> colSoLuong;
-    private TableColumn<ChiTietPhieuDatThuocDTO,String> colDonGia;
-    private TableColumn<ChiTietPhieuDatThuocDTO,String> colThanhTien;
+    private TableColumn<ChiTietPhieuDatThuocDTO, String> colTenThuoc;
+    private TableColumn<ChiTietPhieuDatThuocDTO, String> colDonVi;
+    private TableColumn<ChiTietPhieuDatThuocDTO, String> colSoLuong;
+    private TableColumn<ChiTietPhieuDatThuocDTO, String> colDonGia;
+    private TableColumn<ChiTietPhieuDatThuocDTO, String> colThanhTien;
     private Text txtTotal;
     private Text txtCanhBaoSDT = new Text();
     private Text txtCanhBaoKM = new Text();
@@ -67,7 +67,6 @@ public class ThemPhieuDatFormController extends DialogPane{
     private DecimalFormat decimalFormat = new DecimalFormat("#,### đ");
     private ArrayList<ChiTietPhieuDatThuocDTO> list = new ArrayList<>();
     private ObservableList<ChiTietPhieuDatThuocDTO> obsThuoc = FXCollections.observableArrayList();
-
 
     private KhachHang_Service khachHangDAO = new KhachHang_Service();
     private ArrayList<KhachHangDTO> dsKhach = khachHangDAO.getAllKhachHang();
@@ -109,8 +108,7 @@ public class ThemPhieuDatFormController extends DialogPane{
         gridTop.getRowConstraints().addAll(
                 new RowConstraints(30),
                 new RowConstraints(40),
-                new RowConstraints(30)
-        );
+                new RowConstraints(30));
 
         Text lblMa = new Text("Mã phiếu đặt:");
         lblMa.setFill(Color.web("#374151"));
@@ -153,7 +151,6 @@ public class ThemPhieuDatFormController extends DialogPane{
         // Đặt TextField vào GridPane
         GridPane.setColumnIndex(txtSoDienThoai, 1);
         GridPane.setRowIndex(txtSoDienThoai, 3);
-
 
         Text lblThuocDat = new Text("Thuốc đặt:");
         lblThuocDat.setFill(Color.web("#374151"));
@@ -198,7 +195,8 @@ public class ThemPhieuDatFormController extends DialogPane{
 
         btnThem = new Button("Thêm thuốc");
         btnThem.getStyleClass().add("btn-gray");
-        btnThem.getStylesheets().add(getClass().getResource("/com/antam/app/styles/dashboard_style.css").toExternalForm());
+        btnThem.getStylesheets()
+                .add(getClass().getResource("/com/antam/app/styles/dashboard_style.css").toExternalForm());
 
         HBox hbCanhBaoKM = new HBox();
         txtCanhBaoKM.setFill(Color.RED);
@@ -236,8 +234,7 @@ public class ThemPhieuDatFormController extends DialogPane{
                 "-fx-background-color: #f8fafc;" +
                         "-fx-background-radius: 8px;" +
                         "-fx-border-color: #e5e7eb;" +
-                        "-fx-border-radius: 8px;"
-        );
+                        "-fx-border-radius: 8px;");
 
         /* Column trái - label */
         ColumnConstraints colLeft = new ColumnConstraints();
@@ -277,8 +274,7 @@ public class ThemPhieuDatFormController extends DialogPane{
                 hbCanhBaoKM,
                 cbKhuyenMai,
                 tbChonThuoc,
-                gridTotal
-        );
+                gridTotal);
 
         content.getChildren().add(root);
 
@@ -292,18 +288,18 @@ public class ThemPhieuDatFormController extends DialogPane{
         this.getButtonTypes().add(cancelButton);
         this.getButtonTypes().add(applyButton);
 
-        //tạo cổng kết nối
+        // tạo cổng kết nối
         try {
             Connection con = ConnectDB.getInstance().connect();
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
 
-        //setup phụ
+        // setup phụ
         txtDonGia.setEditable(false);
         cbDonVi.setDisable(true);
 
-        //load ds đơn vị tính.
+        // load ds đơn vị tính.
         dsDonViTinh = donViTinh_dao.getTatCaDonViTinh();
         dsThuoc = thuoc_dao.getAllThuoc();
         cbDonVi.getItems().addAll(FXCollections.observableArrayList(dsDonViTinh));
@@ -318,7 +314,8 @@ public class ThemPhieuDatFormController extends DialogPane{
 
             @Override
             public ThuocDTO fromString(String text) {
-                if (text == null) return null;
+                if (text == null)
+                    return null;
                 return cbTenThuoc.getItems().stream()
                         .filter(t -> text.equals(t.getTenThuoc()))
                         .findFirst()
@@ -337,12 +334,11 @@ public class ThemPhieuDatFormController extends DialogPane{
         txtMa.setText(getHashPD());
         txtMa.setEditable(false);
 
-
         // Load khuyen mai after services are ready.
         dsKhuyenMai = new ArrayList<>(KhuyenMai_DAO.getAllKhuyenMaiConHieuLuc());
 
         // load ComboBox Khuyến mãi.
-        KhuyenMaiDTO nothing = new KhuyenMaiDTO("None","Không áp dụng");
+        KhuyenMaiDTO nothing = new KhuyenMaiDTO("None", "Không áp dụng");
         cbKhuyenMai.getItems().clear();
         cbKhuyenMai.getItems().add(nothing);
         cbKhuyenMai.getItems().addAll(FXCollections.observableArrayList(dsKhuyenMai));
@@ -354,7 +350,8 @@ public class ThemPhieuDatFormController extends DialogPane{
 
             @Override
             public KhuyenMaiDTO fromString(String text) {
-                if (text == null) return null;
+                if (text == null)
+                    return null;
                 return cbKhuyenMai.getItems().stream()
                         .filter(km -> text.equals(km.getTenKM()))
                         .findFirst()
@@ -369,19 +366,19 @@ public class ThemPhieuDatFormController extends DialogPane{
             }
         });
 
-        //gọi tính tổng tiền khi chạy giao diện
+        // gọi tính tổng tiền khi chạy giao diện
         loadTongTien();
 
-        //setup table
+        // setup table
         setupTable();
         tbChonThuoc.setItems(obsThuoc);
         loadTable();
 
         //
-        Button btnApply = (Button)this.lookupButton(applyButton);
-        Button btnCancel = (Button)this.lookupButton(cancelButton);
+        Button btnApply = (Button) this.lookupButton(applyButton);
+        Button btnCancel = (Button) this.lookupButton(cancelButton);
 
-        //sự kiện thêm phiếu đặt
+        // sự kiện thêm phiếu đặt
         btnApply.addEventFilter(ActionEvent.ACTION, event -> {
             if (checkDuLieu()) {
                 themPhieuDat();
@@ -390,16 +387,15 @@ public class ThemPhieuDatFormController extends DialogPane{
             }
         });
 
-
-        //thêm thuốc vào table
-        btnThem.setOnAction(  e ->   {
-            if (approveThuoc()){
+        // thêm thuốc vào table
+        btnThem.setOnAction(e -> {
+            if (approveThuoc()) {
                 addThuocVaoTable();
                 loadTongTien();
             }
         });
 
-        //sự kiện khi thay đổi comboBox khuyến mãi
+        // sự kiện khi thay đổi comboBox khuyến mãi
         cbKhuyenMai.setOnAction(e -> {
             KhuyenMaiDTO km = cbKhuyenMai.getSelectionModel().getSelectedItem();
             // Không áp dụng hoặc chọn null
@@ -417,9 +413,8 @@ public class ThemPhieuDatFormController extends DialogPane{
             // Đã hết hạn
             else if (km.getNgayKetThuc().isBefore(today)) {
                 txtCanhBaoKM.setText("Khuyến mãi đã hết hạn");
-            }
-            else if (soDaSuDung >= km.getSoLuongToiDa()) {
-                    txtCanhBaoKM.setText("Khuyến mãi đã đạt số lượng tối đa");
+            } else if (soDaSuDung >= km.getSoLuongToiDa()) {
+                txtCanhBaoKM.setText("Khuyến mãi đã đạt số lượng tối đa");
             }
             // Hợp lệ
             else {
@@ -428,12 +423,13 @@ public class ThemPhieuDatFormController extends DialogPane{
             loadTongTien();
         });
 
-        //setup spinner số lượng
-        SpinnerValueFactory<Integer> valueFactory = new SpinnerValueFactory.IntegerSpinnerValueFactory(0, Integer.MAX_VALUE, 1);
+        // setup spinner số lượng
+        SpinnerValueFactory<Integer> valueFactory = new SpinnerValueFactory.IntegerSpinnerValueFactory(0,
+                Integer.MAX_VALUE, 1);
         spSoLuong.setValueFactory(valueFactory);
         spSoLuong.setEditable(true);
 
-        //sự kiện khi thay đổi comboBox thuốc
+        // sự kiện khi thay đổi comboBox thuốc
         cbTenThuoc.setOnAction(e -> {
 
             if (cbTenThuoc.getSelectionModel().getSelectedItem() == null) {
@@ -441,7 +437,7 @@ public class ThemPhieuDatFormController extends DialogPane{
             }
 
             for (DonViTinhDTO dvt : cbDonVi.getItems()) {
-                if (dvt.getMaDVT() == cbTenThuoc.getSelectionModel().getSelectedItem().getMaDVTCoSo().getMaDVT() ) {
+                if (dvt.getMaDVT() == cbTenThuoc.getSelectionModel().getSelectedItem().getMaDVTCoSo().getMaDVT()) {
                     cbDonVi.getSelectionModel().select(dvt);
                     break;
                 }
@@ -450,7 +446,7 @@ public class ThemPhieuDatFormController extends DialogPane{
             txtDonGia.setText(dinhDangTien(cbTenThuoc.getSelectionModel().getSelectedItem().getGiaBan()));
         });
 
-        //sự kiện thay đổi số điện thoại
+        // sự kiện thay đổi số điện thoại
         txtSoDienThoai.textProperty().addListener((obs, oldValue, newValue) -> {
             if (newValue.isBlank()) {
                 txtCanhBaoSDT.setText("");
@@ -464,16 +460,15 @@ public class ThemPhieuDatFormController extends DialogPane{
             }
         });
 
-
-        //sự kiện autocomplete khách hàng
+        // sự kiện autocomplete khách hàng
         TuDongGoiY.goiYKhach(txtTenKhach, txtSoDienThoai, autoKhach);
 
-        //sự kiện xóa thuốc khỏi bảng
-        tbChonThuoc.setRowFactory( tv -> {
+        // sự kiện xóa thuốc khỏi bảng
+        tbChonThuoc.setRowFactory(tv -> {
             TableRow<ChiTietPhieuDatThuocDTO> row = new TableRow<>();
             ContextMenu contextMenu = new ContextMenu();
             MenuItem deleteItem = new MenuItem("Xóa thuốc khỏi bảng");
-            deleteItem.setOnAction( event -> {
+            deleteItem.setOnAction(event -> {
                 ChiTietPhieuDatThuocDTO selectedItem = row.getItem();
                 list.remove(selectedItem);
                 loadTable();
@@ -483,22 +478,21 @@ public class ThemPhieuDatFormController extends DialogPane{
             // Chỉ hiển thị menu khi có dữ liệu
             row.contextMenuProperty().bind(
                     javafx.beans.binding.Bindings.when(row.emptyProperty())
-                            .then((ContextMenu)null)
-                            .otherwise(contextMenu)
-            );
+                            .then((ContextMenu) null)
+                            .otherwise(contextMenu));
             return row;
         });
     }
 
-
     /**
      * Duyệt thông tin thuốc trước khi thêm vào bảng
+     * 
      * @return true - hợp lệ, false - không hợp lệ
      */
     private boolean approveThuoc() {
 
         ThuocDTO selectedThuocDTO = cbTenThuoc.getSelectionModel().getSelectedItem();
-        //gọi integer để có thể sử dụng null trong điều kiện
+        // gọi integer để có thể sử dụng null trong điều kiện
         Integer soLuongNhap = spSoLuong.getValue();
 
         // Nếu người dùng chưa chọn thuốc hoặc chọn rỗng
@@ -513,8 +507,7 @@ public class ThemPhieuDatFormController extends DialogPane{
         }
 
         // Lấy chi tiết thuốc trong kho
-        ArrayList<LoThuocDTO> dsChiTiet =
-                chiTietThuoc_dao.getAllCHiTietThuocTheoMaThuoc(selectedThuocDTO.getMaThuoc());
+        ArrayList<LoThuocDTO> dsChiTiet = chiTietThuoc_dao.getAllCHiTietThuocTheoMaThuoc(selectedThuocDTO.getMaThuoc());
         if (dsChiTiet.isEmpty()) {
             showMess("Hết hàng", "Thuốc \"" + selectedThuocDTO.getTenThuoc() + "\" hiện không có trong kho.");
             return false;
@@ -533,10 +526,10 @@ public class ThemPhieuDatFormController extends DialogPane{
             }
         }
 
-        if ( (soLuongNhap + soLuongdaChon) > tongSoLuongTrongKho) {
+        if ((soLuongNhap + soLuongdaChon) > tongSoLuongTrongKho) {
             showMess("Không đủ số lượng",
                     "đơn vị của thuốc " + selectedThuocDTO.getTenThuoc() +
-                            " Kho chỉ còn \"" + (tongSoLuongTrongKho )+ "\".");
+                            " Kho chỉ còn \"" + (tongSoLuongTrongKho) + "\".");
             return false;
         }
         return true;
@@ -550,7 +543,8 @@ public class ThemPhieuDatFormController extends DialogPane{
     }
 
     /**
-     * Thêm thuốc vào bảng nếu đã tồn tại thì cộng dồn số lượng, nếu chi tiết thiếu thì tạo thêm 1 dòng mới
+     * Thêm thuốc vào bảng nếu đã tồn tại thì cộng dồn số lượng, nếu chi tiết thiếu
+     * thì tạo thêm 1 dòng mới
      */
     private void addThuocVaoTable() {
 
@@ -558,7 +552,8 @@ public class ThemPhieuDatFormController extends DialogPane{
         int soLuongCan = spSoLuong.getValue();
         DonViTinhDTO dvt = cbDonVi.getSelectionModel().getSelectedItem();
 
-        if (thuocDTO == null || soLuongCan <= 0) return;
+        if (thuocDTO == null || soLuongCan <= 0)
+            return;
 
         // 1. Lấy các lô còn hạn, sắp theo hạn tăng dần
         ArrayList<LoThuocDTO> dsLo = chiTietThuoc_dao
@@ -576,7 +571,8 @@ public class ThemPhieuDatFormController extends DialogPane{
 
         // 2. Chia số lượng cho từng lô
         for (LoThuocDTO lo : dsLo) {
-            if (soLuongCan <= 0) break;
+            if (soLuongCan <= 0)
+                break;
 
             int lay = Math.min(lo.getSoLuong(), soLuongCan);
             soLuongCan -= lay;
@@ -657,8 +653,7 @@ public class ThemPhieuDatFormController extends DialogPane{
                 nguoiDat,
                 khach,
                 km,
-                tinhTongTien()
-        );
+                tinhTongTien());
 
         // Lưu vào dbs
         try {
@@ -686,15 +681,12 @@ public class ThemPhieuDatFormController extends DialogPane{
                                 phieu,
                                 lo,
                                 soLuongDat,
-                                ct.getDonViTinhDTO()
-                        )
-                );
+                                ct.getDonViTinhDTO()));
 
                 // Trừ kho đúng lô
                 chiTietThuoc_dao.CapNhatSoLuongChiTietThuoc(
                         lo.getMaLoThuoc(),
-                        lo.getSoLuong() - soLuongDat
-                );
+                        lo.getSoLuong() - soLuongDat);
             }
 
             con.commit(); // OK
@@ -711,24 +703,25 @@ public class ThemPhieuDatFormController extends DialogPane{
         }
     }
 
-
     /**
      * Tạo mã khách hàng mới với đinh dạng KHxxxxxxxxx (x là số bất kì, có 9 số)
+     * 
      * @return
      */
     private String getMaKhachMoi() {
-        int newNum = khachHangDAO. getMaxHash() +1;
+        int newNum = khachHangDAO.getMaxHash() + 1;
         return String.format("KH%09d", newNum);
     }
 
-
     /**
      * Kiểm tra khách hàng đã tồn tại chưa
+     * 
      * @return true - khách mới. false - khách đã tồn tại.
      */
     private boolean isKhachHangMoi() {
         String sdt = txtSoDienThoai.getText().trim();
-        if (sdt == null || sdt.isEmpty()) return true;
+        if (sdt == null || sdt.isEmpty())
+            return true;
 
         for (KhachHangDTO kh : dsKhach) {
             if (kh.getSoDienThoai().equals(sdt)) {
@@ -738,17 +731,17 @@ public class ThemPhieuDatFormController extends DialogPane{
         return true;
     }
 
-
     /**
      * Tạo mã phiếu đặt mới chưa tồn tại trong dbs
+     * 
      * @return String - mã phiếu đặt mới
      */
     private String getHashPD() {
         PhieuDat_Service phieuDatService = new PhieuDat_Service();
         String hash = phieuDatService.getMaxHash();
-        if (hash == null){
+        if (hash == null) {
             return "PDT001";
-        }else{
+        } else {
             // Extract số từ mã phiếu (ví dụ: "PDT013" -> "013" -> 13)
             String numberPart = hash.replaceAll("[^0-9]", "");
             int soThuTu = Integer.parseInt(numberPart) + 1;
@@ -758,11 +751,12 @@ public class ThemPhieuDatFormController extends DialogPane{
 
     /**
      * Tính tổng tiền của phiếu đặt áp dụng khuyến mãi (nếu có)
+     * 
      * @return double - tổng tiền sau khi áp dụng khuyến mãi (nếu có)
      */
-    public double tinhTongTien(){
+    public double tinhTongTien() {
         double tongTien = 0.0;
-        for (ChiTietPhieuDatThuocDTO e : tbChonThuoc.getItems()){
+        for (ChiTietPhieuDatThuocDTO e : tbChonThuoc.getItems()) {
             tongTien += e.getSoLuong()
                     * e.getMaThuoc().getMaThuocDTO().getGiaBan()
                     * (1 - e.getMaThuoc().getMaThuocDTO().getThue());
@@ -777,11 +771,11 @@ public class ThemPhieuDatFormController extends DialogPane{
             LoaiKhuyenMaiDTO loaiKM = khuyenMaiDTO.getLoaiKhuyenMaiDTO();
             int soDaSuDung = hoaDon_DAO.soHoaDonDaCoKhuyenMaiVoiMa(khuyenMaiDTO.getMaKM());
             if (soDaSuDung >= khuyenMaiDTO.getSoLuongToiDa()) {
-                return tongTien > 0? tongTien : 0;
-            }else{
-                if(loaiKM.getMaLKM() == 1){
-                    tongTien = tongTien * (1 - khuyenMaiDTO.getSo()/100);
-                }else {
+                return tongTien > 0 ? tongTien : 0;
+            } else {
+                if (loaiKM.getMaLKM() == 1) {
+                    tongTien = tongTien * (1 - khuyenMaiDTO.getSo() / 100);
+                } else {
                     tongTien = tongTien - khuyenMaiDTO.getSo();
                 }
             }
@@ -790,7 +784,7 @@ public class ThemPhieuDatFormController extends DialogPane{
         return tongTien > 0 ? tongTien : 0;
     }
 
-    public void showMess(String tieuDe, String vanBan){
+    public void showMess(String tieuDe, String vanBan) {
         Alert alert = new Alert(Alert.AlertType.WARNING);
         alert.setTitle(tieuDe);
         alert.setContentText(vanBan);
@@ -801,7 +795,7 @@ public class ThemPhieuDatFormController extends DialogPane{
     /**
      * Cập nhật tổng tiền hiển thị trên giao diện
      */
-    private void loadTongTien(){
+    private void loadTongTien() {
         double tongTien = tinhTongTien();
         txtTotal.setText("Tổng tiền: " + dinhDangTien(tongTien));
         txtThue.setText("Thuế: " + dinhDangTien(tinhThue()));
@@ -812,8 +806,9 @@ public class ThemPhieuDatFormController extends DialogPane{
         if (tbChonThuoc.getItems().isEmpty()) {
             return thue;
         }
-        for (ChiTietPhieuDatThuocDTO e : tbChonThuoc.getItems()){
-            thue += e.getSoLuong() * e.getMaThuoc().getMaThuocDTO().getGiaBan()* e.getMaThuoc().getMaThuocDTO().getThue();
+        for (ChiTietPhieuDatThuocDTO e : tbChonThuoc.getItems()) {
+            thue += e.getSoLuong() * e.getMaThuoc().getMaThuocDTO().getGiaBan()
+                    * e.getMaThuoc().getMaThuocDTO().getThue();
         }
         return thue;
     }
@@ -824,14 +819,17 @@ public class ThemPhieuDatFormController extends DialogPane{
             txtTenKhach.requestFocus();
             return false;
         }
-        if (txtSoDienThoai.getText().trim().isEmpty()){
+        if (txtSoDienThoai.getText().trim().isEmpty()) {
             showMess("Thiếu thông tin số điện thọai khách hàng", "Vui lòng nhập số điện thoại khách hàng.");
-            txtSoDienThoai.requestFocus();;
+            txtSoDienThoai.requestFocus();
+            ;
             return false;
         }
-        if (!txtSoDienThoai.getText().matches("^0\\d{9}$")){
-            showMess("Thông tin số điện thọai khách hàng không hợp lệ", "Số điện thoại khách hàng phải có 10 số và bắt đầu với 03, 05, 06, 07, 09.");
-            txtSoDienThoai.requestFocus();;
+        if (!txtSoDienThoai.getText().matches("^0\\d{9}$")) {
+            showMess("Thông tin số điện thọai khách hàng không hợp lệ",
+                    "Số điện thoại khách hàng phải có 10 số và bắt đầu với 03, 05, 06, 07, 09.");
+            txtSoDienThoai.requestFocus();
+            ;
             return false;
         }
         if (tbChonThuoc.getItems().isEmpty()) {
@@ -848,10 +846,11 @@ public class ThemPhieuDatFormController extends DialogPane{
 
     /**
      * hỗ trợ định dạng tiền
+     * 
      * @param tien
      * @return String - tiền đã được định dạng
      */
-    public String dinhDangTien(double tien){
+    public String dinhDangTien(double tien) {
         DecimalFormat df = new DecimalFormat("#,###đ");
         return df.format(tien);
     }
@@ -859,14 +858,19 @@ public class ThemPhieuDatFormController extends DialogPane{
     /**
      * Cài đặt các cột trong bảng
      */
-    private void setupTable(){
-        colTenThuoc.setCellValueFactory( cellData -> new SimpleStringProperty(cellData.getValue().getMaThuoc().getMaThuocDTO().getTenThuoc()));
-        colDonVi.setCellValueFactory( cellData -> new SimpleStringProperty(cellData.getValue().getMaThuoc().getMaThuocDTO().getMaDVTCoSo().getTenDVT()));
-        colSoLuong.setCellValueFactory( cellData -> new SimpleStringProperty(String.valueOf(cellData.getValue().getSoLuong())));
-        colDonGia.setCellValueFactory( cellData -> new SimpleStringProperty(dinhDangTien(cellData.getValue().getMaThuoc().getMaThuocDTO().getGiaBan())));
-        colThanhTien.setCellValueFactory( cellData -> {
-            double thanhTien = cellData.getValue().getSoLuong() * cellData.getValue().getMaThuoc().getMaThuocDTO().getGiaBan();
+    private void setupTable() {
+        colTenThuoc.setCellValueFactory(
+                cellData -> new SimpleStringProperty(cellData.getValue().getMaThuoc().getMaThuocDTO().getTenThuoc()));
+        colDonVi.setCellValueFactory(cellData -> new SimpleStringProperty(
+                cellData.getValue().getMaThuoc().getMaThuocDTO().getMaDVTCoSo().getTenDVT()));
+        colSoLuong.setCellValueFactory(
+                cellData -> new SimpleStringProperty(String.valueOf(cellData.getValue().getSoLuong())));
+        colDonGia.setCellValueFactory(cellData -> new SimpleStringProperty(
+                dinhDangTien(cellData.getValue().getMaThuoc().getMaThuocDTO().getGiaBan())));
+        colThanhTien.setCellValueFactory(cellData -> {
+            double thanhTien = cellData.getValue().getSoLuong()
+                    * cellData.getValue().getMaThuoc().getMaThuocDTO().getGiaBan();
             return new SimpleStringProperty(dinhDangTien(thanhTien));
-        } );
+        });
     }
 }
