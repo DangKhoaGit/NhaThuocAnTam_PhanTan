@@ -5,6 +5,7 @@
 
 package com.antam.app.controller.hoadon;
 
+import com.antam.app.network.ClientManager;
 import com.antam.app.service.I_NhanVien_Service;
 import com.antam.app.service.impl.HoaDon_Service;
 import com.antam.app.service.impl.NhanVien_Service;
@@ -31,6 +32,9 @@ import java.text.DecimalFormatSymbols;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+import javafx.concurrent.Task;
 
 /**
  * Controller cho giao diện quản lý hóa đơn (invoice_view.fxml).
@@ -57,6 +61,8 @@ public class ThemHoaDonController extends ScrollPane{
     private ComboBox<String> cbPrice;
     private DatePicker cbFirstDate;
     private DatePicker cbEndDate;
+
+    private ClientManager clientManager;
 
     // Định dạng tiền tệ kiểu Việt Nam: 1.000đ, 10.000đ
     private static final DecimalFormat VND_FORMAT;
@@ -178,26 +184,37 @@ public class ThemHoaDonController extends ScrollPane{
             dialog.showAndWait();
 
             // Sau khi dialog đóng, cập nhật lại bảng và chọn/tô màu dòng mới
-            HoaDon_Service hoaDon_service = new HoaDon_Service();
-            ObservableList<HoaDonDTO> hoaDonList = FXCollections.observableArrayList(hoaDon_service.getAllHoaDon());
-            table_invoice.setItems(hoaDonList);
-            // Tìm hoá đơn mới nhất (theo mã lớn nhất)
-            HoaDonDTO newest = null;
-            int maxNum = -1;
-            for (HoaDonDTO hd : hoaDonList) {
-                String ma = hd.getMaHD();
-                if (ma != null && ma.matches("HD\\d+")) {
-                    int num = Integer.parseInt(ma.substring(2));
-                    if (num > maxNum) {
-                        maxNum = num;
-                        newest = hd;
+            Task<List<HoaDonDTO>> refreshTask = new Task<List<HoaDonDTO>>() {
+                @Override
+                protected List<HoaDonDTO> call() {
+                    return (List<HoaDonDTO>) clientManager.getHoaDonList();
+                }
+            };
+            refreshTask.setOnSucceeded(e1 -> {
+                List<HoaDonDTO> hoaDonList = refreshTask.getValue();
+                table_invoice.setItems(FXCollections.observableArrayList(hoaDonList));
+                // Tìm hoá đơn mới nhất (theo mã lớn nhất)
+                HoaDonDTO newest = null;
+                int maxNum = -1;
+                for (HoaDonDTO hd : hoaDonList) {
+                    String ma = hd.getMaHD();
+                    if (ma != null && ma.matches("HD\\d+")) {
+                        int num = Integer.parseInt(ma.substring(2));
+                        if (num > maxNum) {
+                            maxNum = num;
+                            newest = hd;
+                        }
                     }
                 }
-            }
-            if (newest != null) {
-                table_invoice.getSelectionModel().select(newest);
-                table_invoice.scrollTo(newest);
-            }
+                if (newest != null) {
+                    table_invoice.getSelectionModel().select(newest);
+                    table_invoice.scrollTo(newest);
+                }
+            });
+            refreshTask.setOnFailed(e1 -> {
+                System.err.println("Failed to refresh HoaDon list: " + refreshTask.getException());
+            });
+            new Thread(refreshTask).start();
         });
 
         // Thiết lập cách lấy dữ liệu cho từng cột TableView
@@ -225,44 +242,68 @@ public class ThemHoaDonController extends ScrollPane{
         });
         colTrangThai.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().isDeleteAt() ? "Đã huỷ" : "Hoạt động"));
 
-        // Load dữ liệu hóa đơn từ DB lên bảng
-        HoaDon_Service hoaDon_service = new HoaDon_Service();
-        ObservableList<HoaDonDTO> hoaDonList = FXCollections.observableArrayList(hoaDon_service.getAllHoaDon());
-        table_invoice.setItems(hoaDonList);
+        // Load dữ liệu hóa đơn từ server lên bảng
+        Task<List<HoaDonDTO>> loadTask = new Task<List<HoaDonDTO>>() {
+            @Override
+            protected List<HoaDonDTO> call() {
+                return (List<HoaDonDTO>) clientManager.getHoaDonList();
+            }
+        };
+        loadTask.setOnSucceeded(e -> {
+            List<HoaDonDTO> hoaDonList = loadTask.getValue();
+            table_invoice.setItems(FXCollections.observableArrayList(hoaDonList));
+        });
+        loadTask.setOnFailed(e -> {
+            // Handle error, maybe show alert
+            System.err.println("Failed to load HoaDon list: " + loadTask.getException());
+        });
+        new Thread(loadTask).start();
 
         // --- Khởi tạo ComboBox nhân viên ---
-        NhanVien_Service nhanVien_service = new NhanVien_Service();
-        ObservableList<NhanVienDTO> dsNhanVien = FXCollections.observableArrayList(nhanVien_service.getAllNhanVien());
-        // Thêm lựa chọn "Tất cả" vào đầu danh sách
-        NhanVienDTO tatCaNV = new NhanVienDTO("Tất cả");
-        dsNhanVien.add(0, tatCaNV);
-        cbEmployee.setItems(dsNhanVien);
-        cbEmployee.setPromptText("Chọn nhân viên");
-        // Hiển thị tên nhân viên trong ComboBox thay vì mã
-        cbEmployee.setCellFactory(lv -> new ListCell<NhanVienDTO>() {
+        Task<List<NhanVienDTO>> loadNVTask = new Task<List<NhanVienDTO>>() {
             @Override
-            protected void updateItem(NhanVienDTO item, boolean empty) {
-                super.updateItem(item, empty);
-                if (empty || item == null) {
-                    setText(null);
-                } else {
-                    // Hiển thị "Tất cả" cho lựa chọn đặc biệt, hoặc tên nhân viên
-                    setText("Tất cả".equals(item.getMaNV()) ? "Tất cả" : item.getHoTen());
-                }
+            protected List<NhanVienDTO> call() {
+                return (List<NhanVienDTO>) clientManager.getNhanVienList();
             }
-        });
-        cbEmployee.setButtonCell(new ListCell<NhanVienDTO>() {
-            @Override
-            protected void updateItem(NhanVienDTO item, boolean empty) {
-                super.updateItem(item, empty);
-                if (empty || item == null) {
-                    setText(null);
-                } else {
-                    // Hiển thị "Tất cả" cho lựa chọn đặc biệt, hoặc tên nhân viên
-                    setText("Tất cả".equals(item.getMaNV()) ? "Tất cả" : item.getHoTen());
+        };
+        loadNVTask.setOnSucceeded(e -> {
+            List<NhanVienDTO> dsNhanVienList = loadNVTask.getValue();
+            ObservableList<NhanVienDTO> dsNhanVien = FXCollections.observableArrayList(dsNhanVienList);
+            // Thêm lựa chọn "Tất cả" vào đầu danh sách
+            NhanVienDTO tatCaNV = new NhanVienDTO("Tất cả");
+            dsNhanVien.add(0, tatCaNV);
+            cbEmployee.setItems(dsNhanVien);
+            cbEmployee.setPromptText("Chọn nhân viên");
+            // Hiển thị tên nhân viên trong ComboBox thay vì mã
+            cbEmployee.setCellFactory(lv -> new ListCell<NhanVienDTO>() {
+                @Override
+                protected void updateItem(NhanVienDTO item, boolean empty) {
+                    super.updateItem(item, empty);
+                    if (empty || item == null) {
+                        setText(null);
+                    } else {
+                        // Hiển thị "Tất cả" cho lựa chọn đặc biệt, hoặc tên nhân viên
+                        setText("Tất cả".equals(item.getMaNV()) ? "Tất cả" : item.getHoTen());
+                    }
                 }
-            }
+            });
+            cbEmployee.setButtonCell(new ListCell<NhanVienDTO>() {
+                @Override
+                protected void updateItem(NhanVienDTO item, boolean empty) {
+                    super.updateItem(item, empty);
+                    if (empty || item == null) {
+                        setText(null);
+                    } else {
+                        // Hiển thị "Tất cả" cho lựa chọn đặc biệt, hoặc tên nhân viên
+                        setText("Tất cả".equals(item.getMaNV()) ? "Tất cả" : item.getHoTen());
+                    }
+                }
+            });
         });
+        loadNVTask.setOnFailed(e -> {
+            System.err.println("Failed to load NhanVien list: " + loadNVTask.getException());
+        });
+        new Thread(loadNVTask).start();
         // --- Khởi tạo ComboBox trạng thái ---
         ObservableList<String> dsTrangThai = FXCollections.observableArrayList("Tất cả", "Hoạt động", "Đã huỷ");
         cbStatus.setItems(dsTrangThai);
@@ -280,7 +321,7 @@ public class ThemHoaDonController extends ScrollPane{
 
         // --- Hàm lọc hóa đơn theo nhân viên, trạng thái, khoảng giá, ngày ---
         Runnable filterInvoices = () -> {
-            HoaDon_Service hoaDon_service1 = new HoaDon_Service();
+            List<HoaDonDTO> allHoaDon = (List<HoaDonDTO>) clientManager.getHoaDonList();
             NhanVienDTO selectedNV = cbEmployee.getValue();
             String selectedStatus = cbStatus.getValue();
             String selectedPrice = cbPrice.getValue();
@@ -291,21 +332,22 @@ public class ThemHoaDonController extends ScrollPane{
             boolean allPrice = (selectedPrice == null || "Tất cả".equals(selectedPrice));
             ObservableList<HoaDonDTO> filtered;
             // Lọc theo nhân viên và trạng thái trước
-            ArrayList<HoaDonDTO> baseList;
+            List<HoaDonDTO> baseList;
             if (allNV && allStatus) {
-                baseList = new ArrayList<>(hoaDon_service1.getAllHoaDon());
+                baseList = new ArrayList<>(allHoaDon);
             } else if (!allNV && allStatus) {
-                baseList = new ArrayList<>(hoaDon_service1.searchHoaDonByMaNV(selectedNV.getMaNV()));
+                baseList = allHoaDon.stream()
+                        .filter(hd -> hd.getMaNV() != null && selectedNV.getMaNV().equals(hd.getMaNV().getMaNV()))
+                        .collect(Collectors.toList());
             } else if (allNV && !allStatus) {
-                baseList = new ArrayList<>(hoaDon_service1.searchHoaDonByStatus(selectedStatus));
+                baseList = allHoaDon.stream()
+                        .filter(hd -> "Hoạt động".equals(selectedStatus) ? !hd.isDeleteAt() : hd.isDeleteAt())
+                        .collect(Collectors.toList());
             } else {
-                ArrayList<HoaDonDTO> byStatus = hoaDon_service1.searchHoaDonByStatus(selectedStatus);
-                baseList = new ArrayList<>();
-                for (HoaDonDTO hd : byStatus) {
-                    if (hd.getMaNV() != null && selectedNV.getMaNV().equals(hd.getMaNV().getMaNV())) {
-                        baseList.add(hd);
-                    }
-                }
+                baseList = allHoaDon.stream()
+                        .filter(hd -> ("Hoạt động".equals(selectedStatus) ? !hd.isDeleteAt() : hd.isDeleteAt()) &&
+                                hd.getMaNV() != null && selectedNV.getMaNV().equals(hd.getMaNV().getMaNV()))
+                        .collect(Collectors.toList());
             }
             // Lọc tiếp theo khoảng giá
             if (!allPrice) {
@@ -327,27 +369,22 @@ public class ThemHoaDonController extends ScrollPane{
                         max = Double.MAX_VALUE;
                         break;
                 }
-                ArrayList<HoaDonDTO> priceFiltered = new ArrayList<>();
-                for (HoaDonDTO hd : baseList) {
-                    double tongTien = hd.getTongTien();
-                    if (tongTien >= min && tongTien < max) {
-                        priceFiltered.add(hd);
-                    }
-                }
-                baseList = priceFiltered;
+                double finalMin = min;
+                double finalMax = max;
+                baseList = baseList.stream()
+                        .filter(hd -> hd.getTongTien() >= finalMin && hd.getTongTien() < finalMax)
+                        .collect(Collectors.toList());
             }
             // Lọc tiếp theo ngày (lấy hóa đơn có ngày tạo nằm trong khoảng [fromDate, toDate])
             if (fromDate != null || toDate != null) {
-                ArrayList<HoaDonDTO> dateFiltered = new ArrayList<>();
-                for (HoaDonDTO hd : baseList) {
-                    LocalDate ngayTao = hd.getNgayTao();
-                    boolean afterFrom = (fromDate == null) || !ngayTao.isBefore(fromDate);
-                    boolean beforeTo = (toDate == null) || !ngayTao.isAfter(toDate);
-                    if (afterFrom && beforeTo) {
-                        dateFiltered.add(hd);
-                    }
-                }
-                baseList = dateFiltered;
+                baseList = baseList.stream()
+                        .filter(hd -> {
+                            LocalDate ngayTao = hd.getNgayTao();
+                            boolean afterFrom = (fromDate == null) || !ngayTao.isBefore(fromDate);
+                            boolean beforeTo = (toDate == null) || !ngayTao.isAfter(toDate);
+                            return afterFrom && beforeTo;
+                        })
+                        .collect(Collectors.toList());
             }
             filtered = FXCollections.observableArrayList(baseList);
             table_invoice.setItems(filtered);
@@ -361,25 +398,29 @@ public class ThemHoaDonController extends ScrollPane{
 
         // Lắng nghe thay đổi nội dung ô tìm kiếm để search realtime
         txtSearchInvoice.textProperty().addListener((observable, oldValue, newValue) -> {
+            List<HoaDonDTO> allHoaDon = (List<HoaDonDTO>) clientManager.getHoaDonList();
             if (newValue == null || newValue.trim().isEmpty()) {
                 // Nếu ô tìm kiếm rỗng, load lại toàn bộ hóa đơn
-                ObservableList<HoaDonDTO> allHoaDon = FXCollections.observableArrayList(hoaDon_service.getAllHoaDon());
-                table_invoice.setItems(allHoaDon);
+                table_invoice.setItems(FXCollections.observableArrayList(allHoaDon));
             } else {
                 // Nếu có nội dung, search theo mã
-                ObservableList<HoaDonDTO> searchResult = FXCollections.observableArrayList(hoaDon_service.searchHoaDonByMaHd(newValue));
-                table_invoice.setItems(searchResult);
+                List<HoaDonDTO> searchResult = allHoaDon.stream()
+                        .filter(hd -> hd.getMaHD().toLowerCase().contains(newValue.toLowerCase()))
+                        .collect(Collectors.toList());
+                table_invoice.setItems(FXCollections.observableArrayList(searchResult));
             }
         });
         // Sự kiện cho nút tìm kiếm vẫn giữ lại để người dùng có thể bấm nút
         btnSearchInvoice.setOnAction(e -> {
+            List<HoaDonDTO> allHoaDon = (List<HoaDonDTO>) clientManager.getHoaDonList();
             String maHd = txtSearchInvoice.getText();
             if (maHd == null || maHd.trim().isEmpty()) {
-                ObservableList<HoaDonDTO> allHoaDon = FXCollections.observableArrayList(hoaDon_service.getAllHoaDon());
-                table_invoice.setItems(allHoaDon);
+                table_invoice.setItems(FXCollections.observableArrayList(allHoaDon));
             } else {
-                ObservableList<HoaDonDTO> searchResult = FXCollections.observableArrayList(hoaDon_service.searchHoaDonByMaHd(maHd));
-                table_invoice.setItems(searchResult);
+                List<HoaDonDTO> searchResult = allHoaDon.stream()
+                        .filter(hd -> hd.getMaHD().toLowerCase().contains(maHd.toLowerCase()))
+                        .collect(Collectors.toList());
+                table_invoice.setItems(FXCollections.observableArrayList(searchResult));
             }
         });
         // Đặt row factory để tô màu dòng được chọn
@@ -410,6 +451,17 @@ public class ThemHoaDonController extends ScrollPane{
 
                 dialog.showAndWait();
             }
+        });
+        // Sự kiện nút đặt lại bộ lọc
+        btnResetInvoice.setOnAction(e -> {
+            cbEmployee.setValue(null);
+            cbStatus.setValue("Tất cả");
+            cbPrice.setValue("Tất cả");
+            if (cbFirstDate != null) cbFirstDate.setValue(null);
+            if (cbEndDate != null) cbEndDate.setValue(null);
+            // Load lại toàn bộ hóa đơn
+            List<HoaDonDTO> allHoaDon = (List<HoaDonDTO>) clientManager.getHoaDonList();
+            table_invoice.setItems(FXCollections.observableArrayList(allHoaDon));
         });
     }
 

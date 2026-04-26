@@ -47,28 +47,25 @@ public class ClientHandler implements Runnable {
             // Lặp để nhận commands từ client
             while (running && !clientSocket.isClosed()) {
                 try {
-                    // Đọc command từ client
                     Object obj = in.readObject();
 
                     if (!(obj instanceof Command)) {
-                        LOGGER.warning("Received non-Command object from client " + clientId);
+                        LOGGER.warning("Invalid object from " + clientId);
                         continue;
                     }
 
                     Command command = (Command) obj;
-
-                    // Route command và lấy response
                     Response response = commandRouter.route(command, clientId);
-
-                    // Gửi response về client
                     sendResponse(response);
 
-                } catch (ClassNotFoundException e) {
-                    LOGGER.log(Level.WARNING, "Class not found while deserializing command from " + clientId, e);
                 } catch (EOFException e) {
-                    // Client disconnected gracefully
                     LOGGER.info("Client " + clientId + " disconnected");
                     break;
+                } catch (IOException e) {
+                    LOGGER.warning("Connection lost with " + clientId + ": " + e.getMessage());
+                    break; // 🔥 QUAN TRỌNG
+                } catch (ClassNotFoundException e) {
+                    LOGGER.log(Level.WARNING, "Class not found", e);
                 }
             }
         } catch (IOException e) {
@@ -87,6 +84,7 @@ public class ClientHandler implements Runnable {
                 synchronized (out) {
                     out.writeObject(response);
                     out.flush();
+                    out.reset(); // QUAN TRỌNG: reset stream để tránh memory leak khi gửi nhiều object
                 }
             }
         } catch (IOException e) {

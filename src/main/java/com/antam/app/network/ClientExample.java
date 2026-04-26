@@ -27,7 +27,7 @@ public class ClientExample {
     public static void main(String[] args) {
         try {
             // Lấy ClientManager singleton
-            ClientManager clientManager = ClientManager.getInstance();
+            ClientManager clientManager = new ClientManager();
 
             System.out.println(BLUE + "🔗 Connecting to server..." + RESET);
             // Kết nối tới server
@@ -42,7 +42,7 @@ public class ClientExample {
 
             // === Example 1: Get HoaDon List ===
             System.out.println(CYAN + "\n📋 === Fetching HoaDon List ===" + RESET);
-            List<HoaDonDTO> hoaDonList = clientManager.getHoaDonList();
+            List<HoaDonDTO> hoaDonList = (List<HoaDonDTO>) clientManager.getHoaDonList();
             System.out.println(GREEN + "✅ Retrieved " + hoaDonList.size() + " HoaDons" + RESET);
             for (HoaDonDTO hd : hoaDonList) {
                 System.out.println("  📄 " + hd.getMaHD() + ": " + YELLOW + hd.getTongTien() + RESET);
@@ -50,7 +50,7 @@ public class ClientExample {
 
             // === Example 2: Check Server Status ===
             System.out.println(CYAN + "\n🔍 === Checking Server Status ===" + RESET);
-            boolean serverOk = clientManager.checkServerStatus();
+            boolean serverOk = (boolean) clientManager.serverStatus();
             if (serverOk) {
                 System.out.println(GREEN + "✅ Server Status: OK" + RESET);
             } else {

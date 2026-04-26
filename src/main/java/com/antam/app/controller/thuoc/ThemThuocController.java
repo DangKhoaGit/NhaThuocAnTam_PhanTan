@@ -17,6 +17,7 @@ import javafx.scene.text.Text;
 import javafx.stage.Modality;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Locale;
 
@@ -219,7 +220,7 @@ public class ThemThuocController extends ScrollPane{
         addComboboxTonKho();
 
         // Load dữ liệu
-        arrayThuoc = new ArrayList<>(clientManager.getThuocList());
+        arrayThuoc = new ArrayList<ThuocDTO>((Collection<? extends ThuocDTO>) clientManager.getThuocList());
         thuocList.addAll(arrayThuoc);
         tableThuoc.setItems(thuocList);
 
@@ -303,7 +304,7 @@ public class ThemThuocController extends ScrollPane{
     public void updateTableThuoc(){
         thuocList.clear();
         tableThuoc.refresh();
-        arrayThuoc = new ArrayList<>(clientManager.getThuocList());
+        arrayThuoc = new ArrayList<ThuocDTO>((Collection<? extends ThuocDTO>) clientManager.getThuocList());
         thuocList.addAll(arrayThuoc);
         tableThuoc.setItems(thuocList);
     }

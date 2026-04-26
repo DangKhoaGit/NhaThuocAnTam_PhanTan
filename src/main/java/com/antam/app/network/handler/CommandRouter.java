@@ -7,6 +7,7 @@ import com.antam.app.dto.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -67,6 +68,8 @@ public class CommandRouter {
                 // NhanVien Operations
                 case GET_NHANVIEN_LIST:
                     return handleGetNhanVienList(command);
+                case GET_NHANVIEN_TAIKHOAN:
+                     return handleGetNhanVienByTaiKhoan(command);
 
                 // KhachHang Operations
                 case GET_KHACHHANG_LIST:
@@ -144,6 +147,10 @@ public class CommandRouter {
                 case GET_LOAIKHUYENMAI_LIST:
                     return handleGetLoaiKhuyenMaiList();
 
+                // ThongKe Operations
+                case GET_THONGKE_TRANGCHINH:
+                    return handleGetThongKeTrangChinh(command);
+
                 default:
                     return Response.builder()
                             .success(false)
@@ -160,6 +167,7 @@ public class CommandRouter {
                     .build();
         }
     }
+
 
     // === HoaDon Handlers ===
 
@@ -308,6 +316,30 @@ public class CommandRouter {
                     .build();
         }
     }
+
+
+    private Response handleGetNhanVienByTaiKhoan(Command command) {
+        try {
+            if (command.getPayload() == null || !command.getPayload().containsKey("taiKhoan")) {
+                return Response.builder().success(false).message("Invalid payload for get NhanVien by TaiKhoan").errorCode("INVALID_PAYLOAD").build();
+            }
+            String taiKhoan = (String) command.getPayload().get("taiKhoan");
+            NhanVienDTO nhanVien = serviceLocator.getNhanVienService().getNhanVienTaiKhoan(taiKhoan);
+            return Response.builder()
+                    .success(true)
+                    .message("NhanVien retrieved successfully")
+                    .data(nhanVien)
+                    .build();
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Error getting NhanVien by TaiKhoan", e);
+            return Response.builder()
+                    .success(false)
+                    .message("Error retrieving NhanVien: " + e.getMessage())
+                    .errorCode("GET_NHANVIEN_BY_TAIKHOAN_ERROR")
+                    .build();
+        }
+    }
+
 
     // === KhachHang Handlers ===
 
@@ -800,6 +832,59 @@ public class CommandRouter {
                     .message("Error checking server status: " + e.getMessage())
                     .errorCode("STATUS_ERROR")
                     .build();
+        }
+    }
+
+    // === ThongKe Handlers ===
+
+    private Response handleGetThongKeTrangChinh(Command command) {
+        try {
+            if (command.getPayload() == null || !command.getPayload().containsKey("type")) {
+                return Response.builder().success(false).message("Invalid payload for get ThongKeTrangChinh").errorCode("INVALID_PAYLOAD").build();
+            }
+
+            String type = (String) command.getPayload().get("type");
+
+            switch (type) {
+                case "TONG_SO_THUOC":
+                    int tongSoThuoc = serviceLocator.getThongKeTrangChinhService().getTongSoThuoc();
+                    return Response.builder().success(true).message("TongSoThuoc retrieved successfully").data(tongSoThuoc).build();
+
+                case "TONG_SO_NHANVIEN":
+                    int tongSoNhanVien = serviceLocator.getThongKeTrangChinhService().getTongSoNhanVien();
+                    return Response.builder().success(true).message("TongSoNhanVien retrieved successfully").data(tongSoNhanVien).build();
+
+                case "SO_HOADON_HOMNAY":
+                    int soHoaDonHomNay = serviceLocator.getThongKeTrangChinhService().getSoHoaDonHomNay();
+                    return Response.builder().success(true).message("SoHoaDonHomNay retrieved successfully").data(soHoaDonHomNay).build();
+
+                case "SO_KHUYENMAI_APDUNG":
+                    int soKhuyenMaiApDung = serviceLocator.getThongKeTrangChinhService().getSoKhuyenMaiApDung();
+                    return Response.builder().success(true).message("SoKhuyenMaiApDung retrieved successfully").data(soKhuyenMaiApDung).build();
+
+                case "DOANHTHU_7NGAY":
+                    Map<String, Double> doanhThu7Ngay = serviceLocator.getThongKeTrangChinhService().getDoanhThu7NgayGanNhat();
+                    return Response.builder().success(true).message("DoanhThu7NgayGanNhat retrieved successfully").data(doanhThu7Ngay).build();
+
+                case "TOP_SANPHAM":
+                    int limit = command.getPayload().containsKey("limit") ? (Integer) command.getPayload().get("limit") : 10;
+                    Map<String, Integer> topSanPham = serviceLocator.getThongKeTrangChinhService().getTopSanPhamBanChay(limit);
+                    return Response.builder().success(true).message("TopSanPhamBanChay retrieved successfully").data(topSanPham).build();
+
+                case "THUOC_SAP_HETHAN":
+                    List<Map<String, Object>> thuocSapHetHan = serviceLocator.getThongKeTrangChinhService().getThuocSapHetHan();
+                    return Response.builder().success(true).message("ThuocSapHetHan retrieved successfully").data(thuocSapHetHan).build();
+
+                case "THUOC_TONKHO_THAP":
+                    List<Map<String, Object>> thuocTonKhoThap = serviceLocator.getThongKeTrangChinhService().getThuocTonKhoThap();
+                    return Response.builder().success(true).message("ThuocTonKhoThap retrieved successfully").data(thuocTonKhoThap).build();
+
+                default:
+                    return Response.builder().success(false).message("Unknown ThongKeTrangChinh type: " + type).errorCode("UNKNOWN_THONGKE_TYPE").build();
+            }
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Error getting ThongKeTrangChinh", e);
+            return Response.builder().success(false).message("Error retrieving ThongKeTrangChinh: " + e.getMessage()).errorCode("GET_THONGKE_TRANGCHINH_ERROR").build();
         }
     }
 }

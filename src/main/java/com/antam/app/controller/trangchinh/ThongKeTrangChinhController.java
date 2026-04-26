@@ -5,7 +5,6 @@
  */
 package com.antam.app.controller.trangchinh;
 
-import com.antam.app.service.impl.ThongKeTrangChinh_Service;
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcon;
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcons;
 import javafx.geometry.Pos;
@@ -28,6 +27,9 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
+import com.antam.app.network.ClientManager;
+import javafx.concurrent.Task;
+
 /*
  * @description Controller for dashboard view
  * @author: Tran Tuan Hung
@@ -47,12 +49,10 @@ public class ThongKeTrangChinhController extends ScrollPane{
     private VBox vboxThuocTonKhoThap = new VBox();          // Danh sách thuốc tồn kho thấp
 
     // ==================== CÁC BIẾN CẤU HÌNH ====================
-    private ThongKeTrangChinh_Service thongKeDAO;
     private final DecimalFormat formatter = new DecimalFormat("#,###");
 
 
     public ThongKeTrangChinhController() {
-        thongKeDAO = new ThongKeTrangChinh_Service();
         /** Giao diện **/
         this.setFitToHeight(true);
         this.setFitToWidth(true);
@@ -239,34 +239,77 @@ public class ThongKeTrangChinhController extends ScrollPane{
      * Load các thống kê cơ bản
      */
     private void loadBasicStatistics() {
-        try {
-            // Tổng số thuốc
-            int tongSoThuoc = thongKeDAO.getTongSoThuoc();
+        // Load tổng số thuốc
+        Task<Integer> tongSoThuocTask = new Task<Integer>() {
+            @Override
+            protected Integer call() {
+                return ClientManager.getInstance().getTongSoThuoc();
+            }
+        };
+        tongSoThuocTask.setOnSucceeded(e -> {
+            int tongSoThuoc = tongSoThuocTask.getValue();
             if (txtTongSoThuoc != null) {
                 txtTongSoThuoc.setText(formatter.format(tongSoThuoc));
             }
+        });
+        tongSoThuocTask.setOnFailed(e -> {
+            System.err.println("Error loading TongSoThuoc: " + tongSoThuocTask.getException());
+        });
+        new Thread(tongSoThuocTask).start();
 
-            // Số nhân viên
-            int soNhanVien = thongKeDAO.getTongSoNhanVien();
+        // Load số nhân viên
+        Task<Integer> soNhanVienTask = new Task<Integer>() {
+            @Override
+            protected Integer call() {
+                return ClientManager.getInstance().getTongSoNhanVien();
+            }
+        };
+        soNhanVienTask.setOnSucceeded(e -> {
+            int soNhanVien = soNhanVienTask.getValue();
             if (txtSoNhanVien != null) {
                 txtSoNhanVien.setText(formatter.format(soNhanVien));
             }
+        });
+        soNhanVienTask.setOnFailed(e -> {
+            System.err.println("Error loading TongSoNhanVien: " + soNhanVienTask.getException());
+        });
+        new Thread(soNhanVienTask).start();
 
-            // Số hóa đơn hôm nay
-            int soHoaDonHomNay = thongKeDAO.getSoHoaDonHomNay();
+        // Load số hóa đơn hôm nay
+        Task<Integer> soHoaDonHomNayTask = new Task<Integer>() {
+            @Override
+            protected Integer call() {
+                return ClientManager.getInstance().getSoHoaDonHomNay();
+            }
+        };
+        soHoaDonHomNayTask.setOnSucceeded(e -> {
+            int soHoaDonHomNay = soHoaDonHomNayTask.getValue();
             if (txtSoHoaDonHomNay != null) {
                 txtSoHoaDonHomNay.setText(formatter.format(soHoaDonHomNay));
             }
+        });
+        soHoaDonHomNayTask.setOnFailed(e -> {
+            System.err.println("Error loading SoHoaDonHomNay: " + soHoaDonHomNayTask.getException());
+        });
+        new Thread(soHoaDonHomNayTask).start();
 
-            // Số khuyến mãi áp dụng
-            int soKhuyenMai = thongKeDAO.getSoKhuyenMaiApDung();
+        // Load số khuyến mãi áp dụng
+        Task<Integer> soKhuyenMaiTask = new Task<Integer>() {
+            @Override
+            protected Integer call() {
+                return ClientManager.getInstance().getSoKhuyenMaiApDung();
+            }
+        };
+        soKhuyenMaiTask.setOnSucceeded(e -> {
+            int soKhuyenMai = soKhuyenMaiTask.getValue();
             if (txtSoKhuyenMai != null) {
                 txtSoKhuyenMai.setText(formatter.format(soKhuyenMai));
             }
-
-        } catch (Exception e) {
-            System.err.println("Error loading basic statistics: " + e.getMessage());
-        }
+        });
+        soKhuyenMaiTask.setOnFailed(e -> {
+            System.err.println("Error loading SoKhuyenMaiApDung: " + soKhuyenMaiTask.getException());
+        });
+        new Thread(soKhuyenMaiTask).start();
     }
 
     /**
@@ -276,8 +319,14 @@ public class ThongKeTrangChinhController extends ScrollPane{
     private void loadRevenueChart() {
         if (chartDoanhThu == null) return;
 
-        try {
-            Map<String, Double> doanhThuData = thongKeDAO.getDoanhThu7NgayGanNhat();
+        Task<Map<String, Double>> revenueTask = new Task<Map<String, Double>>() {
+            @Override
+            protected Map<String, Double> call() {
+                return ClientManager.getInstance().getDoanhThu7NgayGanNhat();
+            }
+        };
+        revenueTask.setOnSucceeded(e -> {
+            Map<String, Double> doanhThuData = revenueTask.getValue();
 
             XYChart.Series<String, Number> series = new XYChart.Series<>();
             series.setName("Doanh thu (VNĐ)");
@@ -319,22 +368,23 @@ public class ThongKeTrangChinhController extends ScrollPane{
                     javafx.scene.control.Tooltip.install(node, tooltip);
 
                     // *** CHỈNH HIỆU ỨNG HOVER: Thay đổi kích thước khi rê chuột ***
-                    node.setOnMouseEntered(e -> {
+                    node.setOnMouseEntered(event -> {
                         node.setStyle(
                             "-fx-cursor: hand; " +
                             "-fx-scale-x: 1.5; " +          // Phóng to 1.5 lần theo chiều ngang
                             "-fx-scale-y: 1.5;"             // Phóng to 1.5 lần theo chiều dọc
                         );
                     });
-                    node.setOnMouseExited(e -> {
+                    node.setOnMouseExited(event -> {
                         node.setStyle("-fx-scale-x: 1.0; -fx-scale-y: 1.0;");
                     });
                 }
             }
-
-        } catch (Exception e) {
-            System.err.println("Error loading revenue chart: " + e.getMessage());
-        }
+        });
+        revenueTask.setOnFailed(e -> {
+            System.err.println("Error loading revenue chart: " + revenueTask.getException());
+        });
+        new Thread(revenueTask).start();
     }
 
     /**
@@ -344,9 +394,14 @@ public class ThongKeTrangChinhController extends ScrollPane{
     private void loadTopProductsChart() {
         if (chartTopSanPham == null) return;
 
-        try {
-            // *** CHỈNH SỐ SẢN PHẨM: Thay đổi số 5 để hiển thị nhiều/ít sản phẩm hơn ***
-            Map<String, Integer> topProducts = thongKeDAO.getTopSanPhamBanChay(5);
+        Task<Map<String, Integer>> topProductsTask = new Task<Map<String, Integer>>() {
+            @Override
+            protected Map<String, Integer> call() {
+                return ClientManager.getInstance().getTopSanPhamBanChay(5);
+            }
+        };
+        topProductsTask.setOnSucceeded(e -> {
+            Map<String, Integer> topProducts = topProductsTask.getValue();
 
             XYChart.Series<String, Number> series = new XYChart.Series<>();
             series.setName("Số lượng bán");
@@ -399,21 +454,22 @@ public class ThongKeTrangChinhController extends ScrollPane{
                     javafx.scene.control.Tooltip.install(node, tooltip);
 
                     // *** CHỈNH HIỆU ỨNG HOVER: Thay đổi độ mờ khi rê chuột ***
-                    node.setOnMouseEntered(e -> {
+                    node.setOnMouseEntered(event -> {
                         node.setStyle(
                             "-fx-cursor: hand; " +
                             "-fx-opacity: 0.8;"             // Độ mờ khi hover (0.0 - 1.0)
                         );
                     });
-                    node.setOnMouseExited(e -> {
+                    node.setOnMouseExited(event -> {
                         node.setStyle("-fx-opacity: 1.0;");
                     });
                 }
             }
-
-        } catch (Exception e) {
-            System.err.println("Error loading top products chart: " + e.getMessage());
-        }
+        });
+        topProductsTask.setOnFailed(e -> {
+            System.err.println("Error loading top products chart: " + topProductsTask.getException());
+        });
+        new Thread(topProductsTask).start();
     }
 
     /**
@@ -423,8 +479,14 @@ public class ThongKeTrangChinhController extends ScrollPane{
     private void loadExpiredMedicines() {
         if (vboxThuocSapHetHan == null) return;
 
-        try {
-            List<Map<String, Object>> thuocSapHetHan = thongKeDAO.getThuocSapHetHan();
+        Task<List<Map<String, Object>>> expiredMedicinesTask = new Task<List<Map<String, Object>>>() {
+            @Override
+            protected List<Map<String, Object>> call() {
+                return ClientManager.getInstance().getThuocSapHetHan();
+            }
+        };
+        expiredMedicinesTask.setOnSucceeded(e -> {
+            List<Map<String, Object>> thuocSapHetHan = expiredMedicinesTask.getValue();
 
             // Xóa các item cũ (giữ lại header)
             if (vboxThuocSapHetHan.getChildren().size() > 1) {
@@ -448,10 +510,11 @@ public class ThongKeTrangChinhController extends ScrollPane{
                     createExpiredMedicineItem(thuoc);
                 }
             }
-
-        } catch (Exception e) {
-            System.err.println("Error loading expired medicines: " + e.getMessage());
-        }
+        });
+        expiredMedicinesTask.setOnFailed(e -> {
+            System.err.println("Error loading expired medicines: " + expiredMedicinesTask.getException());
+        });
+        new Thread(expiredMedicinesTask).start();
     }
 
     /**
@@ -461,8 +524,14 @@ public class ThongKeTrangChinhController extends ScrollPane{
     private void loadLowStockMedicines() {
         if (vboxThuocTonKhoThap == null) return;
 
-        try {
-            List<Map<String, Object>> thuocTonKhoThap = thongKeDAO.getThuocTonKhoThap();
+        Task<List<Map<String, Object>>> lowStockMedicinesTask = new Task<List<Map<String, Object>>>() {
+            @Override
+            protected List<Map<String, Object>> call() {
+                return ClientManager.getInstance().getThuocTonKhoThap();
+            }
+        };
+        lowStockMedicinesTask.setOnSucceeded(e -> {
+            List<Map<String, Object>> thuocTonKhoThap = lowStockMedicinesTask.getValue();
 
             // Xóa các item cũ (giữ lại header)
             if (vboxThuocTonKhoThap.getChildren().size() > 1) {
@@ -486,10 +555,11 @@ public class ThongKeTrangChinhController extends ScrollPane{
                     createLowStockMedicineItem(thuoc);
                 }
             }
-
-        } catch (Exception e) {
-            System.err.println("Error loading low stock medicines: " + e.getMessage());
-        }
+        });
+        lowStockMedicinesTask.setOnFailed(e -> {
+            System.err.println("Error loading low stock medicines: " + lowStockMedicinesTask.getException());
+        });
+        new Thread(lowStockMedicinesTask).start();
     }
 
     /**
