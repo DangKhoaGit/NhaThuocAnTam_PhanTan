@@ -489,56 +489,56 @@ public class CommandRouter {
     private Response handleCreateThuoc(Command command) {
         try {
             if (command.getPayload() == null || !command.getPayload().containsKey("thuoc")) {
-                return Response.builder().success(false).message("Invalid payload for create Thuoc").errorCode("INVALID_PAYLOAD").build();
+                return Response.builder().success(false).data(false).message("Invalid payload for create Thuoc").errorCode("INVALID_PAYLOAD").build();
             }
             ThuocDTO thuocDTO = (ThuocDTO) command.getPayload().get("thuoc");
             boolean success = serviceLocator.getThuocService().themThuoc(thuocDTO);
-            return Response.builder().success(success).message(success ? "Thuoc created successfully" : "Failed to create Thuoc").errorCode(success ? null : "CREATE_THUOC_FAILED").build();
+            return Response.builder().success(success).data(success).message(success ? "Thuoc created successfully" : "Failed to create Thuoc").errorCode(success ? null : "CREATE_THUOC_FAILED").build();
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "Error creating Thuoc", e);
-            return Response.builder().success(false).message("Error creating Thuoc: " + e.getMessage()).errorCode("CREATE_THUOC_ERROR").build();
+            return Response.builder().success(false).data(false).message("Error creating Thuoc: " + e.getMessage()).errorCode("CREATE_THUOC_ERROR").build();
         }
     }
 
     private Response handleUpdateThuoc(Command command) {
         try {
             if (command.getPayload() == null || !command.getPayload().containsKey("thuoc")) {
-                return Response.builder().success(false).message("Invalid payload for update Thuoc").errorCode("INVALID_PAYLOAD").build();
+                return Response.builder().success(false).data(false).message("Invalid payload for update Thuoc").errorCode("INVALID_PAYLOAD").build();
             }
             ThuocDTO thuocDTO = (ThuocDTO) command.getPayload().get("thuoc");
             boolean success = serviceLocator.getThuocService().capNhatThuoc(thuocDTO);
-            return Response.builder().success(success).message(success ? "Thuoc updated successfully" : "Failed to update Thuoc").errorCode(success ? null : "UPDATE_THUOC_FAILED").build();
+            return Response.builder().success(success).data(success).message(success ? "Thuoc updated successfully" : "Failed to update Thuoc").errorCode(success ? null : "UPDATE_THUOC_FAILED").build();
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "Error updating Thuoc", e);
-            return Response.builder().success(false).message("Error updating Thuoc: " + e.getMessage()).errorCode("UPDATE_THUOC_ERROR").build();
+            return Response.builder().success(false).data(false).message("Error updating Thuoc: " + e.getMessage()).errorCode("UPDATE_THUOC_ERROR").build();
         }
     }
 
     private Response handleDeleteThuoc(Command command) {
         try {
             if (command.getPayload() == null || !command.getPayload().containsKey("maThuoc")) {
-                return Response.builder().success(false).message("Invalid payload for delete Thuoc").errorCode("INVALID_PAYLOAD").build();
+                return Response.builder().success(false).data(false).message("Invalid payload for delete Thuoc").errorCode("INVALID_PAYLOAD").build();
             }
             String maThuoc = (String) command.getPayload().get("maThuoc");
             boolean success = serviceLocator.getThuocService().xoaThuocTheoMa(maThuoc);
-            return Response.builder().success(success).message(success ? "Thuoc deleted successfully" : "Failed to delete Thuoc").errorCode(success ? null : "DELETE_THUOC_FAILED").build();
+            return Response.builder().success(success).data(success).message(success ? "Thuoc deleted successfully" : "Failed to delete Thuoc").errorCode(success ? null : "DELETE_THUOC_FAILED").build();
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "Error deleting Thuoc", e);
-            return Response.builder().success(false).message("Error deleting Thuoc: " + e.getMessage()).errorCode("DELETE_THUOC_ERROR").build();
+            return Response.builder().success(false).data(false).message("Error deleting Thuoc: " + e.getMessage()).errorCode("DELETE_THUOC_ERROR").build();
         }
     }
 
     private Response handleRestoreThuoc(Command command) {
         try {
             if (command.getPayload() == null || !command.getPayload().containsKey("maThuoc")) {
-                return Response.builder().success(false).message("Invalid payload for restore Thuoc").errorCode("INVALID_PAYLOAD").build();
+                return Response.builder().success(false).data(false).message("Invalid payload for restore Thuoc").errorCode("INVALID_PAYLOAD").build();
             }
             String maThuoc = (String) command.getPayload().get("maThuoc");
             boolean success = serviceLocator.getThuocService().khoiPhucThuocTheoMa(maThuoc);
-            return Response.builder().success(success).message(success ? "Thuoc restored successfully" : "Failed to restore Thuoc").errorCode(success ? null : "RESTORE_THUOC_FAILED").build();
+            return Response.builder().success(success).data(success).message(success ? "Thuoc restored successfully" : "Failed to restore Thuoc").errorCode(success ? null : "RESTORE_THUOC_FAILED").build();
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "Error restoring Thuoc", e);
-            return Response.builder().success(false).message("Error restoring Thuoc: " + e.getMessage()).errorCode("RESTORE_THUOC_ERROR").build();
+            return Response.builder().success(false).data(false).message("Error restoring Thuoc: " + e.getMessage()).errorCode("RESTORE_THUOC_ERROR").build();
         }
     }
 

@@ -16,8 +16,11 @@ import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
+import javafx.concurrent.Task;
 
+import java.net.URL;
 import java.util.ArrayList;
+import java.util.Collection;
 
 public class XemChiTietThuocFormController extends DialogPane {
 
@@ -45,13 +48,37 @@ public class XemChiTietThuocFormController extends DialogPane {
 
     /** Load dữ liệu */
     public void showData() {
+        if (thuocDTO == null) {
+            txtMaThuoc_CTT.setText("Mã Thuốc:");
+            txtTenThuoc_CTT.setText("Tên Thuốc:");
+            listChiTietThuoc.clear();
+            return;
+        }
+
         txtMaThuoc_CTT.setText("Mã Thuốc: " + thuocDTO.getMaThuoc());
         txtTenThuoc_CTT.setText("Tên Thuốc: " + thuocDTO.getTenThuoc());
 
-        ArrayList<LoThuocDTO> list = new ArrayList<>(clientManager.getLoThuocFefoByThuocId(thuocDTO.getMaThuoc()));
-        listChiTietThuoc.clear();
-        listChiTietThuoc.addAll(list);
-        tableChiTietThuoc.setItems(listChiTietThuoc);
+        Task<ArrayList<LoThuocDTO>> loadTask = new Task<>() {
+            @Override
+            protected ArrayList<LoThuocDTO> call() {
+                Collection<LoThuocDTO> loThuocFromServer = clientManager.getLoThuocFefoByThuocId(thuocDTO.getMaThuoc());
+                return loThuocFromServer == null ? new ArrayList<>() : new ArrayList<>(loThuocFromServer);
+            }
+        };
+
+        loadTask.setOnSucceeded(e -> {
+            listChiTietThuoc.setAll(loadTask.getValue());
+            tableChiTietThuoc.setItems(listChiTietThuoc);
+        });
+
+        loadTask.setOnFailed(e -> {
+            listChiTietThuoc.clear();
+            tableChiTietThuoc.setItems(listChiTietThuoc);
+        });
+
+        Thread loadThread = new Thread(loadTask, "xem-chi-tiet-thuoc-task");
+        loadThread.setDaemon(true);
+        loadThread.start();
     }
 
     /** Constructor UI thuần Java */
@@ -118,7 +145,10 @@ public class XemChiTietThuocFormController extends DialogPane {
         this.setContent(root);
 
         // Load CSS
-        this.getStylesheets().add(getClass().getResource("/com/antam/app/styles/dashboard_style.css").toExternalForm());
+        URL stylesheet = getClass().getResource("/com/antam/app/styles/dashboard_style.css");
+        if (stylesheet != null) {
+            this.getStylesheets().add(stylesheet.toExternalForm());
+        }
 
         // Button Hủy (đóng dialog)
         ButtonType cancelButton = new ButtonType("Huỷ", ButtonData.CANCEL_CLOSE);

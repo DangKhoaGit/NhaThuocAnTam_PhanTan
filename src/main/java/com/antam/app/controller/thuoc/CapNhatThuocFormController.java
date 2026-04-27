@@ -2,6 +2,7 @@ package com.antam.app.controller.thuoc;
 
 import com.antam.app.dto.*;
 import com.antam.app.network.ClientManager;
+import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -10,11 +11,12 @@ import javafx.scene.layout.*;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 
+import java.net.URL;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import javafx.util.StringConverter;
 
 public class CapNhatThuocFormController extends DialogPane{
     private ThuocDTO thuocDTO;
@@ -55,7 +57,7 @@ public class CapNhatThuocFormController extends DialogPane{
         FlowPane header = new FlowPane();
         header.setAlignment(Pos.CENTER);
         header.setStyle("-fx-background-color: #1e3a8a;");
-        Text title = new Text("Thêm thuốc mới");
+        Text title = new Text("Cập nhật thuốc");
         title.setFill(javafx.scene.paint.Color.WHITE);
         title.setFont(Font.font("System Bold", 15));
         FlowPane.setMargin(title, new Insets(10,0,10,0));
@@ -164,8 +166,11 @@ public class CapNhatThuocFormController extends DialogPane{
         this.setContent(root);
 
         // ===== Stylesheet =====
-        this.getStylesheets().add(getClass().getResource("/com/antam/app/styles/dashboard_style.css").toExternalForm());
-        /** Sự kiện **/
+        URL stylesheet = getClass().getResource("/com/antam/app/styles/dashboard_style.css");
+        if (stylesheet != null) {
+            this.getStylesheets().add(stylesheet.toExternalForm());
+        }
+        // Sự kiện
         // them button vao dialog
         ButtonType closeButton = new ButtonType("Đóng", ButtonBar.ButtonData.CANCEL_CLOSE);
         ButtonType applyButtonUpdate = new ButtonType("Sửa", ButtonBar.ButtonData.APPLY);
@@ -174,45 +179,29 @@ public class CapNhatThuocFormController extends DialogPane{
         this.getButtonTypes().addAll(applyButtonUpdate, applyButtonDelete, closeButton);
         // su kien button sua
         Button applyBtnUpdate = (Button) this.lookupButton(applyButtonUpdate);
-        applyBtnUpdate.addEventFilter(ActionEvent.ACTION, event -> {
-            boolean isValid = validate();
-
-            if (!isValid) {
-                event.consume();
-            }else {
-                String maThuoc = txtDUMaThuoc.getText();
-                String tenThuoc = txtDUTenThuoc.getText();
-                DonViTinhDTO donViCoSo = cbDUDVCS.getValue();
-                DangDieuCheDTO dangDieuCheDTO =  cbDUDangDieuChe.getValue();
-                String hamLuong = txtDUHamLuong.getText();
-                Double giaGoc = spDUGiaGoc.getValue();
-                Double giaBan = spDUGiaBan.getValue();
-                Double thue = spDUThue.getValue();
-                KeDTO keDTO = cbDUKe.getValue();
-                ThuocDTO thuocDTO = new ThuocDTO(maThuoc, tenThuoc, hamLuong, giaBan, giaGoc, thue.floatValue(), false,
-                        dangDieuCheDTO, donViCoSo, keDTO);
-                boolean success = clientManager.updateThuoc(thuocDTO);
-                if (!success) {
-                    notification_DUThuoc.setText("Cập nhật thuốc thất bại!");
-                    event.consume();
-                }
-
-            }
-
-        });
-        // su kien button xoa
         Button applyBtnDelete = (Button) this.lookupButton(applyButtonDelete);
-        applyBtnDelete.addEventFilter(ActionEvent.ACTION, event -> {
-            boolean isValid = showConfirmDeleteDialog(getThuoc().getTenThuoc());
 
-            if (!isValid) {
-                event.consume();
-            } else {
-                if (!clientManager.deleteThuoc(getThuoc().getMaThuoc())) {
-                    notification_DUThuoc.setText("Xóa thuốc thất bại!");
-                    event.consume();
-                }
+        applyBtnUpdate.addEventFilter(ActionEvent.ACTION, event -> {
+            event.consume();
+            if (!validate()) {
+                return;
             }
+            ThuocDTO updatedThuoc = buildThuocDTO();
+            handleUpdateThuocAsync(updatedThuoc, applyBtnUpdate, applyBtnDelete);
+        });
+
+        // su kien button xoa
+        applyBtnDelete.addEventFilter(ActionEvent.ACTION, event -> {
+            event.consume();
+            ThuocDTO currentThuoc = getThuoc();
+            if (currentThuoc == null) {
+                notification_DUThuoc.setText("Không tìm thấy thông tin thuốc để xóa!");
+                return;
+            }
+            if (!showConfirmDeleteDialog(currentThuoc.getTenThuoc())) {
+                return;
+            }
+            handleDeleteThuocAsync(currentThuoc.getMaThuoc(), applyBtnUpdate, applyBtnDelete);
         });
 
 
@@ -307,16 +296,117 @@ public class CapNhatThuocFormController extends DialogPane{
         });
     }
 
+    private ThuocDTO buildThuocDTO() {
+        return new ThuocDTO(
+                txtDUMaThuoc.getText().trim(),
+                txtDUTenThuoc.getText().trim(),
+                txtDUHamLuong.getText().trim(),
+                spDUGiaBan.getValue(),
+                spDUGiaGoc.getValue(),
+                spDUThue.getValue().floatValue(),
+                false,
+                cbDUDangDieuChe.getValue(),
+                cbDUDVCS.getValue(),
+                cbDUKe.getValue()
+        );
+    }
+
+    private void handleUpdateThuocAsync(ThuocDTO updatedThuoc, Button applyBtnUpdate, Button applyBtnDelete) {
+        Task<Boolean> updateTask = new Task<>() {
+            @Override
+            protected Boolean call() {
+                return clientManager.updateThuoc(updatedThuoc);
+            }
+        };
+
+        updateTask.setOnRunning(e -> {
+            setFormDisabled(true, applyBtnUpdate, applyBtnDelete);
+            notification_DUThuoc.setText("Đang cập nhật dữ liệu...");
+        });
+
+        updateTask.setOnSucceeded(e -> {
+            setFormDisabled(false, applyBtnUpdate, applyBtnDelete);
+            if (Boolean.TRUE.equals(updateTask.getValue())) {
+                notification_DUThuoc.setText("");
+                if (getScene() != null && getScene().getWindow() != null) {
+                    getScene().getWindow().hide();
+                }
+            } else {
+                notification_DUThuoc.setText("Cập nhật thuốc thất bại!");
+            }
+        });
+
+        updateTask.setOnFailed(e -> {
+            setFormDisabled(false, applyBtnUpdate, applyBtnDelete);
+            Throwable ex = updateTask.getException();
+            notification_DUThuoc.setText(ex == null ? "Lỗi kết nối tới server!" : "Lỗi kết nối: " + ex.getMessage());
+        });
+
+        Thread updateThread = new Thread(updateTask, "cap-nhat-thuoc-task");
+        updateThread.setDaemon(true);
+        updateThread.start();
+    }
+
+    private void handleDeleteThuocAsync(String maThuoc, Button applyBtnUpdate, Button applyBtnDelete) {
+        Task<Boolean> deleteTask = new Task<>() {
+            @Override
+            protected Boolean call() {
+                return clientManager.deleteThuoc(maThuoc);
+            }
+        };
+
+        deleteTask.setOnRunning(e -> {
+            setFormDisabled(true, applyBtnUpdate, applyBtnDelete);
+            notification_DUThuoc.setText("Đang xóa thuốc...");
+        });
+
+        deleteTask.setOnSucceeded(e -> {
+            setFormDisabled(false, applyBtnUpdate, applyBtnDelete);
+            if (Boolean.TRUE.equals(deleteTask.getValue())) {
+                notification_DUThuoc.setText("");
+                if (getScene() != null && getScene().getWindow() != null) {
+                    getScene().getWindow().hide();
+                }
+            } else {
+                notification_DUThuoc.setText("Xóa thuốc thất bại!");
+            }
+        });
+
+        deleteTask.setOnFailed(e -> {
+            setFormDisabled(false, applyBtnUpdate, applyBtnDelete);
+            Throwable ex = deleteTask.getException();
+            notification_DUThuoc.setText(ex == null ? "Lỗi kết nối tới server!" : "Lỗi kết nối: " + ex.getMessage());
+        });
+
+        Thread deleteThread = new Thread(deleteTask, "xoa-thuoc-task");
+        deleteThread.setDaemon(true);
+        deleteThread.start();
+    }
+
+    private void setFormDisabled(boolean disabled, Button applyBtnUpdate, Button applyBtnDelete) {
+        txtDUMaThuoc.setDisable(disabled);
+        txtDUTenThuoc.setDisable(disabled);
+        txtDUHamLuong.setDisable(disabled);
+        spDUGiaGoc.setDisable(disabled);
+        spDUGiaBan.setDisable(disabled);
+        spDUThue.setDisable(disabled);
+        cbDUDVCS.setDisable(disabled);
+        cbDUDangDieuChe.setDisable(disabled);
+        cbDUKe.setDisable(disabled);
+        applyBtnUpdate.setDisable(disabled);
+        applyBtnDelete.setDisable(disabled);
+    }
+
     private String formatKe(KeDTO keDTO) {
-        return keDTO.getMaKe() + " - " + keDTO.getTenKe();
+        return keDTO == null ? "" : keDTO.getMaKe() + " - " + keDTO.getTenKe();
     }
 
     private String formatDDC(DangDieuCheDTO ddc) {
-        return ddc.getMaDDC() + " - " + ddc.getTenDDC();
+        return ddc == null ? "" : ddc.getDisplayText();
     }
 
     private String formatDVT(DonViTinhDTO dvt) {
-        return dvt.getMaDVT() + " - " + dvt.getTenDVT();
+        return dvt == null ? "" : dvt.getMaDVT() + " - " + dvt.getTenDVT();
     }
 
     // hien thi hop thoai xac nhan xoa
@@ -332,26 +422,20 @@ public class CapNhatThuocFormController extends DialogPane{
     }
     // ham kiem tra du lieu hop le
     public boolean validate(){
-        String maThuoc = txtDUMaThuoc.getText();
-        String tenThuoc = txtDUTenThuoc.getText();
-        String donViCoSo = cbDUDVCS.getValue().getTenDVT();
-        String dangDieuChe = cbDUDangDieuChe.getValue().getTenDDC();
-        String hamLuong = txtDUHamLuong.getText();
-        Double giaGoc = 0.0;
-        Double giaBan = 0.0;
-        Double thue = 0.0;
-        String ke = cbDUKe.getValue().getTenKe();
+        String maThuoc = txtDUMaThuoc.getText() == null ? "" : txtDUMaThuoc.getText().trim();
+        String tenThuoc = txtDUTenThuoc.getText() == null ? "" : txtDUTenThuoc.getText().trim();
+        DonViTinhDTO donViCoSo = cbDUDVCS.getValue();
+        DangDieuCheDTO dangDieuChe = cbDUDangDieuChe.getValue();
+        String hamLuong = txtDUHamLuong.getText() == null ? "" : txtDUHamLuong.getText().trim();
+        KeDTO ke = cbDUKe.getValue();
 
         if(maThuoc.isEmpty()){
             notification_DUThuoc.setText("Vui lòng điền mã thuốc!");
             return false;
-        }else{
-            if (maThuoc.matches("^VN-\\d{5}-\\d{2}$")) {
-                notification_DUThuoc.setText("");
-            } else {
-                notification_DUThuoc.setText("Mã thuốc không hợp lệ! (VD: VN-12345-01)");
-                return false;
-            }
+        }
+        if (!maThuoc.matches("^VN-\\d{5}-\\d{2}$")) {
+            notification_DUThuoc.setText("Mã thuốc không hợp lệ! (VD: VN-12345-01)");
+            return false;
         }
         if (tenThuoc.isEmpty()){
             notification_DUThuoc.setText("Vui lòng điền đầy đủ tên thuốc!");
@@ -370,8 +454,8 @@ public class CapNhatThuocFormController extends DialogPane{
             return false;
         }
         try {
-            giaGoc = spDUGiaGoc.getValue();
-            if (giaGoc <= 0) {
+            Double giaGoc = spDUGiaGoc.getValue();
+            if (giaGoc == null || giaGoc <= 0) {
                 notification_DUThuoc.setText("Giá gốc phải lớn hơn 0!");
                 return false;
             }
@@ -380,8 +464,8 @@ public class CapNhatThuocFormController extends DialogPane{
             return false;
         }
         try {
-            giaBan = spDUGiaBan.getValue();
-            if (giaBan <= 0) {
+            Double giaBan = spDUGiaBan.getValue();
+            if (giaBan == null || giaBan <= 0) {
                 notification_DUThuoc.setText("Giá bán phải lớn hơn 0!");
                 return false;
             }
@@ -390,8 +474,8 @@ public class CapNhatThuocFormController extends DialogPane{
             return false;
         }
         try {
-            thue = spDUThue.getValue();
-            if (thue < 0) {
+            Double thue = spDUThue.getValue();
+            if (thue == null || thue < 0) {
                 notification_DUThuoc.setText("Thuế không được âm!");
                 return false;
             }
@@ -403,12 +487,14 @@ public class CapNhatThuocFormController extends DialogPane{
             notification_DUThuoc.setText("Vui lòng điền đầy đủ thông tin!");
             return false;
         }
+
+        notification_DUThuoc.setText("");
         return true;
     }
 
     // them value vao combobox ke
     public void addComBoBoxKe() {
-        ArrayList<KeDTO> arrayKe = new ArrayList<>(clientManager.getActiveKeList());
+        ArrayList<KeDTO> arrayKe = toKeList(clientManager.getActiveKeList());
         cbDUKe.getItems().clear();
         for (KeDTO keDTO : arrayKe) {
             cbDUKe.getItems().add(keDTO);
@@ -418,7 +504,7 @@ public class CapNhatThuocFormController extends DialogPane{
 
     // Them value vao combobox dang dieu che
     public void addComBoBoxDDC() {
-        ArrayList<DangDieuCheDTO> arrayDDC = new ArrayList<>(clientManager.getActiveDangDieuCheList());
+        ArrayList<DangDieuCheDTO> arrayDDC = toDangDieuCheList(clientManager.getActiveDangDieuCheList());
         cbDUDangDieuChe.getItems().clear();
         for (DangDieuCheDTO ddc : arrayDDC){
             cbDUDangDieuChe.getItems().add(ddc);
@@ -428,11 +514,50 @@ public class CapNhatThuocFormController extends DialogPane{
 
     // Them value vao combobox don vi tinh
     public void addComBoBoxDVCS() {
-        ArrayList<DonViTinhDTO> arrayDVT = new ArrayList<>(clientManager.getDonViTinhList());
+        ArrayList<DonViTinhDTO> arrayDVT = toDonViTinhList(clientManager.getDonViTinhList());
         cbDUDVCS.getItems().clear();
         arrayDVT.forEach(dvt -> cbDUDVCS.getItems().add(dvt));
         cbDUDVCS.getSelectionModel().selectFirst();
-        txtDUGiaByDV.setText(cbDUDVCS.getValue().toString());
+        txtDUGiaByDV.setText(cbDUDVCS.getValue() == null ? "" : cbDUDVCS.getValue().toString());
+    }
+
+    private ArrayList<KeDTO> toKeList(Collection<?> source) {
+        ArrayList<KeDTO> result = new ArrayList<>();
+        if (source == null) {
+            return result;
+        }
+        for (Object item : source) {
+            if (item instanceof KeDTO keDTO) {
+                result.add(keDTO);
+            }
+        }
+        return result;
+    }
+
+    private ArrayList<DangDieuCheDTO> toDangDieuCheList(Collection<?> source) {
+        ArrayList<DangDieuCheDTO> result = new ArrayList<>();
+        if (source == null) {
+            return result;
+        }
+        for (Object item : source) {
+            if (item instanceof DangDieuCheDTO dangDieuCheDTO) {
+                result.add(dangDieuCheDTO);
+            }
+        }
+        return result;
+    }
+
+    private ArrayList<DonViTinhDTO> toDonViTinhList(Collection<?> source) {
+        ArrayList<DonViTinhDTO> result = new ArrayList<>();
+        if (source == null) {
+            return result;
+        }
+        for (Object item : source) {
+            if (item instanceof DonViTinhDTO donViTinhDTO) {
+                result.add(donViTinhDTO);
+            }
+        }
+        return result;
     }
 
     // Cat chuoi

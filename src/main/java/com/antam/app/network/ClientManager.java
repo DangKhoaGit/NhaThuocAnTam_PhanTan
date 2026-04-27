@@ -321,8 +321,8 @@ public class ClientManager {
                     .build();
 
             Response response = sendCommandWithAutoConnect(command);
-            if (response.isSuccess() && response.getData() instanceof ArrayList) {
-                return (ArrayList<LoThuocDTO>) response.getData();
+            if (response.isSuccess() && response.getData() instanceof List<?>) {
+                return toTypedList((List<?>) response.getData(), LoThuocDTO.class);
             }
 
             LOGGER.warning("Failed to get LoThuoc FEFO by Thuoc ID: " + response.getMessage());
@@ -344,8 +344,8 @@ public class ClientManager {
     }
 
     public List<KeDTO> getActiveKeList() {
-        List<KeDTO> keDTOList = send(RequestBuilder.getActiveKeList());
-        return  keDTOList;
+        List<?> keDTOList = send(RequestBuilder.getActiveKeList());
+        return toTypedList(keDTOList, KeDTO.class);
     }
 
     public ThuocDTO getThuocById(String maThuoc) {
@@ -354,13 +354,13 @@ public class ClientManager {
     }
 
     public List<DangDieuCheDTO> getActiveDangDieuCheList() {
-        List<DangDieuCheDTO> list = send(RequestBuilder.getActivceDDCList());
-        return  list;
+        List<?> list = send(RequestBuilder.getActivceDDCList());
+        return toTypedList(list, DangDieuCheDTO.class);
     }
 
     public List<LoThuocDTO> getLoThuocList() {
-        List<LoThuocDTO> list = send(RequestBuilder.getLoThuocList());
-        return list;
+        List<?> list = send(RequestBuilder.getLoThuocList());
+        return toTypedList(list, LoThuocDTO.class);
     }
 
     public KhuyenMaiDTO getKhuyenMaiById(String maKM) {
@@ -370,17 +370,18 @@ public class ClientManager {
 
     public boolean updateThuoc(ThuocDTO thuocDTO) {
         Boolean send = send(RequestBuilder.updateThuoc(thuocDTO));
-        return send;
+        System.out.println(send);
+        return send != null && send;
     }
 
     public boolean deleteThuoc(String maThuoc) {
         Boolean send = send(RequestBuilder.deleteThuoc(maThuoc));
-        return send;
+        return send != null && send;
     }
 
     public List<DonViTinhDTO> getDonViTinhList() {
-        List<DonViTinhDTO> list = send(RequestBuilder.getDonViTinhList());
-        return  list;
+        List<?> list = send(RequestBuilder.getDonViTinhList());
+        return toTypedList(list, DonViTinhDTO.class);
     }
 
     public LoThuocDTO getLoThuocByLoThuocId(int maLoThuoc) {
@@ -424,6 +425,19 @@ public class ClientManager {
             LOGGER.log(Level.SEVERE, logMessage, e);
             return new ArrayList<>();
         }
+    }
+
+    private <T> List<T> toTypedList(List<?> source, Class<T> targetClass) {
+        List<T> result = new ArrayList<>();
+        if (source == null) {
+            return result;
+        }
+        for (Object item : source) {
+            if (targetClass.isInstance(item)) {
+                result.add(targetClass.cast(item));
+            }
+        }
+        return result;
     }
 
     public List<ChiTietHoaDonDTO> getChiTietHoaDonConBanByHoaDonId(String maHD) {
@@ -746,3 +760,4 @@ public class ClientManager {
 
     }
 }
+

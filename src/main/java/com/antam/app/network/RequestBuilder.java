@@ -213,7 +213,7 @@ public class RequestBuilder {
     }
 
     public static Command getActiveKeList() {
-        return build(CommandType.GET_KE_LIST);
+        return build(CommandType.GET_KE_ACTIVE_LIST);
     }
 
     public static Command getThuocById(String maThuoc) {
@@ -233,7 +233,7 @@ public class RequestBuilder {
     }
 
     public static Command updateThuoc(ThuocDTO thuocDTO) {
-        return build(CommandType.UPDATE_THUOC, map("Thuoc", thuocDTO));
+        return build(CommandType.UPDATE_THUOC, map("thuoc", thuocDTO));
     }
 
     public static Command deleteThuoc(String maThuoc) {
