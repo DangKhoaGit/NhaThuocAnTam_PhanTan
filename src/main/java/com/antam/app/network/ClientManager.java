@@ -100,6 +100,33 @@ public class ClientManager {
         }
     }
 
+    private boolean sendForSuccess(Command command) {
+        try {
+            // inject session nếu có
+            if (sessionId != null) {
+                command.setSessionId(sessionId);
+            }
+
+            Response response = sendCommandWithAutoConnect(command);
+
+            if (response == null) {
+                LOGGER.warning("⚠Response = null (lỗi kết nối / serialization)");
+                return false;
+            }
+
+            if (!response.isSuccess()) {
+                LOGGER.warning("Command failed: " + response.getMessage());
+                return false;
+            }
+
+            return true;
+
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Client error", e);
+            return false;
+        }
+    }
+
     // =========================================================
     // 🔐 AUTH
     // =========================================================
@@ -208,7 +235,7 @@ public class ClientManager {
     }
 
     public boolean createThuoc(Object dto) {
-        Boolean rs = send(RequestBuilder.createThuoc((ThuocDTO) dto));
+        Boolean rs = sendForSuccess(RequestBuilder.createThuoc((ThuocDTO) dto));
         return rs != null && rs;
     }
 
@@ -369,13 +396,13 @@ public class ClientManager {
     }
 
     public boolean updateThuoc(ThuocDTO thuocDTO) {
-        Boolean send = send(RequestBuilder.updateThuoc(thuocDTO));
+        Boolean send = sendForSuccess(RequestBuilder.updateThuoc(thuocDTO));
         System.out.println(send);
         return send != null && send;
     }
 
     public boolean deleteThuoc(String maThuoc) {
-        Boolean send = send(RequestBuilder.deleteThuoc(maThuoc));
+        Boolean send = sendForSuccess(RequestBuilder.deleteThuoc(maThuoc));
         return send != null && send;
     }
 
