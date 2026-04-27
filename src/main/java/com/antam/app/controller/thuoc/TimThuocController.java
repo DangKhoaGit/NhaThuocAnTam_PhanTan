@@ -8,7 +8,6 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.scene.control.*;
-import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.effect.DropShadow;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
@@ -16,7 +15,9 @@ import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.stage.Modality;
 
+import java.net.URL;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Locale;
 
@@ -172,7 +173,10 @@ public class TimThuocController extends ScrollPane{
         // ===================== ADD CONTAINER =====================
         root.getChildren().addAll(titleBox, filterPane, searchBox, tableThuoc, guide);
 
-        this.getStylesheets().add(getClass().getResource("/com/antam/app/styles/dashboard_style.css").toExternalForm());
+        URL stylesheet = getClass().getResource("/com/antam/app/styles/dashboard_style.css");
+        if (stylesheet != null) {
+            this.getStylesheets().add(stylesheet.toExternalForm());
+        }
         this.setContent(root);
         /** Sự kiện **/
         // Load tồn kho
@@ -199,7 +203,8 @@ public class TimThuocController extends ScrollPane{
         addComboboxTonKho();
 
         // Load dữ liệu
-        arrayThuoc = new ArrayList<>(clientManager.getThuocList());
+        Collection<?> thuocFromServer = clientManager.getThuocList();
+        arrayThuoc = toThuocList(thuocFromServer);
         thuocList.addAll(arrayThuoc);
         tableThuoc.setItems(thuocList);
 
@@ -249,7 +254,8 @@ public class TimThuocController extends ScrollPane{
 
     // them value vao combobox ke
     public void addComBoBoxKe() {
-        ArrayList<KeDTO> arrayKe = new ArrayList<>(clientManager.getActiveKeList());
+        Collection<KeDTO> keFromServer = clientManager.getActiveKeList();
+        ArrayList<KeDTO> arrayKe = keFromServer == null ? new ArrayList<>() : new ArrayList<>(keFromServer);
         cbKe.getItems().clear();
         KeDTO tatCa = new KeDTO("KE0000", "Tất cả", "Tất cả", false);
         cbKe.getItems().add(tatCa);
@@ -261,7 +267,8 @@ public class TimThuocController extends ScrollPane{
 
     // them value vao combobox dang dieu che
     public void addComBoBoxDDC() {
-        ArrayList<DangDieuCheDTO> arrayDDC = new ArrayList<>(clientManager.getActiveDangDieuCheList());
+        Collection<DangDieuCheDTO> ddcFromServer = clientManager.getActiveDangDieuCheList();
+        ArrayList<DangDieuCheDTO> arrayDDC = ddcFromServer == null ? new ArrayList<>() : new ArrayList<>(ddcFromServer);
         cbDangDieuChe.getItems().clear();
         DangDieuCheDTO Tatca = new DangDieuCheDTO(-1, "Tất cả");
         cbDangDieuChe.getItems().add(Tatca);
@@ -282,7 +289,8 @@ public class TimThuocController extends ScrollPane{
     public void updateTableThuoc(){
         thuocList.clear();
         tableThuoc.refresh();
-        arrayThuoc = new ArrayList<>(clientManager.getThuocList());
+        Collection<?> thuocFromServer = clientManager.getThuocList();
+        arrayThuoc = toThuocList(thuocFromServer);
         thuocList.addAll(arrayThuoc);
         tableThuoc.setItems(thuocList);
     }
@@ -292,30 +300,30 @@ public class TimThuocController extends ScrollPane{
         String selectedKe = cbKe.getValue() == null ? "Tất cả" : cbKe.getValue().getTenKe();
         String selectedDDC = cbDangDieuChe.getValue() == null ? "Tất cả" : cbDangDieuChe.getValue().getTenDDC();
         String selectedTonKho = cbTonKho.getValue() == null ? "Tất cả" : cbTonKho.getValue();
-        String searchText = searchNameThuoc.getText().trim().toLowerCase(Locale.ROOT);
+        String searchText = searchNameThuoc.getText() == null ? "" : searchNameThuoc.getText().trim().toLowerCase(Locale.ROOT);
 
         ArrayList<ThuocDTO> filteredList = new ArrayList<>();
 
-        for (ThuocDTO p : arrayThuoc) { // luôn thao tác trên danh sách gốc
+        for (ThuocDTO p : arrayThuoc) {
+            if (p == null) {
+                continue;
+            }
             boolean match = true;
             int tonKho = TinhTonKho(p);
+            String tenKe = p.getMaKeDTO() == null ? "" : safeText(p.getMaKeDTO().getTenKe());
+            String tenDDC = p.getDangDieuCheDTO() == null ? "" : safeText(p.getDangDieuCheDTO().getTenDDC());
+            String tenThuoc = safeText(p.getTenThuoc()).toLowerCase(Locale.ROOT);
 
-            // Filter Ke
-            if (!selectedKe.equals("Tất cả") && !p.getMaKeDTO().getTenKe().equals(selectedKe)) match = false;
+            if (!selectedKe.equals("Tất cả") && !tenKe.equals(selectedKe)) match = false;
+            if (!selectedDDC.equals("Tất cả") && !tenDDC.equals(selectedDDC)) match = false;
 
-            // Filter DDC
-            if (!selectedDDC.equals("Tất cả") && !p.getDangDieuCheDTO().getTenDDC().equals(selectedDDC)) match = false;
-
-            // Filter TonKho
             if (!selectedTonKho.equals("Tất cả")) {
                 if (selectedTonKho.equals("Tồn kho thấp (< 50)") && tonKho >= 50) match = false;
                 else if (selectedTonKho.equals("Bình thường (50-200)") && (tonKho < 50 || tonKho > 200)) match = false;
                 else if (selectedTonKho.equals("Dồi dào (> 200)") && tonKho <= 200) match = false;
             }
 
-
-            // Search theo tên
-            if (!searchText.isEmpty() && !p.getTenThuoc().toLowerCase(Locale.ROOT).contains(searchText)) match = false;
+            if (!searchText.isEmpty() && !tenThuoc.contains(searchText)) match = false;
 
             if (match) filteredList.add(p);
         }
@@ -326,10 +334,14 @@ public class TimThuocController extends ScrollPane{
 
     // ham load ton kho
     public void loadTonKho() {
-        ArrayList<LoThuocDTO> list = new ArrayList<>(clientManager.getLoThuocList());
+        Collection<LoThuocDTO> loThuocFromServer = clientManager.getLoThuocList();
+        ArrayList<LoThuocDTO> list = loThuocFromServer == null ? new ArrayList<>() : new ArrayList<>(loThuocFromServer);
         mapTonKho.clear();
 
         for (LoThuocDTO ct : list) {
+            if (ct == null || ct.getMaThuocDTO() == null || ct.getMaThuocDTO().getMaThuoc() == null) {
+                continue;
+            }
             String maThuoc = ct.getMaThuocDTO().getMaThuoc();
             mapTonKho.put(maThuoc, mapTonKho.getOrDefault(maThuoc, 0) + ct.getSoLuong());
         }
@@ -379,6 +391,19 @@ public class TimThuocController extends ScrollPane{
                 setText(empty || item == null ? null : formatDDC(item));
             }
         });
+    }
+
+    private ArrayList<ThuocDTO> toThuocList(Collection<?> source) {
+        ArrayList<ThuocDTO> result = new ArrayList<>();
+        if (source == null) {
+            return result;
+        }
+        for (Object item : source) {
+            if (item instanceof ThuocDTO thuocDTO) {
+                result.add(thuocDTO);
+            }
+        }
+        return result;
     }
 
     private String formatKe(KeDTO keDTO) {

@@ -7,14 +7,17 @@ package com.antam.app.controller.thuoc;
 
 import com.antam.app.dto.*;
 import com.antam.app.network.ClientManager;
+import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
 import javafx.scene.control.*;
 import javafx.scene.control.ButtonBar.ButtonData;
 import javafx.scene.text.Text;
 import javafx.util.StringConverter;
 
+import java.net.URL;
 import java.text.NumberFormat;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -156,8 +159,11 @@ public class ThemThuocFormController extends DialogPane{
         this.setContent(root);
 
         // ===== Stylesheet =====
-        this.getStylesheets().add(getClass().getResource("/com/antam/app/styles/dashboard_style.css").toExternalForm());
-        /** Sự kiện **/
+        URL stylesheet = getClass().getResource("/com/antam/app/styles/dashboard_style.css");
+        if (stylesheet != null) {
+            this.getStylesheets().add(stylesheet.toExternalForm());
+        }
+        // Sự kiện
         // them button vao dialog
         ButtonType cancelButton = new ButtonType("Huỷ", ButtonData.CANCEL_CLOSE);
         ButtonType applyButton = new ButtonType("Lưu", ButtonData.APPLY);
@@ -168,30 +174,14 @@ public class ThemThuocFormController extends DialogPane{
         Button applyBtn = (Button) this.lookupButton(applyButton);
 
         applyBtn.addEventFilter(ActionEvent.ACTION, event -> {
-            boolean isValid = validate();
-
-            if (!isValid) {
-                event.consume();
-            }else {
-                String maThuoc = txtAddMaThuoc.getText();
-                String tenThuoc = txtAddTenThuoc.getText();
-                DonViTinhDTO donViCoSo = cbAddDVCS.getValue();
-                DangDieuCheDTO dangDieuCheDTO =  cbAddDangDieuChe.getValue();
-                String hamLuong = txtAddHamLuong.getText();
-                Double giaGoc = spAddGiaGoc.getValue();
-                Double giaBan = spAddGiaBan.getValue();
-                Double thue = spAddThue.getValue();
-                KeDTO keDTO = cbAddKe.getValue();
-
-                ThuocDTO thuocDTO = new ThuocDTO(maThuoc, tenThuoc, hamLuong, giaBan, giaGoc, thue.floatValue(), false,
-                        dangDieuCheDTO, donViCoSo, keDTO);
-                boolean check = clientManager.createThuoc(thuocDTO);
-                if (!check) {
-                    notification_addThuoc.setText("Thêm thuốc thất bại!");
-                    event.consume();
-                }
+            // Keep dialog open until async save finishes.
+            event.consume();
+            if (!validate()) {
+                return;
             }
 
+            ThuocDTO thuocDTO = buildThuocDTO();
+            handleSaveThuocAsync(thuocDTO, applyBtn);
         });
 
         // su kien up down spinner gia goc
@@ -335,6 +325,17 @@ public class ThemThuocFormController extends DialogPane{
                 setText(empty || item == null ? null : formatDVT(item));
             }
         });
+        cbAddDVCS.setConverter(new StringConverter<>() {
+            @Override
+            public String toString(DonViTinhDTO dvt) {
+                return formatDVT(dvt);
+            }
+
+            @Override
+            public DonViTinhDTO fromString(String string) {
+                return null;
+            }
+        });
     }
 
     private String formatKe(KeDTO keDTO) {
@@ -349,32 +350,90 @@ public class ThemThuocFormController extends DialogPane{
         return dvt == null ? "" : dvt.getMaDVT() + " - " + dvt.getTenDVT();
     }
 
+    private ThuocDTO buildThuocDTO() {
+        return new ThuocDTO(
+                txtAddMaThuoc.getText().trim(),
+                txtAddTenThuoc.getText().trim(),
+                txtAddHamLuong.getText().trim(),
+                spAddGiaBan.getValue(),
+                spAddGiaGoc.getValue(),
+                spAddThue.getValue().floatValue(),
+                false,
+                cbAddDangDieuChe.getValue(),
+                cbAddDVCS.getValue(),
+                cbAddKe.getValue()
+        );
+    }
+
+    private void handleSaveThuocAsync(ThuocDTO thuocDTO, Button applyBtn) {
+        Task<String> saveTask = new Task<>() {
+            @Override
+            protected String call() {
+                if (clientManager.getThuocById(thuocDTO.getMaThuoc()) != null) {
+                    return "Mã thuốc đã tồn tại!";
+                }
+                return clientManager.createThuoc(thuocDTO) ? null : "Thêm thuốc thất bại!";
+            }
+        };
+
+        saveTask.setOnRunning(e -> {
+            setFormDisabled(true, applyBtn);
+            notification_addThuoc.setText("Đang lưu dữ liệu...");
+        });
+
+        saveTask.setOnSucceeded(e -> {
+            setFormDisabled(false, applyBtn);
+            String errorMessage = saveTask.getValue();
+            if (errorMessage == null) {
+                notification_addThuoc.setText("");
+                if (getScene() != null && getScene().getWindow() != null) {
+                    getScene().getWindow().hide();
+                }
+            } else {
+                notification_addThuoc.setText(errorMessage);
+            }
+        });
+
+        saveTask.setOnFailed(e -> {
+            setFormDisabled(false, applyBtn);
+            Throwable ex = saveTask.getException();
+            notification_addThuoc.setText(ex == null ? "Lỗi kết nối tới server!" : "Lỗi kết nối: " + ex.getMessage());
+        });
+
+        Thread saveThread = new Thread(saveTask, "them-thuoc-save-task");
+        saveThread.setDaemon(true);
+        saveThread.start();
+    }
+
+    private void setFormDisabled(boolean disabled, Button applyBtn) {
+        txtAddMaThuoc.setDisable(disabled);
+        txtAddTenThuoc.setDisable(disabled);
+        txtAddHamLuong.setDisable(disabled);
+        spAddGiaGoc.setDisable(disabled);
+        spAddGiaBan.setDisable(disabled);
+        spAddThue.setDisable(disabled);
+        cbAddDangDieuChe.setDisable(disabled);
+        cbAddKe.setDisable(disabled);
+        cbAddDVCS.setDisable(disabled);
+        applyBtn.setDisable(disabled);
+    }
+
     // ham validate kiem tra du lieu truyen vao dung hay ko
     public boolean validate(){
-        String maThuoc = txtAddMaThuoc.getText();
-        String tenThuoc = txtAddTenThuoc.getText();
-        String donViCoSo = cbAddDVCS.getValue().getTenDVT();
-        String dangDieuChe = cbAddDangDieuChe.getValue().getTenDDC();
-        String hamLuong = txtAddHamLuong.getText();
-        Double giaGoc = 0.0;
-        Double giaBan = 0.0;
-        Double thue = 0.0;
-        String ke = cbAddKe.getValue().getTenKe();
+        String maThuoc = txtAddMaThuoc.getText() == null ? "" : txtAddMaThuoc.getText().trim();
+        String tenThuoc = txtAddTenThuoc.getText() == null ? "" : txtAddTenThuoc.getText().trim();
+        DonViTinhDTO donViCoSo = cbAddDVCS.getValue();
+        DangDieuCheDTO dangDieuChe = cbAddDangDieuChe.getValue();
+        String hamLuong = txtAddHamLuong.getText() == null ? "" : txtAddHamLuong.getText().trim();
+        KeDTO ke = cbAddKe.getValue();
 
-        if(maThuoc.isEmpty()){
+        if (maThuoc.isEmpty()) {
             notification_addThuoc.setText("Vui lòng điền mã thuốc!");
             return false;
-        }else{
-            if (maThuoc.matches("^VN-\\d{5}-\\d{2}$")) {
-                if (clientManager.getThuocById(maThuoc) != null){
-                    notification_addThuoc.setText("Mã thuốc đã tồn tại!");
-                    return false;
-                }
-                notification_addThuoc.setText("");
-            } else {
-                notification_addThuoc.setText("Mã thuốc không hợp lệ! (VD: VN-12345-01)");
-                return false;
-            }
+        }
+        if (!maThuoc.matches("^VN-\\d{5}-\\d{2}$")) {
+            notification_addThuoc.setText("Mã thuốc không hợp lệ! (VD: VN-12345-01)");
+            return false;
         }
         if (tenThuoc.isEmpty()){
             notification_addThuoc.setText("Vui lòng điền đầy đủ tên thuốc!");
@@ -392,9 +451,10 @@ public class ThemThuocFormController extends DialogPane{
             notification_addThuoc.setText("Vui lòng điền đầy đủ hàm lượng!");
             return false;
         }
+
         try {
-            giaGoc = spAddGiaGoc.getValue();
-            if (giaGoc <= 0) {
+            Double giaGoc = spAddGiaGoc.getValue();
+            if (giaGoc == null || giaGoc <= 0) {
                 notification_addThuoc.setText("Giá gốc phải lớn hơn 0!");
                 return false;
             }
@@ -403,8 +463,8 @@ public class ThemThuocFormController extends DialogPane{
             return false;
         }
         try {
-            giaBan = spAddGiaBan.getValue();
-            if (giaBan <= 0) {
+            Double giaBan = spAddGiaBan.getValue();
+            if (giaBan == null || giaBan <= 0) {
                 notification_addThuoc.setText("Giá bán phải lớn hơn 0!");
                 return false;
             }
@@ -413,8 +473,8 @@ public class ThemThuocFormController extends DialogPane{
             return false;
         }
         try {
-            thue = spAddThue.getValue();
-            if (thue < 0) {
+            Double thue = spAddThue.getValue();
+            if (thue == null || thue < 0) {
                 notification_addThuoc.setText("Thuế không được âm!");
                 return false;
             }
@@ -426,12 +486,14 @@ public class ThemThuocFormController extends DialogPane{
             notification_addThuoc.setText("Vui lòng điền đầy đủ thông tin!");
             return false;
         }
+
+        notification_addThuoc.setText("");
         return true;
     }
 
     // them value vao combobox ke
     public void addComBoBoxKe() {
-        ArrayList<KeDTO> arrayKe = new ArrayList<>(clientManager.getActiveKeList());
+        ArrayList<KeDTO> arrayKe = toKeList(clientManager.getActiveKeList());
         cbAddKe.getItems().clear();
         for (KeDTO keDTO : arrayKe) {
             cbAddKe.getItems().add(keDTO);
@@ -441,7 +503,7 @@ public class ThemThuocFormController extends DialogPane{
 
     // Them value vao combobox dang dieu che
     public void addComBoBoxDDC() {
-        ArrayList<DangDieuCheDTO> arrayDDC = new ArrayList<>(clientManager.getActiveDangDieuCheList());
+        ArrayList<DangDieuCheDTO> arrayDDC = toDangDieuCheList(clientManager.getActiveDangDieuCheList());
         cbAddDangDieuChe.getItems().clear();
         for (DangDieuCheDTO ddc : arrayDDC){
             cbAddDangDieuChe.getItems().add(ddc);
@@ -451,10 +513,49 @@ public class ThemThuocFormController extends DialogPane{
 
     // Them value vao combobox don vi tinh
     public void addComBoBoxDVCS() {
-        ArrayList<DonViTinhDTO> arrayDVT = new ArrayList<>(clientManager.getDonViTinhList());
+        ArrayList<DonViTinhDTO> arrayDVT = toDonViTinhList(clientManager.getDonViTinhList());
         cbAddDVCS.getItems().clear();
         arrayDVT.forEach(dvt -> cbAddDVCS.getItems().add(dvt));
         cbAddDVCS.getSelectionModel().selectFirst();
+    }
+
+    private ArrayList<KeDTO> toKeList(Collection<?> source) {
+        ArrayList<KeDTO> result = new ArrayList<>();
+        if (source == null) {
+            return result;
+        }
+        for (Object item : source) {
+            if (item instanceof KeDTO keDTO) {
+                result.add(keDTO);
+            }
+        }
+        return result;
+    }
+
+    private ArrayList<DangDieuCheDTO> toDangDieuCheList(Collection<?> source) {
+        ArrayList<DangDieuCheDTO> result = new ArrayList<>();
+        if (source == null) {
+            return result;
+        }
+        for (Object item : source) {
+            if (item instanceof DangDieuCheDTO dangDieuCheDTO) {
+                result.add(dangDieuCheDTO);
+            }
+        }
+        return result;
+    }
+
+    private ArrayList<DonViTinhDTO> toDonViTinhList(Collection<?> source) {
+        ArrayList<DonViTinhDTO> result = new ArrayList<>();
+        if (source == null) {
+            return result;
+        }
+        for (Object item : source) {
+            if (item instanceof DonViTinhDTO donViTinhDTO) {
+                result.add(donViTinhDTO);
+            }
+        }
+        return result;
     }
 
     // Cat chuoi lay don vi

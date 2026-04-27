@@ -22,6 +22,8 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.Collection;
+
 import javafx.geometry.Insets;
 import javafx.scene.control.Button;
 import javafx.scene.control.ScrollPane;
@@ -56,8 +58,8 @@ public class DoiThuocFormController extends DialogPane{
     }
 
     public void showData(HoaDonDTO hoaDonDTO) {
-        HoaDonDTO hd = clientManager.getHoaDonById(hoaDonDTO.getMaHD());
-        chiTietHoaDons = new ArrayList<>(clientManager.getChiTietHoaDonByHoaDonId(hoaDonDTO.getMaHD()));
+        HoaDonDTO hd = (HoaDonDTO) clientManager.getHoaDonById(hoaDonDTO.getMaHD());
+        chiTietHoaDons = new ArrayList<ChiTietHoaDonDTO>((Collection<? extends ChiTietHoaDonDTO>) clientManager.getChiTietHoaDon(hoaDonDTO.getMaHD()));
         txtMaHoaDonDoi.setText(hd == null ? hoaDonDTO.getMaHD() : hd.getMaHD());
         vhDSCTHD.getChildren().clear();
         selectedItems.clear();
@@ -512,6 +514,7 @@ public class DoiThuocFormController extends DialogPane{
                             }
 
                             clientManager.updateHoaDonTongTien(hoaDonDTO.getMaHD(), tongTienCu - tongTienCoKM - tongTienTra + tongTienMua);
+
                         }
 
                     }
@@ -573,7 +576,7 @@ public class DoiThuocFormController extends DialogPane{
             tinhTongTien();
         });
 
-        LoThuocDTO ctt = clientManager.getLoThuocById(chiTietHoaDonDTO.getMaLoThuocDTO().getMaLoThuoc());
+        LoThuocDTO ctt = clientManager.getLoThuocByLoThuocId(chiTietHoaDonDTO.getMaLoThuocDTO().getMaLoThuoc());
         ThuocDTO t = ctt == null || ctt.getMaThuocDTO() == null ? null : clientManager.getThuocById(ctt.getMaThuocDTO().getMaThuoc());
         Text txtMaThuoc = new Text(t == null ? "" : t.getTenThuoc());
         txtMaThuoc.setStyle("-fx-font-size: 15px;");
@@ -619,7 +622,7 @@ public class DoiThuocFormController extends DialogPane{
         );
         comboBoxThuoc.setPromptText("Chọn thuốc");
 
-        ArrayList<ThuocDTO> thuocs = new ArrayList<>(clientManager.getThuocList());
+        ArrayList<ThuocDTO> thuocs = new ArrayList<ThuocDTO>((Collection<? extends ThuocDTO>) clientManager.getThuocList());
         for (ThuocDTO t : thuocs) {
             comboBoxThuoc.getItems().add(t);
         }

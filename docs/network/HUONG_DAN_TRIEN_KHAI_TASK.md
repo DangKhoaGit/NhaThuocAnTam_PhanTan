@@ -23,6 +23,20 @@ public enum CommandType {
 ### Bước 2: Xây dựng API tại ClientManager
 
 `ClientManager` đóng vai trò là "người đưa thư". Bạn tạo một phương thức để đóng gói dữ liệu vào `Command`.
+* Phương thức send() CHỈ trả về response.getData()
+* → KHÔNG trả về response.isSuccess()
+*
+* Điều này có nghĩa:
+* - Nếu server KHÔNG set data → send() sẽ trả về null
+* - null KHÔNG có nghĩa là thất bại, có thể request đã thành công
+*
+* ❗ KHÔNG dùng send() cho các chức năng chỉ cần success như:
+*   - update
+*   - delete
+*   - insert
+*
+* 👉 Thay vào đó phải dùng:
+*   sendForSuccess()
 
 **File:** `com.antam.app.network.ClientManager`
 
@@ -46,6 +60,7 @@ public boolean insertPhieuDatFull(PhieuDatThuocDTO phieu, List<ChiTietPhieuDatTh
         return false;
     }
 }
+
 ```
 
 ### Bước 3: Định tuyến xử lý tại Server (CommandRouter)

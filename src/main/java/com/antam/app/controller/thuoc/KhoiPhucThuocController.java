@@ -7,6 +7,7 @@ import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcons;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.concurrent.Task;
 import javafx.geometry.Insets;
 import javafx.scene.control.*;
 import javafx.scene.effect.DropShadow;
@@ -16,7 +17,9 @@ import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.stage.Modality;
 
+import java.net.URL;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Locale;
 
@@ -175,7 +178,10 @@ public class KhoiPhucThuocController extends ScrollPane{
         // ===================== ADD CONTAINER =====================
         root.getChildren().addAll(titleBox, filterPane, searchBox, tableThuoc, guide);
 
-        this.getStylesheets().add(getClass().getResource("/com/antam/app/styles/dashboard_style.css").toExternalForm());
+        URL stylesheet = getClass().getResource("/com/antam/app/styles/dashboard_style.css");
+        if (stylesheet != null) {
+            this.getStylesheets().add(stylesheet.toExternalForm());
+        }
         this.setContent(root);
         /** Sự kiện **/
 
@@ -191,7 +197,6 @@ public class KhoiPhucThuocController extends ScrollPane{
                 return;
             }
 
-
             Alert confirmAlert = new Alert(Alert.AlertType.CONFIRMATION);
             confirmAlert.setTitle("Xác nhận khôi phục");
             confirmAlert.setHeaderText(null);
@@ -199,21 +204,7 @@ public class KhoiPhucThuocController extends ScrollPane{
             confirmAlert.initModality(Modality.APPLICATION_MODAL);
             confirmAlert.showAndWait().ifPresent(response -> {
                 if (response == ButtonType.OK) {
-                    boolean success = clientManager.restoreThuoc(selectedThuocDTO.getMaThuoc());
-                    if (success) {
-                        Alert successAlert = new Alert(Alert.AlertType.INFORMATION);
-                        successAlert.setTitle("Khôi phục thành công");
-                        successAlert.setHeaderText(null);
-                        successAlert.setContentText("Khôi phục thuốc thành công!");
-                        successAlert.showAndWait();
-                        updateTableThuoc();
-                    } else {
-                        Alert errorAlert = new Alert(Alert.AlertType.ERROR);
-                        errorAlert.setTitle("Khôi phục thất bại");
-                        errorAlert.setHeaderText(null);
-                        errorAlert.setContentText("Khôi phục thuốc thất bại. Vui lòng thử lại!");
-                        errorAlert.showAndWait();
-                    }
+                    handleRestoreThuocAsync(selectedThuocDTO);
                 }
             });
         });
@@ -242,7 +233,7 @@ public class KhoiPhucThuocController extends ScrollPane{
         addComboboxTonKho();
 
         // Load dữ liệu
-        arrayThuoc = new ArrayList<>(clientManager.getDeletedThuocList());
+        arrayThuoc = toThuocList(clientManager.getDeletedThuocList());
         thuocList.addAll(arrayThuoc);
         tableThuoc.setItems(thuocList);
 
@@ -293,7 +284,7 @@ public class KhoiPhucThuocController extends ScrollPane{
 
     // them value vao combobox ke
     public void addComBoBoxKe() {
-        ArrayList<KeDTO> arrayKe = new ArrayList<>(clientManager.getActiveKeList());
+        ArrayList<KeDTO> arrayKe = toKeList(clientManager.getActiveKeList());
         cbKe.getItems().clear();
         KeDTO tatCa = new KeDTO("KE0000", "Tất cả", "Tất cả", false);
         cbKe.getItems().add(tatCa);
@@ -305,7 +296,7 @@ public class KhoiPhucThuocController extends ScrollPane{
 
     // them value vao combobox dang dieu che
     public void addComBoBoxDDC() {
-        ArrayList<DangDieuCheDTO> arrayDDC = new ArrayList<>(clientManager.getActiveDangDieuCheList());
+        ArrayList<DangDieuCheDTO> arrayDDC = toDangDieuCheList(clientManager.getActiveDangDieuCheList());
         cbDangDieuChe.getItems().clear();
         DangDieuCheDTO Tatca = new DangDieuCheDTO(-1, "Tất cả");
         cbDangDieuChe.getItems().add(Tatca);
@@ -326,9 +317,53 @@ public class KhoiPhucThuocController extends ScrollPane{
     public void updateTableThuoc(){
         thuocList.clear();
         tableThuoc.refresh();
-        arrayThuoc = new ArrayList<>(clientManager.getDeletedThuocList());
+        arrayThuoc = toThuocList(clientManager.getDeletedThuocList());
         thuocList.addAll(arrayThuoc);
         tableThuoc.setItems(thuocList);
+    }
+
+    private void handleRestoreThuocAsync(ThuocDTO selectedThuocDTO) {
+        Task<Boolean> restoreTask = new Task<>() {
+            @Override
+            protected Boolean call() {
+                return clientManager.restoreThuoc(selectedThuocDTO.getMaThuoc());
+            }
+        };
+
+        restoreTask.setOnRunning(e -> btnKhoiPhuc.setDisable(true));
+
+        restoreTask.setOnSucceeded(e -> {
+            btnKhoiPhuc.setDisable(false);
+            if (Boolean.TRUE.equals(restoreTask.getValue())) {
+                Alert successAlert = new Alert(Alert.AlertType.INFORMATION);
+                successAlert.setTitle("Khôi phục thành công");
+                successAlert.setHeaderText(null);
+                successAlert.setContentText("Khôi phục thuốc thành công!");
+                successAlert.showAndWait();
+                updateTableThuoc();
+                loadTonKho();
+            } else {
+                Alert errorAlert = new Alert(Alert.AlertType.ERROR);
+                errorAlert.setTitle("Khôi phục thất bại");
+                errorAlert.setHeaderText(null);
+                errorAlert.setContentText("Khôi phục thuốc thất bại. Vui lòng thử lại!");
+                errorAlert.showAndWait();
+            }
+        });
+
+        restoreTask.setOnFailed(e -> {
+            btnKhoiPhuc.setDisable(false);
+            Throwable ex = restoreTask.getException();
+            Alert errorAlert = new Alert(Alert.AlertType.ERROR);
+            errorAlert.setTitle("Khôi phục thất bại");
+            errorAlert.setHeaderText(null);
+            errorAlert.setContentText(ex == null ? "Lỗi kết nối tới server!" : "Lỗi kết nối: " + ex.getMessage());
+            errorAlert.showAndWait();
+        });
+
+        Thread restoreThread = new Thread(restoreTask, "khoi-phuc-thuoc-task");
+        restoreThread.setDaemon(true);
+        restoreThread.start();
     }
 
     // ham loc va tim kiem thuoc
@@ -336,30 +371,30 @@ public class KhoiPhucThuocController extends ScrollPane{
         String selectedKe = cbKe.getValue() == null ? "Tất cả" : cbKe.getValue().getTenKe();
         String selectedDDC = cbDangDieuChe.getValue() == null ? "Tất cả" : cbDangDieuChe.getValue().getTenDDC();
         String selectedTonKho = cbTonKho.getValue() == null ? "Tất cả" : cbTonKho.getValue();
-        String searchText = searchNameThuoc.getText().trim().toLowerCase(Locale.ROOT);
+        String searchText = searchNameThuoc.getText() == null ? "" : searchNameThuoc.getText().trim().toLowerCase(Locale.ROOT);
 
         ArrayList<ThuocDTO> filteredList = new ArrayList<>();
 
-        for (ThuocDTO p : arrayThuoc) { // luôn thao tác trên danh sách gốc
+        for (ThuocDTO p : arrayThuoc) {
+            if (p == null) {
+                continue;
+            }
             boolean match = true;
             int tonKho = TinhTonKho(p);
+            String tenKe = p.getMaKeDTO() == null ? "" : safeText(p.getMaKeDTO().getTenKe());
+            String tenDDC = p.getDangDieuCheDTO() == null ? "" : safeText(p.getDangDieuCheDTO().getTenDDC());
+            String tenThuoc = safeText(p.getTenThuoc()).toLowerCase(Locale.ROOT);
 
-            // Filter Ke
-            if (!selectedKe.equals("Tất cả") && !p.getMaKeDTO().getTenKe().equals(selectedKe)) match = false;
+            if (!selectedKe.equals("Tất cả") && !tenKe.equals(selectedKe)) match = false;
+            if (!selectedDDC.equals("Tất cả") && !tenDDC.equals(selectedDDC)) match = false;
 
-            // Filter DDC
-            if (!selectedDDC.equals("Tất cả") && !p.getDangDieuCheDTO().getTenDDC().equals(selectedDDC)) match = false;
-
-            // Filter TonKho
             if (!selectedTonKho.equals("Tất cả")) {
                 if (selectedTonKho.equals("Tồn kho thấp (< 50)") && tonKho >= 50) match = false;
                 else if (selectedTonKho.equals("Bình thường (50-200)") && (tonKho < 50 || tonKho > 200)) match = false;
                 else if (selectedTonKho.equals("Dồi dào (> 200)") && tonKho <= 200) match = false;
             }
 
-
-            // Search theo tên
-            if (!searchText.isEmpty() && !p.getTenThuoc().toLowerCase(Locale.ROOT).contains(searchText)) match = false;
+            if (!searchText.isEmpty() && !tenThuoc.contains(searchText)) match = false;
 
             if (match) filteredList.add(p);
         }
@@ -370,10 +405,13 @@ public class KhoiPhucThuocController extends ScrollPane{
 
     // ham load ton kho
     public void loadTonKho() {
-        ArrayList<LoThuocDTO> list = new ArrayList<>(clientManager.getLoThuocList());
+        ArrayList<LoThuocDTO> list = toLoThuocList(clientManager.getLoThuocList());
         mapTonKho.clear();
 
         for (LoThuocDTO ct : list) {
+            if (ct == null || ct.getMaThuocDTO() == null || ct.getMaThuocDTO().getMaThuoc() == null) {
+                continue;
+            }
             String maThuoc = ct.getMaThuocDTO().getMaThuoc();
             mapTonKho.put(maThuoc, mapTonKho.getOrDefault(maThuoc, 0) + ct.getSoLuong());
         }
@@ -423,6 +461,58 @@ public class KhoiPhucThuocController extends ScrollPane{
                 setText(empty || item == null ? null : formatDDC(item));
             }
         });
+    }
+
+    private ArrayList<ThuocDTO> toThuocList(Collection<?> source) {
+        ArrayList<ThuocDTO> result = new ArrayList<>();
+        if (source == null) {
+            return result;
+        }
+        for (Object item : source) {
+            if (item instanceof ThuocDTO thuocDTO) {
+                result.add(thuocDTO);
+            }
+        }
+        return result;
+    }
+
+    private ArrayList<KeDTO> toKeList(Collection<?> source) {
+        ArrayList<KeDTO> result = new ArrayList<>();
+        if (source == null) {
+            return result;
+        }
+        for (Object item : source) {
+            if (item instanceof KeDTO keDTO) {
+                result.add(keDTO);
+            }
+        }
+        return result;
+    }
+
+    private ArrayList<DangDieuCheDTO> toDangDieuCheList(Collection<?> source) {
+        ArrayList<DangDieuCheDTO> result = new ArrayList<>();
+        if (source == null) {
+            return result;
+        }
+        for (Object item : source) {
+            if (item instanceof DangDieuCheDTO dangDieuCheDTO) {
+                result.add(dangDieuCheDTO);
+            }
+        }
+        return result;
+    }
+
+    private ArrayList<LoThuocDTO> toLoThuocList(Collection<?> source) {
+        ArrayList<LoThuocDTO> result = new ArrayList<>();
+        if (source == null) {
+            return result;
+        }
+        for (Object item : source) {
+            if (item instanceof LoThuocDTO loThuocDTO) {
+                result.add(loThuocDTO);
+            }
+        }
+        return result;
     }
 
     private String formatKe(KeDTO keDTO) {

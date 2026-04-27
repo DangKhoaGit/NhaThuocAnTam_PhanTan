@@ -205,16 +205,9 @@ public class ThemKhuyenMaiFormController extends DialogPane{
         // set su kien loai khuyen mai
         cbLoaiKhuyenMai.setOnAction(e -> {
             LoaiKhuyenMaiDTO selectedLoai = cbLoaiKhuyenMai.getSelectionModel().getSelectedItem();
-            if (selectedLoai != null) {
-                if (selectedLoai.getMaLKM() == 1) { // Phần trăm
-                    SpinnerValueFactory<Integer> value = new SpinnerValueFactory.IntegerSpinnerValueFactory(1, 100, 10, 1);
-                    spSo.setValueFactory(valueFactorySo);
-                } else if (selectedLoai.getMaLKM() == 2) { // Tiền mặt
-                    SpinnerValueFactory<Integer> value = new SpinnerValueFactory.IntegerSpinnerValueFactory(1000, 1000000, 10000, 1000);
-                    spSo.setValueFactory(valueFactorySo);
-                }
-            }
+            applySpinnerRangeForLoai(selectedLoai);
         });
+        applySpinnerRangeForLoai(cbLoaiKhuyenMai.getSelectionModel().getSelectedItem());
     }
 
     public void loadLoaiKhuyenMai(){
@@ -222,6 +215,22 @@ public class ThemKhuyenMaiFormController extends DialogPane{
         cbLoaiKhuyenMai.getItems().clear();
         cbLoaiKhuyenMai.getItems().addAll(listLoaiKhuyenMai);
         cbLoaiKhuyenMai.getSelectionModel().selectFirst();
+    }
+
+    private void applySpinnerRangeForLoai(LoaiKhuyenMaiDTO selectedLoai) {
+        if (selectedLoai == null) {
+            spSo.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(1, Integer.MAX_VALUE, 10, 1));
+            return;
+        }
+
+        String tenLoai = selectedLoai.getTenLKM() == null ? "" : selectedLoai.getTenLKM().toLowerCase();
+        if (tenLoai.contains("phần trăm") || tenLoai.contains("%")) {
+            spSo.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(1, 100, 10, 1));
+        } else if (tenLoai.contains("tiền")) {
+            spSo.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(1000, 1000000, 10000, 1000));
+        } else {
+            spSo.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(1, Integer.MAX_VALUE, 10, 1));
+        }
     }
 
     public boolean validate(){
