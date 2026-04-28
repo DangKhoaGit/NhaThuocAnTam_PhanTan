@@ -1,19 +1,8 @@
 package com.antam.app.service;
 
-import com.antam.app.connect.ConnectDB;
-import com.antam.app.service.impl.LoThuoc_Service;
-import com.antam.app.service.impl.DonViTinh_Service;
 import com.antam.app.dto.ChiTietPhieuDatThuocDTO;
-import com.antam.app.dto.LoThuocDTO;
-import com.antam.app.dto.DonViTinhDTO;
-import com.antam.app.dto.PhieuDatThuocDTO;
 import jakarta.persistence.EntityManager;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.List;
 
 /*
@@ -23,7 +12,7 @@ import java.util.List;
  * @version: 1.0
  */
 public interface I_ChiTietPhieuDat_Service {
-    void themChiTietPhieuDatVaoDBS(ChiTietPhieuDatThuocDTO ct);
+    boolean themChiTietPhieuDatVaoDBS(ChiTietPhieuDatThuocDTO ct);
 
     /**
      * Lấy danh sách chi tiết phiếu đặt thuốc theo mã phiếu đặt thuốc

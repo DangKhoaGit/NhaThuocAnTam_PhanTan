@@ -9,7 +9,6 @@ import com.antam.app.dao.I_ChiTietPhieuDat_DAO;
 import com.antam.app.entity.ChiTietPhieuDatThuoc;
 import org.hibernate.Hibernate;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class ChiTietPhieuDat_DAO extends AbstractGenericDao<ChiTietPhieuDatThuoc, ChiTietPhieuDatThuoc.ChiTietPhieuDatThuocId> implements I_ChiTietPhieuDat_DAO {
@@ -28,15 +27,16 @@ public class ChiTietPhieuDat_DAO extends AbstractGenericDao<ChiTietPhieuDatThuoc
     }
 
     @Override
-    public void themChiTietPhieuDatVaoDBS(ChiTietPhieuDatThuoc ct) {
+    public boolean themChiTietPhieuDatVaoDBS(ChiTietPhieuDatThuoc ct) {
         doInTransaction(em -> {
             // Merge the associated entities to avoid detached entity issues
             ct.setMaPhieu(em.merge(ct.getMaPhieu()));
             ct.setMaThuoc(em.merge(ct.getMaThuoc()));
             ct.setDonViTinh(em.merge(ct.getDonViTinh()));
             em.persist(ct);
-            return null;
+            return true;
         });
+        return false;
     }
 
     @Override
