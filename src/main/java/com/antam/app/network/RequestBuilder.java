@@ -173,7 +173,7 @@ public class RequestBuilder {
     }
 
     public static Command createChiTietHoaDon(ChiTietHoaDonDTO dto) {
-        return build(CommandType.CREATE_CHITIETHOADON, map("cthd", dto));
+        return build(CommandType.CREATE_CHITIETHOADON, map("chiTietHoaDon", dto));
     }
 
     // =========================================================
@@ -259,7 +259,7 @@ public class RequestBuilder {
     public static Command updateLoThuocQuantity(int maLoThuoc, int soLuong) {
         return build(CommandType.UPDATE_LOTHUOC_QUANTITY, map(
                 "maLoThuoc", maLoThuoc,
-                "soLuong", soLuong
+                "deltaSoLuong", soLuong
         ));
     }
 
