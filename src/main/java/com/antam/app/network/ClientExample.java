@@ -2,6 +2,7 @@ package com.antam.app.network;
 
 import com.antam.app.dto.HoaDonDTO;
 import com.antam.app.network.config.NetworkConfig;
+import com.antam.app.network.message.Response;
 
 import java.util.List;
 import java.util.logging.Logger;
@@ -40,32 +41,37 @@ public class ClientExample {
 
             System.out.println(GREEN + "✅ Connected successfully!" + RESET);
 
-            // === Example 1: Get HoaDon List ===
-            System.out.println(CYAN + "\n📋 === Fetching HoaDon List ===" + RESET);
-            List<HoaDonDTO> hoaDonList = (List<HoaDonDTO>) clientManager.getHoaDonList();
-            System.out.println(GREEN + "✅ Retrieved " + hoaDonList.size() + " HoaDons" + RESET);
-            for (HoaDonDTO hd : hoaDonList) {
-                System.out.println("  📄 " + hd.getMaHD() + ": " + YELLOW + hd.getTongTien() + RESET);
-            }
+//            // === Example 1: Get HoaDon List ===
+//            System.out.println(CYAN + "\n📋 === Fetching HoaDon List ===" + RESET);
+//            List<HoaDonDTO> hoaDonList = (List<HoaDonDTO>) clientManager.getHoaDonList();
+//            System.out.println(GREEN + "✅ Retrieved " + hoaDonList.size() + " HoaDons" + RESET);
+//            for (HoaDonDTO hd : hoaDonList) {
+//                System.out.println("  📄 " + hd.getMaHD() + ": " + YELLOW + hd.getTongTien() + RESET);
+//            }
+//
+//            // === Example 2: Check Server Status ===
+//            System.out.println(CYAN + "\n🔍 === Checking Server Status ===" + RESET);
+//            boolean serverOk = (boolean) clientManager.serverStatus();
+//            if (serverOk) {
+//                System.out.println(GREEN + "✅ Server Status: OK" + RESET);
+//            } else {
+//                System.out.println(RED + "❌ Server Status: FAILED" + RESET);
+//            }
+//
+//            // === Example 3: Get NhanVien List ===
+//            System.out.println(CYAN + "\n👥 === Fetching NhanVien List ===" + RESET);
+//            var nhanVienList = clientManager.getNhanVienList();
+//            System.out.println(GREEN + "✅ Retrieved " + nhanVienList.size() + " NhanViens" + RESET);
+//
+//            // === Example 4: Get KhachHang List ===
+//            System.out.println(CYAN + "\n🛒 === Fetching KhachHang List ===" + RESET);
+//            var khachHangList = clientManager.getKhachHangList();
+//            System.out.println(GREEN + "✅ Retrieved " + khachHangList.size() + " KhachHangs" + RESET);
 
-            // === Example 2: Check Server Status ===
-            System.out.println(CYAN + "\n🔍 === Checking Server Status ===" + RESET);
-            boolean serverOk = (boolean) clientManager.serverStatus();
-            if (serverOk) {
-                System.out.println(GREEN + "✅ Server Status: OK" + RESET);
-            } else {
-                System.out.println(RED + "❌ Server Status: FAILED" + RESET);
-            }
 
-            // === Example 3: Get NhanVien List ===
-            System.out.println(CYAN + "\n👥 === Fetching NhanVien List ===" + RESET);
-            var nhanVienList = clientManager.getNhanVienList();
-            System.out.println(GREEN + "✅ Retrieved " + nhanVienList.size() + " NhanViens" + RESET);
+            var khachHangList = clientManager.getMaxHashNhanVien();
+            System.out.println(GREEN + "✅ Retrieved " + khachHangList+ RESET);
 
-            // === Example 4: Get KhachHang List ===
-            System.out.println(CYAN + "\n🛒 === Fetching KhachHang List ===" + RESET);
-            var khachHangList = clientManager.getKhachHangList();
-            System.out.println(GREEN + "✅ Retrieved " + khachHangList.size() + " KhachHangs" + RESET);
 
             System.out.println(GREEN + "\n🎉 === All examples completed successfully! ===" + RESET);
 
@@ -78,4 +84,6 @@ public class ClientExample {
             System.out.println(BLUE + "🔌 Disconnected from server" + RESET);
         }
     }
+
+
 }

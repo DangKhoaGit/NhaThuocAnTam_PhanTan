@@ -277,4 +277,8 @@ public class RequestBuilder {
     public static Command getNhanVienByTaiKhoan(String text) {
         return build(CommandType.GET_NHANVIEN_TAIKHOAN, map("taiKhoan", text));
     }
+
+    public static Command getMaxHashNhanVien() {
+        return  build(CommandType.GET_MAX_HASH_NHANVIEN);
+    }
 }

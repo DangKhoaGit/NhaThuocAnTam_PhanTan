@@ -184,8 +184,8 @@ public class ClientManager {
     // =========================================================
     // 👥 NHANVIEN
     // =========================================================
-    public List<?> getNhanVienList() {
-        List<?> rs = send(RequestBuilder.getNhanVienList());
+    public List<NhanVienDTO> getNhanVienList() {
+        List<NhanVienDTO> rs = send(RequestBuilder.getNhanVienList());
         return rs != null ? rs : new ArrayList<>();
     }
 
@@ -785,6 +785,51 @@ public class ClientManager {
         NhanVienDTO nhanVienDTO = send(RequestBuilder.getNhanVienByTaiKhoan(text));
         return nhanVienDTO;
 
+    }
+
+    public String getMaxHashNhanVien() {
+        Response response = null;
+        try {
+            response = sendCommandWithAutoConnect(
+                    RequestBuilder.getMaxHashNhanVien()
+            );
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        if (response.isSuccess() && response.getData() instanceof String) {
+            return (String) response.getData();
+        }
+
+        LOGGER.warning("Failed to get max hash: " + response.getMessage());
+        return null;
+    }
+
+    public boolean khoiPhucNhanVien(String maNV) {
+        return executeNhanVienIdWrite(CommandType.KHOI_PHUC_NHAN_VIEN, maNV, "Error restoring NhanVien");
+    }
+
+    private boolean executeNhanVienIdWrite(CommandType commandType, String maNV, String errorLog) {
+        try {
+            Map<String, Object> payload = new HashMap<>();
+            payload.put("maNV", maNV);
+
+            Command command = Command.builder()
+                    .type(commandType)
+                    .payload(payload)
+                    .sessionId(sessionId)
+                    .timestamp(System.currentTimeMillis())
+                    .build();
+
+            Response response = sendCommandWithAutoConnect(command);
+            if (!response.isSuccess()) {
+                LOGGER.warning(errorLog + ": " + response.getMessage());
+            }
+            return response.isSuccess();
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, errorLog, e);
+            return false;
+        }
     }
 }
 

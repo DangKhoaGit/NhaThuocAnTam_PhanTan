@@ -1,12 +1,13 @@
 package com.antam.app.controller.nhanvien;
 
 import com.antam.app.dto.NhanVienDTO;
-import com.antam.app.service.impl.NhanVien_Service;
+import com.antam.app.network.ClientManager;
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcon;
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcons;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.concurrent.Task;
 import javafx.geometry.Insets;
 import javafx.scene.control.*;
 import javafx.scene.effect.DropShadow;
@@ -26,12 +27,13 @@ public class CapNhatNhanVienController extends ScrollPane{
     private TableColumn<NhanVienDTO, String> colMaNV, colHoTen, colChucVu, colSDT, colDiaChi, colEmail;
     private TableColumn<NhanVienDTO, String> colLuong;
     private ComboBox<String> cbChucVu, cbLuongCB;
-    private NhanVien_Service nhanVien_service =  new NhanVien_Service();
-    private List<NhanVienDTO> listNV = nhanVien_service.getAllNhanVien();
+    private List<NhanVienDTO> listNV;
 
     private ObservableList<NhanVienDTO> TVNhanVien;
     private final ObservableList<NhanVienDTO> filteredList = FXCollections.observableArrayList();
     public  static NhanVienDTO nhanVienDTOSelected;
+
+    public ClientManager clientManager = ClientManager.getInstance();
 
     public CapNhatNhanVienController(){
         /** Giao diện **/
@@ -159,7 +161,7 @@ public class CapNhatNhanVienController extends ScrollPane{
             dialog.setDialogPane(capNhatDialog);
             dialog.setTitle("Cập nhật nhân viên");
             dialog.showAndWait();
-            loadNhanVien();
+            loadNhanVienAsync();
         });
         tbNhanVien.setOnMouseClicked(e -> {
             if (e.getClickCount()==2){
@@ -169,11 +171,11 @@ public class CapNhatNhanVienController extends ScrollPane{
                 dialog.setDialogPane(capNhatDialog);
                 dialog.setTitle("Cập nhật nhân viên");
                 dialog.showAndWait();
-                loadNhanVien();
+                loadNhanVienAsync();
             }
         });
         setupTableNhanVien();
-        loadNhanVien();
+        loadNhanVienAsync();
         loadComboBox();
         setupListener();
 
@@ -197,14 +199,36 @@ public class CapNhatNhanVienController extends ScrollPane{
         alert.showAndWait();
     }
 
-    private void loadNhanVien() {
-        listNV = nhanVien_service.getAllNhanVien();
-        TVNhanVien = FXCollections.observableArrayList(
-                listNV.stream()
-                        .filter(nv -> !nv.isDeleteAt())
-                        .toList()
-        );
-        tbNhanVien.setItems(TVNhanVien);
+    private void loadNhanVienAsync() {
+        Task<List<NhanVienDTO>> task = new Task<>() {
+            @Override
+            protected List<NhanVienDTO> call() throws Exception {
+                return clientManager.getNhanVienList();
+            }
+        };
+
+        task.setOnSucceeded(e -> {
+            try {
+                listNV = task.getValue();
+                TVNhanVien = FXCollections.observableArrayList(
+                        listNV.stream()
+                                .filter(nv -> !nv.isDeleteAt())
+                                .toList()
+                );
+                tbNhanVien.setItems(TVNhanVien);
+            }catch (Exception ex) {
+                showMess("Lỗi khi tải dữ liệu: " + ex.getMessage());
+            };
+        });
+
+        task.setOnFailed(e -> {
+            Throwable ex = task.getException();
+            showMess("Lỗi khi tải dữ liệu: " + (ex != null ? ex.getMessage() : "Không xác định"));
+        });
+
+        Thread thread = new Thread(task);
+        thread.start();
+
     }
 
 

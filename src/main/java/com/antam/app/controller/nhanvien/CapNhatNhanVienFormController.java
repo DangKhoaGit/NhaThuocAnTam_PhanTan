@@ -6,7 +6,8 @@ package com.antam.app.controller.nhanvien;/*
  */
 
 import com.antam.app.dto.NhanVienDTO;
-import com.antam.app.service.impl.NhanVien_Service;
+import com.antam.app.network.ClientManager;
+import javafx.concurrent.Task;
 import javafx.geometry.Insets;
 import javafx.scene.control.*;
 import javafx.scene.control.ComboBox;
@@ -30,7 +31,6 @@ public class CapNhatNhanVienFormController extends DialogPane{
     private ComboBox<String> cbChucVu;
     private Spinner<Double> luong;
 
-    NhanVien_Service nhanVienService = new NhanVien_Service();
 
     NhanVienDTO select = nhanVienDTOSelected;
     public CapNhatNhanVienFormController() {
@@ -174,8 +174,20 @@ public class CapNhatNhanVienFormController extends DialogPane{
                     diaChi, luongCoBan, taiKhoan, select.getMatKhau(), quanLy
             );
             System.out.println(nvUpdate);
-            boolean result = nhanVienService.updateNhanVienTrongDBS(nvUpdate);
-            showMess(result ? "Cập nhật nhân viên thành công!" : "Cập nhật nhân viên thất bại!");
+            Task<Boolean> task = new Task<>() {
+                @Override
+                protected Boolean call() throws Exception {
+                    return ClientManager.getInstance().updateNhanVien(nvUpdate);
+                }
+            };
+            task.setOnSucceeded(evt -> {
+                boolean result = task.getValue();
+                showMess(result ? "Cập nhật nhân viên thành công!" : "Cập nhật nhân viên thất bại!");
+            });
+            task.setOnFailed(evt -> {
+                showMess("Lỗi: " + task.getException().getMessage());
+            });
+            new Thread(task).start();
 //            } catch (Exception ex) {
 //                showMess("Lỗi: " + ex.getMessage());
 //            }
@@ -184,8 +196,20 @@ public class CapNhatNhanVienFormController extends DialogPane{
         // Xóa nhân viên
         btnXoa.setOnAction(e -> {
             try {
-                boolean result = nhanVienService.xoaNhanVienTrongDBS(select.getMaNV());
-                showMess(result ? "Xóa nhân viên thành công!" : "Xóa nhân viên thất bại!");
+                Task<Boolean> task = new Task<>() {
+                    @Override
+                    protected Boolean call() throws Exception {
+                        return ClientManager.getInstance().deleteNhanVien(select.getMaNV());
+                    }
+                };
+                task.setOnSucceeded(evt -> {
+                    boolean result = task.getValue();
+                    showMess(result ? "Xóa nhân viên thành công!" : "Xóa nhân viên thất bại!");
+                });
+                task.setOnFailed(evt -> {
+                    showMess("Lỗi: " + task.getException().getMessage());
+                });
+                new Thread(task).start();
             } catch (Exception ex) {
                 showMess("Lỗi: " + ex.getMessage());
             }

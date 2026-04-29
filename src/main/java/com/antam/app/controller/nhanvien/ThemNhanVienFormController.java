@@ -1,19 +1,21 @@
 package com.antam.app.controller.nhanvien;
 /*
- * @description
+ * @description ThemNhanVienFormController - Refactored for Client-Server Architecture
  * @author: Pham Dang Khoa
  * @date: 29/10/2025
- * @version: 1.0
+ * @version: 2.0 (Client-Server)
  */
-import com.antam.app.service.I_NhanVien_Service;
 import com.antam.app.dto.NhanVienDTO;
 import com.antam.app.helper.MaKhoaMatKhau;
-import com.antam.app.service.impl.NhanVien_Service;
+import com.antam.app.network.ClientManager;
+import javafx.concurrent.Task;
 import javafx.geometry.Insets;
 import javafx.scene.control.*;
 import javafx.scene.control.ButtonBar.ButtonData;
 
 import java.text.DecimalFormat;
+import java.util.logging.Logger;
+import java.util.logging.Level;
 
 import javafx.scene.layout.*;
 import javafx.scene.text.Font;
@@ -21,13 +23,17 @@ import javafx.scene.text.Text;
 
 public class ThemNhanVienFormController extends DialogPane{
 
+    private static final Logger LOGGER = Logger.getLogger(ThemNhanVienFormController.class.getName());
+
     private TextField txtMaNV, txtHoTen, txtSDT, txtEmail,txtDiaChi, txtTaiKhoan;
     private PasswordField txtPass;
     private ComboBox<String> cbChucVu;
     private Spinner<Double> luong;
-    private NhanVien_Service nhanVienService =  new NhanVien_Service();
+    private ClientManager clientManager;
 
     public ThemNhanVienFormController() {
+        this.clientManager = ClientManager.getInstance();
+
         this.setPrefSize(800, 600);
         Text headerText = new Text("Thêm nhân viên mới");
         headerText.setFont(Font.font("System Bold", 15));
@@ -158,11 +164,9 @@ public class ThemNhanVienFormController extends DialogPane{
         cbChucVu.getSelectionModel().selectFirst();
         //sự kiện thêm nhân viên
         btnThem.setOnAction(e -> {
-            if (setupThemNhanVien() != null){
-                nhanVienService.themNhanVien(setupThemNhanVien());
-                showAlert("Thêm nhân viên thành công!");
-            }else{
-
+            NhanVienDTO nhanVien = setupThemNhanVien();
+            if (nhanVien != null){
+                themNhanVienAsync(nhanVien);
             }
         });
         //sự kiện khi người dùng nhập sai thông tin
@@ -188,6 +192,57 @@ public class ThemNhanVienFormController extends DialogPane{
                 txtSDT.setStyle("-fx-border-color: red; -fx-border-width: 2px;");
             }
         });
+    }
+
+    /**
+     * Thêm nhân viên mới đến server một cách bất đồng bộ
+     */
+    private void themNhanVienAsync(NhanVienDTO nhanVien) {
+        Task<Boolean> task = new Task<Boolean>() {
+            @Override
+            protected Boolean call() throws Exception {
+                try {
+                    return clientManager.createNhanVien(nhanVien);
+                } catch (Exception e) {
+                    LOGGER.log(Level.SEVERE, "Error adding NhanVien to server", e);
+                    throw new Exception("Lỗi kết nối server: " + e.getMessage());
+                }
+            }
+        };
+
+        task.setOnSucceeded(e -> {
+            try {
+                Boolean success = task.getValue();
+                if (success != null && success) {
+                    LOGGER.info("Successfully added new nhân viên");
+                    showAlert( "Thêm nhân viên thành công!");
+                    // Close the dialog
+                    Dialog<?> dialog = null;
+//                    for (Window window : Window.getWindows()) {
+//                        if (window instanceof Dialog && window.isShowing()) {
+//                            dialog = (Dialog<?>) window;
+//                            break;
+//                        }
+//                    }
+                    if (dialog != null) {
+                        dialog.close();
+                    }
+                } else {
+                    showAlert( "Lỗi khi thêm nhân viên");
+                }
+            } catch (Exception ex) {
+                LOGGER.log(Level.SEVERE, "Error processing add result", ex);
+                showAlert("Lỗi xử lý: " + ex.getMessage());
+            }
+        });
+
+        task.setOnFailed(e -> {
+            Throwable exception = task.getException();
+            LOGGER.log(Level.SEVERE, "Add NhanVien failed", exception);
+            showAlert("Không thể thêm nhân viên: " + exception.getMessage());
+        });
+
+        new Thread(task).start();
     }
 
     /**
@@ -248,11 +303,22 @@ public class ThemNhanVienFormController extends DialogPane{
      * Tạo mã nhân viên tự động và tăng 1 giá trị mỗi khi thêm nhân viên.
      * @return String(Chuỗi mã nhân viên được tạo tự động)
      */
-    public String getHashMaNV(){
-        String hash = nhanVienService.getMaxHashNhanVien();
-        int maxHash = hash != null ? Integer.parseInt(hash) : 0;
-        DecimalFormat deFomat = new DecimalFormat("00000");
-        return String.format("NV%s",deFomat.format(++maxHash));
+    public String getHashMaNV() {
+        try {
+            String result = clientManager.getMaxHashNhanVien();
+
+            int maxHash = 0;
+            if (result != null && result.startsWith("NV")) {
+                maxHash = Integer.parseInt(result.substring(2));
+            }
+
+            DecimalFormat decimalFormat = new DecimalFormat("00000");
+            return String.format("NV%s", decimalFormat.format(++maxHash));
+
+        } catch (Exception ex) {
+            LOGGER.log(Level.SEVERE, "Error getting hash", ex);
+            throw new RuntimeException("Lỗi kết nối server: " + ex.getMessage());
+        }
     }
 
     /**

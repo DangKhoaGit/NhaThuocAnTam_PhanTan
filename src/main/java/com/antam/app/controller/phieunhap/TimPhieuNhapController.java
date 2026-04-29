@@ -1,14 +1,12 @@
 //
-// Source code recreated from a .class file by IntelliJ IDEA
+// Refactored to Client-Server Architecture
+// Original source code recreated from a .class file by IntelliJ IDEA
 // (powered by FernFlower decompiler)
 //
 
 package com.antam.app.controller.phieunhap;
 
-import com.antam.app.connect.ConnectDB;
-import com.antam.app.service.I_NhanVien_Service;
-import com.antam.app.service.impl.NhanVien_Service;
-import com.antam.app.service.impl.PhieuNhap_Service;
+import com.antam.app.network.ClientManager;
 import com.antam.app.dto.NhanVienDTO;
 import com.antam.app.dto.PhieuNhapDTO;
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcon;
@@ -16,17 +14,18 @@ import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcons;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.concurrent.Task;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 
-import java.sql.Connection;
-import java.sql.SQLException;
 import java.text.NumberFormat;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javafx.geometry.Insets;
 import javafx.scene.effect.DropShadow;
 import javafx.scene.layout.*;
@@ -37,7 +36,8 @@ import javafx.scene.text.Text;
 
 public class TimPhieuNhapController extends ScrollPane{
 
-    
+    private static final Logger LOGGER = Logger.getLogger(TimPhieuNhapController.class.getName());
+
     private TableView<PhieuNhapDTO> tbPhieuNhap;
     private ComboBox<NhanVienDTO> cbNhanVienNhap;
     private DatePicker dpTuNgay, dpDenNgay;
@@ -45,16 +45,18 @@ public class TimPhieuNhapController extends ScrollPane{
     private TextField tfTimPhieuNhap;
     private Button btnXoaRong;
 
-    private PhieuNhap_Service phieuNhap_DAO = new PhieuNhap_Service();
-    private NhanVien_Service nhanVien_DAO = new NhanVien_Service();
+    private ClientManager clientManager;
 
-    /* Lấy dữ liệu từ DAO */
+    /* Lấy dữ liệu từ network */
     private ArrayList<PhieuNhapDTO> dsPhieuNhap = new ArrayList<>();
     private ObservableList<PhieuNhapDTO> data = FXCollections.observableArrayList();
 
     private PhieuNhapDTO phieuNhapDTODuocChon;
 
     public TimPhieuNhapController() {
+        // Initialize ClientManager
+        this.clientManager = ClientManager.getInstance();
+
         /** Giao diện **/
         this.setFitToHeight(true);
         this.setFitToWidth(true);
@@ -190,21 +192,10 @@ public class TimPhieuNhapController extends ScrollPane{
 
         this.getStylesheets().add(getClass().getResource("/com/antam/app/styles/dashboard_style.css").toExternalForm());
         this.setContent(root);
+
         /** Sự kiện **/
-        try {
-            Connection con = ConnectDB.getInstance().connect();
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
-
-
         loadDanhSachPhieuNhap();
-        loadDanhSachNhanVien();
         loadKhoangGia();
-
-        dsPhieuNhap = phieuNhap_DAO.getDanhSachPhieuNhap();
-        data.setAll(dsPhieuNhap);
-        tbPhieuNhap.setItems(data);
 
         cbNhanVienNhap.setOnAction(e -> filterAndSearch());
         dpTuNgay.setOnAction(e -> filterAndSearch());
@@ -215,19 +206,11 @@ public class TimPhieuNhapController extends ScrollPane{
         //Tuỳ chỉnh field
         dpTuNgay.setPromptText("Chọn ngày");
         dpDenNgay.setPromptText("Chọn ngày");
+
         //Nút xoá rỗng
-        btnXoaRong.setOnAction(e -> {
-            cbNhanVienNhap.getSelectionModel().clearSelection();
-            dpTuNgay.setValue(null);
-            dpDenNgay.setValue(null);
-            cbKhoangGia.getSelectionModel().clearSelection();
-            tfTimPhieuNhap.clear();
-            data.setAll(dsPhieuNhap);
-            tbPhieuNhap.setItems(data);
-        });
+        btnXoaRong.setOnAction(e -> handleXoaTrang());
 
         //Khi click double vào 1 phiếu nhập sẽ hiện chi tiết phiếu nhập
-        //Sự kiện khi click table
         tbPhieuNhap.getSelectionModel().setSelectionMode(SelectionMode.SINGLE);
         tbPhieuNhap.setOnMousePressed(e -> {
             PhieuNhapDTO selected = tbPhieuNhap.getSelectionModel().getSelectedItem();
@@ -254,6 +237,120 @@ public class TimPhieuNhapController extends ScrollPane{
                 }
             }
         });
+
+        // Load data asynchronously
+        loadDanhSachPhieuNhapAsync();
+        loadDanhSachNhanVienAsync();
+    }
+
+    /**
+     * Load PhieuNhap data asynchronously using ClientManager
+     */
+    private void loadDanhSachPhieuNhapAsync() {
+        Task<List<PhieuNhapDTO>> task = new Task<List<PhieuNhapDTO>>() {
+            @Override
+            protected List<PhieuNhapDTO> call() throws Exception {
+                try {
+                    List<PhieuNhapDTO> list = (List<PhieuNhapDTO>) clientManager.getPhieuNhapList();
+                    return list != null ? list : new ArrayList<>();
+                } catch (Exception e) {
+                    LOGGER.log(Level.SEVERE, "Error loading PhieuNhap list from server", e);
+                    throw new Exception("Lỗi kết nối server: " + e.getMessage());
+                }
+            }
+        };
+
+        task.setOnSucceeded(e -> {
+            try {
+                List<PhieuNhapDTO> list = task.getValue();
+                dsPhieuNhap.clear();
+                dsPhieuNhap.addAll(list.stream().filter(pn -> !pn.isDeleteAt()).toList());
+                data.setAll(dsPhieuNhap);
+                tbPhieuNhap.setItems(data);
+                LOGGER.info("Loaded " + dsPhieuNhap.size() + " PhieuNhap records");
+            } catch (Exception ex) {
+                LOGGER.log(Level.SEVERE, "Error processing PhieuNhap data", ex);
+                showMess("Lỗi", "Lỗi xử lý dữ liệu: " + ex.getMessage());
+            }
+        });
+
+        task.setOnFailed(e -> {
+            Throwable exception = task.getException();
+            LOGGER.log(Level.SEVERE, "Task failed to load PhieuNhap", exception);
+            showMess("Lỗi", "Không thể tải dữ liệu phiếu nhập: " + exception.getMessage());
+        });
+
+        new Thread(task).start();
+    }
+
+    /**
+     * Load NhanVien data asynchronously for ComboBox
+     */
+    private void loadDanhSachNhanVienAsync() {
+        Task<List<NhanVienDTO>> task = new Task<List<NhanVienDTO>>() {
+            @Override
+            protected List<NhanVienDTO> call() throws Exception {
+                try {
+                    List<NhanVienDTO> list = (List<NhanVienDTO>) clientManager.getNhanVienList();
+                    return list != null ? list : new ArrayList<>();
+                } catch (Exception e) {
+                    LOGGER.log(Level.SEVERE, "Error loading NhanVien list from server", e);
+                    throw new Exception("Lỗi kết nối server: " + e.getMessage());
+                }
+            }
+        };
+
+        task.setOnSucceeded(e -> {
+            try {
+                List<NhanVienDTO> list = task.getValue();
+                runOnUIThread(() -> populateNhanVienCombo(list));
+                LOGGER.info("Loaded " + list.size() + " NhanVien records");
+            } catch (Exception ex) {
+                LOGGER.log(Level.SEVERE, "Error processing NhanVien data", ex);
+            }
+        });
+
+        task.setOnFailed(e -> {
+            Throwable exception = task.getException();
+            LOGGER.log(Level.SEVERE, "Task failed to load NhanVien", exception);
+        });
+
+        new Thread(task).start();
+    }
+
+    private void runOnUIThread(Runnable runnable) {
+        javafx.application.Platform.runLater(runnable);
+    }
+
+    private void populateNhanVienCombo(List<NhanVienDTO> dsNhanVienRaw) {
+        ObservableList<NhanVienDTO> dsNhanVien = FXCollections.observableArrayList(dsNhanVienRaw);
+
+        cbNhanVienNhap.setItems(dsNhanVien);
+        cbNhanVienNhap.setPromptText("Chọn nhân viên");
+
+        cbNhanVienNhap.setCellFactory(lv -> new ListCell<NhanVienDTO>() {
+            @Override
+            protected void updateItem(NhanVienDTO item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setText(null);
+                } else {
+                    setText("Tất cả".equals(item.getMaNV()) ? "Tất cả" : item.getHoTen());
+                }
+            }
+        });
+
+        cbNhanVienNhap.setButtonCell(new ListCell<NhanVienDTO>() {
+            @Override
+            protected void updateItem(NhanVienDTO item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setText(null);
+                } else {
+                    setText("Tất cả".equals(item.getMaNV()) ? "Tất cả" : item.getHoTen());
+                }
+            }
+        });
     }
 
     private VBox createLabeledBox(String label, Control control) {
@@ -274,38 +371,14 @@ public class TimPhieuNhapController extends ScrollPane{
         alert.showAndWait();
     }
 
-    public void loadDanhSachNhanVien(){
-        List<NhanVienDTO> dsNhanVienRaw = nhanVien_DAO.getAllNhanVien();
-
-        ObservableList<NhanVienDTO> dsNhanVien = FXCollections.observableArrayList(dsNhanVienRaw);
-
-        cbNhanVienNhap.setItems(dsNhanVien);
-        cbNhanVienNhap.setPromptText("Chọn nhân viên");
-
-        cbNhanVienNhap.setCellFactory(lv -> new ListCell<NhanVienDTO>() {
-            @Override
-            protected void updateItem(NhanVienDTO item, boolean empty) {
-                super.updateItem(item, empty);
-                if (empty || item == null) {
-                    setText(null);
-                } else {
-                    // Hiển thị "Tất cả" nếu mã là "Tất cả", ngược lại hiện Họ tên
-                    setText("Tất cả".equals(item.getMaNV()) ? "Tất cả" : item.getHoTen());
-                }
-            }
-        });
-
-        cbNhanVienNhap.setButtonCell(new ListCell<NhanVienDTO>() {
-            @Override
-            protected void updateItem(NhanVienDTO item, boolean empty) {
-                super.updateItem(item, empty);
-                if (empty || item == null) {
-                    setText(null);
-                } else {
-                    setText("Tất cả".equals(item.getMaNV()) ? "Tất cả" : item.getHoTen());
-                }
-            }
-        });
+    private void handleXoaTrang() {
+        cbNhanVienNhap.getSelectionModel().clearSelection();
+        dpTuNgay.setValue(null);
+        dpDenNgay.setValue(null);
+        cbKhoangGia.getSelectionModel().clearSelection();
+        tfTimPhieuNhap.clear();
+        data.setAll(dsPhieuNhap);
+        tbPhieuNhap.setItems(data);
     }
 
     public void loadKhoangGia(){

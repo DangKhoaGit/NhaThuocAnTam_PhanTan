@@ -1,12 +1,13 @@
 package com.antam.app.controller.nhanvien;
 
 import com.antam.app.dto.NhanVienDTO;
-import com.antam.app.service.impl.NhanVien_Service;
+import com.antam.app.network.ClientManager;
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcon;
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcons;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.concurrent.Task;
 import javafx.geometry.Insets;
 import javafx.scene.control.*;
 import javafx.scene.effect.DropShadow;
@@ -17,22 +18,27 @@ import javafx.scene.text.Text;
 
 import java.text.DecimalFormat;
 import java.util.List;
+import java.util.logging.Logger;
+import java.util.logging.Level;
 
 public class ThemNhanVienController extends ScrollPane{
     
+    private static final Logger LOGGER = Logger.getLogger(ThemNhanVienController.class.getName());
+
     private TableView<NhanVienDTO> tbNhanVien;
     private Button btnFindNV,btnXoaTrang,btnAddEmployee;
     private TextField txtFindNV;
     private TableColumn<NhanVienDTO, String> colMaNV, colHoTen, colChucVu, colSDT, colDiaChi, colEmail;
     private TableColumn<NhanVienDTO, String> colLuong;
     private ComboBox<String> cbChucVu, cbLuongCB;
-    private NhanVien_Service nhanVien_service = new NhanVien_Service();
-    List<NhanVienDTO> listNV = nhanVien_service.getAllNhanVien();
+    private ClientManager clientManager;
 
-    private ObservableList<NhanVienDTO> TVNhanVien;
+    private ObservableList<NhanVienDTO> TVNhanVien = FXCollections.observableArrayList();
     private final ObservableList<NhanVienDTO> filteredList = FXCollections.observableArrayList();
 
     public ThemNhanVienController(){
+        this.clientManager = ClientManager.getInstance();
+
         /** Giao diện **/
         this.setFitToHeight(true);
         this.setFitToWidth(true);
@@ -141,18 +147,16 @@ public class ThemNhanVienController extends ScrollPane{
             ThemNhanVienFormController themDialog = new ThemNhanVienFormController();
             Dialog<Void> dialog = new Dialog<>();
             dialog.setDialogPane(themDialog);
-            dialog.setTitle("Thêm khách hàng");
+            dialog.setTitle("Thêm nhân viên");
             dialog.showAndWait();
-            listNV = nhanVien_service.getAllNhanVien();
-            loadNhanVien();
+            loadNhanVienAsync();
         });
         setupTableNhanVien();
-        loadNhanVien();
+        loadNhanVienAsync();
         loadComboBox();
         setupListener();
 
         btnFindNV.setOnAction(e -> timNhanVien());
-        setupListener();
 
         tbNhanVien.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
         btnXoaTrang.setOnAction(e -> {
@@ -162,17 +166,56 @@ public class ThemNhanVienController extends ScrollPane{
             tbNhanVien.setItems(TVNhanVien);
         });
     }
+    /**
+     * Tải danh sách nhân viên từ server một cách bất đồng bộ
+     */
+    private void loadNhanVienAsync() {
+        Task<List<NhanVienDTO>> task = new Task<List<NhanVienDTO>>() {
+            @Override
+            protected List<NhanVienDTO> call() throws Exception {
+                try {
+                    return (List<NhanVienDTO>) clientManager.getNhanVienList();
+                } catch (Exception e) {
+                    LOGGER.log(Level.SEVERE, "Error loading NhanVien from server", e);
+                    throw new Exception("Lỗi kết nối server: " + e.getMessage());
+                }
+            }
+        };
 
+        task.setOnSucceeded(e -> {
+            try {
+                List<NhanVienDTO> list = task.getValue();
+                if (list != null && !list.isEmpty()) {
+                    TVNhanVien = FXCollections.observableArrayList(
+                            list.stream()
+                                    .filter(nv -> !nv.isDeleteAt())
+                                    .toList()
+                    );
+                    tbNhanVien.setItems(TVNhanVien);
+                    LOGGER.info("Loaded " + TVNhanVien.size() + " nhân viên records");
+                } else {
+                    showAlert("Thông báo", "Không có dữ liệu nhân viên");
+                    TVNhanVien = FXCollections.observableArrayList();
+                    tbNhanVien.setItems(TVNhanVien);
+                }
+            } catch (Exception ex) {
+                LOGGER.log(Level.SEVERE, "Error processing NhanVien data", ex);
+                showAlert("Lỗi", "Không thể xử lý dữ liệu: " + ex.getMessage());
+            }
+        });
 
-    private void loadNhanVien() {
-        listNV = nhanVien_service.getAllNhanVien();
-        TVNhanVien = FXCollections.observableArrayList(
-                listNV.stream()
-                        .filter(nv -> !nv.isDeleteAt())
-                        .toList()
-        );
-        tbNhanVien.setItems(TVNhanVien);
+        task.setOnFailed(e -> {
+            Throwable exception = task.getException();
+            LOGGER.log(Level.SEVERE, "NhanVien loading failed", exception);
+            showAlert("Lỗi", "Không thể tải dữ liệu: " + exception.getMessage());
+        });
+
+        new Thread(task).start();
     }
+
+    /**
+     * Tải danh sách nhân viên từ server (cũ - giữ để tương thích)
+     */
 
 
     private void setupTableNhanVien() {
@@ -261,5 +304,16 @@ public class ThemNhanVienController extends ScrollPane{
     private String dinhDangTien(double tien) {
         DecimalFormat df = new DecimalFormat("#,### đ");
         return df.format(tien);
+    }
+
+    /**
+     * Hiện thông báo cho người dùng
+     */
+    private void showAlert(String title, String message) {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle(title);
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+        alert.showAndWait();
     }
 }

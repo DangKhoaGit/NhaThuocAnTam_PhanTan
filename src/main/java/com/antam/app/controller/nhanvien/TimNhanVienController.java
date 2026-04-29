@@ -1,16 +1,19 @@
 package com.antam.app.controller.nhanvien;
 
 import com.antam.app.dto.NhanVienDTO;
-import com.antam.app.service.impl.NhanVien_Service;
+import com.antam.app.network.ClientManager;
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcon;
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcons;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.concurrent.Task;
 import javafx.scene.control.*;
 
 import java.text.DecimalFormat;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javafx.geometry.Insets;
 import javafx.scene.control.Button;
@@ -27,19 +30,23 @@ import javafx.scene.text.Text;
 
 public class TimNhanVienController extends ScrollPane{
 
+    private static final Logger LOGGER = Logger.getLogger(TimNhanVienController.class.getName());
+
     private TableView<NhanVienDTO> tbNhanVien;
-    private Button btnFindNV,btnXoaTrang;
+    private Button btnFindNV, btnXoaTrang;
     private TextField txtFindNV;
     private TableColumn<NhanVienDTO, String> colMaNV, colHoTen, colChucVu, colSDT, colDiaChi, colEmail;
     private TableColumn<NhanVienDTO, String> colLuong;
     private ComboBox<String> cbChucVu, cbLuongCB;
 
-    private ObservableList<NhanVienDTO> TVNhanVien;
-    private NhanVien_Service nhanVien_service = new NhanVien_Service();
-    private List<NhanVienDTO> listNV = nhanVien_service.getAllNhanVien();
+    private ObservableList<NhanVienDTO> TVNhanVien = FXCollections.observableArrayList();
     private ObservableList<NhanVienDTO> filteredList = FXCollections.observableArrayList();
+    private ClientManager clientManager;
 
     public TimNhanVienController(){
+        // Initialize ClientManager
+        this.clientManager = ClientManager.getInstance();
+
         /** Giao diện **/
         this.setFitToHeight(true);
         this.setFitToWidth(true);
@@ -141,32 +148,83 @@ public class TimNhanVienController extends ScrollPane{
         root.getChildren().addAll(titleBox, filterPane, searchBox, tbNhanVien);
 
         this.setContent(root);
+
         /** Sự kiện **/
         setupTableNhanVien();
-        loadNhanVien();
         loadComboBox();
         setupListener();
 
         btnFindNV.setOnAction(e -> timNhanVien());
-        setupListener();
+        btnXoaTrang.setOnAction(e -> handleXoaTrang());
 
         tbNhanVien.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
-        btnXoaTrang.setOnAction(e -> {
-            txtFindNV.clear();
-            cbChucVu.getSelectionModel().selectFirst();
-            cbLuongCB.getSelectionModel().selectFirst();
-            tbNhanVien.setItems(TVNhanVien);
+
+        // Load data asynchronously
+        loadNhanVienAsync();
+    }
+
+    /**
+     * Load nhân viên asynchronously using ClientManager
+     * Runs on a background thread to avoid blocking the UI
+     */
+    private void loadNhanVienAsync() {
+        Task<List<NhanVienDTO>> task = new Task<List<NhanVienDTO>>() {
+            @Override
+            protected List<NhanVienDTO> call() throws Exception {
+                try {
+                    return (List<NhanVienDTO>) clientManager.getNhanVienList();
+                } catch (Exception e) {
+                    LOGGER.log(Level.SEVERE, "Error loading NhanVien list from server", e);
+                    throw new Exception("Lỗi kết nối server: " + e.getMessage());
+                }
+            }
+        };
+
+        // Handle success
+        task.setOnSucceeded(e -> {
+            try {
+                List<NhanVienDTO> listNV = task.getValue();
+                if (listNV != null && !listNV.isEmpty()) {
+                    TVNhanVien.setAll(
+                        listNV.stream()
+                                .filter(nv -> !nv.isDeleteAt())
+                                .toList()
+                    );
+                    tbNhanVien.setItems(TVNhanVien);
+                    LOGGER.info("Loaded " + TVNhanVien.size() + " NhanVien records");
+                } else {
+                    showAlert("Thông báo", "Không có dữ liệu nhân viên");
+                }
+            } catch (Exception ex) {
+                LOGGER.log(Level.SEVERE, "Error processing NhanVien data", ex);
+                showAlert("Lỗi", "Lỗi xử lý dữ liệu: " + ex.getMessage());
+            }
         });
+
+        // Handle failure
+        task.setOnFailed(e -> {
+            Throwable exception = task.getException();
+            LOGGER.log(Level.SEVERE, "Task failed to load NhanVien", exception);
+            showAlert("Lỗi", "Không thể tải dữ liệu nhân viên: " + exception.getMessage());
+        });
+
+        // Run on background thread
+        new Thread(task).start();
     }
 
     private void loadNhanVien() {
-        listNV = nhanVien_service.getAllNhanVien();
-        TVNhanVien = FXCollections.observableArrayList(
-                listNV.stream()
-                        .filter(nv -> !nv.isDeleteAt())
-                        .toList()
-        );
-        tbNhanVien.setItems(TVNhanVien);
+        try {
+            List<NhanVienDTO> listNV = (List<NhanVienDTO>) clientManager.getNhanVienList();
+            TVNhanVien = FXCollections.observableArrayList(
+                    listNV.stream()
+                            .filter(nv -> !nv.isDeleteAt())
+                            .toList()
+            );
+            tbNhanVien.setItems(TVNhanVien);
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Error loading NhanVien list", e);
+            showAlert("Lỗi", "Không thể tải dữ liệu: " + e.getMessage());
+        }
     }
 
 
@@ -256,5 +314,20 @@ public class TimNhanVienController extends ScrollPane{
     private String dinhDangTien(double tien) {
         DecimalFormat df = new DecimalFormat("#,### đ");
         return df.format(tien);
+    }
+
+    private void handleXoaTrang() {
+        txtFindNV.clear();
+        cbChucVu.getSelectionModel().selectFirst();
+        cbLuongCB.getSelectionModel().selectFirst();
+        tbNhanVien.setItems(TVNhanVien);
+    }
+
+    private void showAlert(String title, String content) {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle(title);
+        alert.setHeaderText(null);
+        alert.setContentText(content);
+        alert.showAndWait();
     }
 }
