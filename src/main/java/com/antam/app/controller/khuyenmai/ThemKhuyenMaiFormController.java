@@ -5,19 +5,15 @@
 
 package com.antam.app.controller.khuyenmai;
 
-import com.antam.app.connect.ConnectDB;
 import com.antam.app.network.ClientManager;
-import com.antam.app.service.impl.KhuyenMai_Service;
-import com.antam.app.service.impl.LoaiKhuyenMai_Service;
 import com.antam.app.dto.KhuyenMaiDTO;
 import com.antam.app.dto.LoaiKhuyenMaiDTO;
+import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
 import javafx.scene.control.*;
 import javafx.scene.control.ButtonBar.ButtonData;
 import javafx.scene.text.Text;
 
-import java.sql.Connection;
-import java.time.LocalDate;
 import java.util.ArrayList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -32,8 +28,6 @@ public class ThemKhuyenMaiFormController extends DialogPane{
     private DatePicker dpNgayBacDau, dpNgayKetThuc;
     
     private Text txtThongBao;
-    private KhuyenMai_Service khuyenMai_dao = new KhuyenMai_Service();
-    private LoaiKhuyenMai_Service loaiKhuyenMai_dao = new LoaiKhuyenMai_Service();
     private final ClientManager clientManager;
 
     public ThemKhuyenMaiFormController() {
@@ -155,46 +149,26 @@ public class ThemKhuyenMaiFormController extends DialogPane{
 
         this.getStylesheets().add(getClass().getResource("/com/antam/app/styles/dashboard_style.css").toExternalForm());
         this.setContent(anchor);
-        /** Sự kiện **/
+        // Sự kiện
         ButtonType cancelButton = new ButtonType("Huỷ", ButtonData.CANCEL_CLOSE);
         ButtonType applyButton = new ButtonType("Lưu", ButtonData.APPLY);
         this.getButtonTypes().add(cancelButton);
         this.getButtonTypes().add(applyButton);
         Button applyBtn = (Button) this.lookupButton(applyButton);
 
-        try {
-            ConnectDB.getInstance().getConnection();
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-
         applyBtn.addEventFilter(ActionEvent.ACTION, e -> {
+            e.consume();
             if (!validate()) {
-                e.consume();
-            } else {
-                String maKM = txtMaKhuyenMai.getText().trim();
-                String tenKM = txtTenKhuyenMai.getText().trim();
-                LoaiKhuyenMaiDTO loaiKM = cbLoaiKhuyenMai.getSelectionModel().getSelectedItem();
-                int so = spSo.getValue();
-                LocalDate ngayBatDau = dpNgayBacDau.getValue();
-                LocalDate ngayKetThuc = dpNgayKetThuc.getValue();
-                int soLuongToiDa = spSoLuongToiDa.getValue();
-
-                KhuyenMaiDTO khuyenMaiDTO = new KhuyenMaiDTO(maKM, tenKM, ngayBatDau, ngayKetThuc, loaiKM, so, soLuongToiDa, false);
-                boolean success = clientManager.createKhuyenMai(khuyenMaiDTO);
-                if (success) {
-                    txtThongBao.setStyle("-fx-fill: green;");
-                    txtThongBao.setText("Thêm khuyến mãi thành công");
-                } else {
-                    txtThongBao.setStyle("-fx-fill: red;");
-                    txtThongBao.setText("Thêm khuyến mãi thất bại");
-                    e.consume();
-                }
+                return;
             }
+
+            KhuyenMaiDTO khuyenMaiDTO = buildKhuyenMaiDTO();
+            handleSaveKhuyenMaiAsync(khuyenMaiDTO, applyBtn);
         });
         // set ma khuyen mai
-        txtMaKhuyenMai.setText(taoMaKhuyenMai());
+        txtMaKhuyenMai.setPromptText("Đang tạo mã...");
         txtMaKhuyenMai.setEditable(false);
+        loadMaKhuyenMaiAsync();
         // load loai khuyen mai
         loadLoaiKhuyenMai();
         // set spinner
@@ -210,11 +184,116 @@ public class ThemKhuyenMaiFormController extends DialogPane{
         applySpinnerRangeForLoai(cbLoaiKhuyenMai.getSelectionModel().getSelectedItem());
     }
 
+    private KhuyenMaiDTO buildKhuyenMaiDTO() {
+        return new KhuyenMaiDTO(
+                txtMaKhuyenMai.getText().trim(),
+                txtTenKhuyenMai.getText().trim(),
+                dpNgayBacDau.getValue(),
+                dpNgayKetThuc.getValue(),
+                cbLoaiKhuyenMai.getValue(),
+                spSo.getValue(),
+                spSoLuongToiDa.getValue(),
+                false
+        );
+    }
+
+    private void handleSaveKhuyenMaiAsync(KhuyenMaiDTO khuyenMaiDTO, Button applyBtn) {
+        Task<Boolean> saveTask = new Task<>() {
+            @Override
+            protected Boolean call() {
+                return clientManager.createKhuyenMai(khuyenMaiDTO);
+            }
+        };
+
+        saveTask.setOnRunning(e -> {
+            setFormDisabled(true, applyBtn);
+            txtThongBao.setFill(javafx.scene.paint.Color.web("#2563eb"));
+            txtThongBao.setText("Đang lưu dữ liệu...");
+        });
+
+        saveTask.setOnSucceeded(e -> {
+            setFormDisabled(false, applyBtn);
+            if (Boolean.TRUE.equals(saveTask.getValue())) {
+                txtThongBao.setFill(javafx.scene.paint.Color.GREEN);
+                txtThongBao.setText("Thêm khuyến mãi thành công");
+                if (getScene() != null && getScene().getWindow() != null) {
+                    getScene().getWindow().hide();
+                }
+            } else {
+                txtThongBao.setFill(javafx.scene.paint.Color.RED);
+                txtThongBao.setText("Thêm khuyến mãi thất bại");
+            }
+        });
+
+        saveTask.setOnFailed(e -> {
+            setFormDisabled(false, applyBtn);
+            Throwable ex = saveTask.getException();
+            txtThongBao.setFill(javafx.scene.paint.Color.RED);
+            txtThongBao.setText(ex == null ? "Lỗi kết nối tới server!" : "Lỗi kết nối: " + ex.getMessage());
+        });
+
+        Thread saveThread = new Thread(saveTask, "them-khuyenmai-save-task");
+        saveThread.setDaemon(true);
+        saveThread.start();
+    }
+
+    private void setFormDisabled(boolean disabled, Button applyBtn) {
+        txtMaKhuyenMai.setDisable(disabled);
+        txtTenKhuyenMai.setDisable(disabled);
+        cbLoaiKhuyenMai.setDisable(disabled);
+        spSo.setDisable(disabled);
+        spSoLuongToiDa.setDisable(disabled);
+        dpNgayBacDau.setDisable(disabled);
+        dpNgayKetThuc.setDisable(disabled);
+        applyBtn.setDisable(disabled);
+    }
+
     public void loadLoaiKhuyenMai(){
-        ArrayList<LoaiKhuyenMaiDTO> listLoaiKhuyenMai = new ArrayList<>(clientManager.getLoaiKhuyenMaiList());
-        cbLoaiKhuyenMai.getItems().clear();
-        cbLoaiKhuyenMai.getItems().addAll(listLoaiKhuyenMai);
-        cbLoaiKhuyenMai.getSelectionModel().selectFirst();
+        Task<ArrayList<LoaiKhuyenMaiDTO>> loadTask = new Task<>() {
+            @Override
+            protected ArrayList<LoaiKhuyenMaiDTO> call() {
+                return new ArrayList<>(clientManager.getLoaiKhuyenMaiList());
+            }
+        };
+
+        loadTask.setOnRunning(e -> txtThongBao.setText("Đang tải loại khuyến mãi..."));
+        loadTask.setOnSucceeded(e -> {
+            cbLoaiKhuyenMai.getItems().setAll(loadTask.getValue());
+            cbLoaiKhuyenMai.getSelectionModel().selectFirst();
+            applySpinnerRangeForLoai(cbLoaiKhuyenMai.getSelectionModel().getSelectedItem());
+            txtThongBao.setText("");
+        });
+        loadTask.setOnFailed(e -> {
+            Throwable ex = loadTask.getException();
+            txtThongBao.setText(ex == null ? "Không tải được loại khuyến mãi" : "Không tải được loại khuyến mãi: " + ex.getMessage());
+        });
+
+        Thread loadThread = new Thread(loadTask, "load-loai-khuyenmai-task");
+        loadThread.setDaemon(true);
+        loadThread.start();
+    }
+
+    private void loadMaKhuyenMaiAsync() {
+        Task<String> loadTask = new Task<>() {
+            @Override
+            protected String call() {
+                return taoMaKhuyenMai();
+            }
+        };
+
+        loadTask.setOnRunning(e -> txtThongBao.setText("Đang tạo mã khuyến mãi..."));
+        loadTask.setOnSucceeded(e -> {
+            txtMaKhuyenMai.setText(loadTask.getValue());
+            txtThongBao.setText("");
+        });
+        loadTask.setOnFailed(e -> {
+            Throwable ex = loadTask.getException();
+            txtThongBao.setText(ex == null ? "Không tạo được mã khuyến mãi" : "Không tạo được mã khuyến mãi: " + ex.getMessage());
+        });
+
+        Thread loadThread = new Thread(loadTask, "load-ma-khuyenmai-task");
+        loadThread.setDaemon(true);
+        loadThread.start();
     }
 
     private void applySpinnerRangeForLoai(LoaiKhuyenMaiDTO selectedLoai) {

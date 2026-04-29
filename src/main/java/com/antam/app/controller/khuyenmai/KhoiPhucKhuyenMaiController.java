@@ -8,13 +8,13 @@ package com.antam.app.controller.khuyenmai;
 import com.antam.app.connect.ConnectDB;
 import com.antam.app.network.ClientManager;
 import com.antam.app.dto.LoaiKhuyenMaiDTO;
-import com.antam.app.service.impl.KhuyenMai_Service;
 import com.antam.app.dto.KhuyenMaiDTO;
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcon;
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcons;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.concurrent.Task;
 import javafx.geometry.Insets;
 import javafx.scene.control.*;
 import javafx.scene.effect.DropShadow;
@@ -40,7 +40,6 @@ public class KhoiPhucKhuyenMaiController extends ScrollPane{
     private final ClientManager clientManager;
     private ObservableList<KhuyenMaiDTO> khuyenMaiList = FXCollections.observableArrayList();
     private ArrayList<KhuyenMaiDTO> arrayKhuyenMai = new ArrayList<>();
-    private KhuyenMai_Service khuyenMai_dao = new KhuyenMai_Service();
     public KhoiPhucKhuyenMaiController() {
         this.clientManager = ClientManager.getInstance();
         /** Giao diện **/
@@ -161,12 +160,6 @@ public class KhoiPhucKhuyenMaiController extends ScrollPane{
 
         this.setContent(root);
         /** Sự kiện **/
-        try {
-            ConnectDB.getInstance().connect();
-        }catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-
         // nut them khuyen mai
         this.btnKhoiPhuc.setOnAction((e) -> {
             KhuyenMaiDTO selectedKM = tableKhuyenMai.getSelectionModel().getSelectedItem();
@@ -179,21 +172,7 @@ public class KhoiPhucKhuyenMaiController extends ScrollPane{
 
                 alert.showAndWait().ifPresent(response -> {
                     if (response == ButtonType.OK) {
-                        boolean success = clientManager.restoreKhuyenMai(selectedKM.getMaKM());
-                        if (success) {
-                            Alert successAlert = new Alert(Alert.AlertType.INFORMATION);
-                            successAlert.setTitle("Thành công");
-                            successAlert.setHeaderText(null);
-                            successAlert.setContentText("Khôi phục khuyến mãi thành công!");
-                            successAlert.showAndWait();
-                            updateTableKhuyenMai();
-                        } else {
-                            Alert errorAlert = new Alert(Alert.AlertType.ERROR);
-                            errorAlert.setTitle("Lỗi");
-                            errorAlert.setHeaderText(null);
-                            errorAlert.setContentText("Khôi phục khuyến mãi thất bại!");
-                            errorAlert.showAndWait();
-                        }
+                        handleRestoreKhuyenMaiAsync(selectedKM.getMaKM());
                     }
                 });
             } else {
@@ -225,9 +204,7 @@ public class KhoiPhucKhuyenMaiController extends ScrollPane{
             }
         });
         // load du lieu
-        arrayKhuyenMai = new ArrayList<>(clientManager.getKhuyenMaiDeletedList());
-        khuyenMaiList.setAll(arrayKhuyenMai);
-        tableKhuyenMai.setItems(khuyenMaiList);
+        updateTableKhuyenMai();
         // them combobox
         addCombobox();
         // su kien loc va tim kiem
@@ -254,28 +231,89 @@ public class KhoiPhucKhuyenMaiController extends ScrollPane{
         box.getChildren().addAll(label, field);
         return box;
     }
-    public void addCombobox() {
-        cbLoaiKhuyenMai.getItems().clear();
-        cbLoaiKhuyenMai.getItems().add("Tất cả");
-
-        for (LoaiKhuyenMaiDTO loaiKhuyenMai : clientManager.getLoaiKhuyenMaiList()) {
-            String tenLoai = safeText(loaiKhuyenMai.getTenLKM());
-            if (!tenLoai.isBlank() && !cbLoaiKhuyenMai.getItems().contains(tenLoai)) {
-                cbLoaiKhuyenMai.getItems().add(tenLoai);
+    private void handleRestoreKhuyenMaiAsync(String maKM) {
+        Task<Boolean> restoreTask = new Task<>() {
+            @Override
+            protected Boolean call() {
+                return clientManager.restoreKhuyenMai(maKM);
             }
-        }
-        cbLoaiKhuyenMai.getSelectionModel().selectFirst();
+        };
 
-        cbTrangThai.getItems().addAll("Tất cả", "Chưa bắt đầu", "Đang diễn ra", "Đã kết thúc");
-        cbTrangThai.getSelectionModel().selectFirst();
+        restoreTask.setOnRunning(e -> btnKhoiPhuc.setDisable(true));
+        restoreTask.setOnSucceeded(e -> {
+            btnKhoiPhuc.setDisable(false);
+            if (Boolean.TRUE.equals(restoreTask.getValue())) {
+                Alert successAlert = new Alert(Alert.AlertType.INFORMATION);
+                successAlert.setTitle("Thành công");
+                successAlert.setHeaderText(null);
+                successAlert.setContentText("Khôi phục khuyến mãi thành công!");
+                successAlert.showAndWait();
+                updateTableKhuyenMai();
+            } else {
+                Alert errorAlert = new Alert(Alert.AlertType.ERROR);
+                errorAlert.setTitle("Lỗi");
+                errorAlert.setHeaderText(null);
+                errorAlert.setContentText("Khôi phục khuyến mãi thất bại!");
+                errorAlert.showAndWait();
+            }
+        });
+        restoreTask.setOnFailed(e -> {
+            btnKhoiPhuc.setDisable(false);
+            Throwable ex = restoreTask.getException();
+            Alert errorAlert = new Alert(Alert.AlertType.ERROR);
+            errorAlert.setTitle("Lỗi");
+            errorAlert.setHeaderText(null);
+            errorAlert.setContentText(ex == null ? "Lỗi kết nối tới server!" : "Lỗi kết nối: " + ex.getMessage());
+            errorAlert.showAndWait();
+        });
+
+        Thread restoreThread = new Thread(restoreTask, "restore-khuyenmai-task");
+        restoreThread.setDaemon(true);
+        restoreThread.start();
+    }
+    public void addCombobox() {
+        Task<ArrayList<LoaiKhuyenMaiDTO>> loadTask = new Task<>() {
+            @Override
+            protected ArrayList<LoaiKhuyenMaiDTO> call() {
+                return new ArrayList<>(clientManager.getLoaiKhuyenMaiList());
+            }
+        };
+
+        loadTask.setOnSucceeded(e -> {
+            cbLoaiKhuyenMai.getItems().clear();
+            cbLoaiKhuyenMai.getItems().add("Tất cả");
+
+            for (LoaiKhuyenMaiDTO loaiKhuyenMai : loadTask.getValue()) {
+                String tenLoai = safeText(loaiKhuyenMai.getTenLKM());
+                if (!tenLoai.isBlank() && !cbLoaiKhuyenMai.getItems().contains(tenLoai)) {
+                    cbLoaiKhuyenMai.getItems().add(tenLoai);
+                }
+            }
+            cbLoaiKhuyenMai.getSelectionModel().selectFirst();
+
+            cbTrangThai.getItems().setAll("Tất cả", "Chưa bắt đầu", "Đang diễn ra", "Đã kết thúc");
+            cbTrangThai.getSelectionModel().selectFirst();
+        });
+        loadTask.setOnFailed(e -> {
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("Lỗi tải dữ liệu");
+            alert.setHeaderText(null);
+            Throwable ex = loadTask.getException();
+            alert.setContentText(ex == null ? "Không tải được loại khuyến mãi" : "Không tải được loại khuyến mãi: " + ex.getMessage());
+            alert.showAndWait();
+        });
+
+        Thread loadThread = new Thread(loadTask, "load-loai-khuyenmai-restore-task");
+        loadThread.setDaemon(true);
+        loadThread.start();
     }
 
     public void fiterAndSearch() {
-        String loaiKhuyenMai = cbLoaiKhuyenMai.getValue();
-        String trangThai = cbTrangThai.getValue();
+        String loaiKhuyenMai = cbLoaiKhuyenMai.getValue() == null ? "Tất cả" : cbLoaiKhuyenMai.getValue();
+        String trangThai = cbTrangThai.getValue() == null ? "Tất cả" : cbTrangThai.getValue();
         LocalDate tuNgay = dpTuNgay.getValue();
         LocalDate denNgay = dpDenNgay.getValue();
-        String tuKhoa = txtTiemKiemKhuyenMai.getText().trim().toLowerCase();
+        String tuKhoa = txtTiemKiemKhuyenMai.getText() == null ? "" : txtTiemKiemKhuyenMai.getText().trim().toLowerCase();
 
         if (tuNgay != null && denNgay != null && denNgay.isBefore(tuNgay)) {
             Alert alert = new Alert(Alert.AlertType.WARNING);
@@ -325,8 +363,12 @@ public class KhoiPhucKhuyenMaiController extends ScrollPane{
     }
 
     public void clearFilters() {
-        cbLoaiKhuyenMai.getSelectionModel().selectFirst();
-        cbTrangThai.getSelectionModel().selectFirst();
+        if (!cbLoaiKhuyenMai.getItems().isEmpty()) {
+            cbLoaiKhuyenMai.getSelectionModel().selectFirst();
+        }
+        if (!cbTrangThai.getItems().isEmpty()) {
+            cbTrangThai.getSelectionModel().selectFirst();
+        }
         dpTuNgay.setValue(null);
         dpDenNgay.setValue(null);
         txtTiemKiemKhuyenMai.clear();
@@ -334,11 +376,30 @@ public class KhoiPhucKhuyenMaiController extends ScrollPane{
     }
 
     public void updateTableKhuyenMai(){
-        khuyenMaiList.clear();
-        tableKhuyenMai.refresh();
-        arrayKhuyenMai = new ArrayList<>(clientManager.getKhuyenMaiDeletedList());
-        khuyenMaiList.addAll(arrayKhuyenMai);
-        tableKhuyenMai.setItems(khuyenMaiList);
+        Task<ArrayList<KhuyenMaiDTO>> loadTask = new Task<>() {
+            @Override
+            protected ArrayList<KhuyenMaiDTO> call() {
+                return new ArrayList<>(clientManager.getKhuyenMaiDeletedList());
+            }
+        };
+
+        loadTask.setOnSucceeded(e -> {
+            arrayKhuyenMai = new ArrayList<>(loadTask.getValue());
+            khuyenMaiList.setAll(arrayKhuyenMai);
+            tableKhuyenMai.setItems(khuyenMaiList);
+        });
+        loadTask.setOnFailed(e -> {
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("Lỗi tải dữ liệu");
+            alert.setHeaderText(null);
+            Throwable ex = loadTask.getException();
+            alert.setContentText(ex == null ? "Không tải được danh sách khuyến mãi đã xoá" : "Không tải được danh sách khuyến mãi đã xoá: " + ex.getMessage());
+            alert.showAndWait();
+        });
+
+        Thread loadThread = new Thread(loadTask, "load-khuyenmai-deleted-list-task");
+        loadThread.setDaemon(true);
+        loadThread.start();
     }
 
     private String safeText(String value) { return value == null ? "" : value; }

@@ -167,18 +167,15 @@ public class ClientManager {
     }
 
     public boolean createHoaDon(Object dto) {
-        Boolean rs = send(RequestBuilder.createHoaDon((HoaDonDTO) dto));
-        return rs != null && rs;
+        return sendForSuccess(RequestBuilder.createHoaDon((HoaDonDTO) dto));
     }
 
     public boolean updateHoaDon(Object dto) {
-        Boolean rs = send(RequestBuilder.updateHoaDon((HoaDonDTO) dto));
-        return rs != null && rs;
+        return sendForSuccess(RequestBuilder.updateHoaDon((HoaDonDTO) dto));
     }
 
     public boolean deleteHoaDon(String maHD) {
-        Boolean rs = send(RequestBuilder.deleteHoaDon(maHD));
-        return rs != null && rs;
+        return sendForSuccess(RequestBuilder.deleteHoaDon(maHD));
     }
 
     // =========================================================
@@ -190,18 +187,15 @@ public class ClientManager {
     }
 
     public boolean createNhanVien(Object dto) {
-        Boolean rs = send(RequestBuilder.createNhanVien((NhanVienDTO) dto));
-        return rs != null && rs;
+        return sendForSuccess(RequestBuilder.createNhanVien((NhanVienDTO) dto));
     }
 
     public boolean updateNhanVien(Object dto) {
-        Boolean rs = send(RequestBuilder.updateNhanVien((NhanVienDTO) dto));
-        return rs != null && rs;
+        return sendForSuccess(RequestBuilder.updateNhanVien((NhanVienDTO) dto));
     }
 
     public boolean deleteNhanVien(String id) {
-        Boolean rs = send(RequestBuilder.deleteNhanVien(id));
-        return rs != null && rs;
+        return sendForSuccess(RequestBuilder.deleteNhanVien(id));
     }
 
     // =========================================================
@@ -248,13 +242,11 @@ public class ClientManager {
     }
 
     public boolean createPhieuNhap(Object dto) {
-        Boolean rs = send(RequestBuilder.createPhieuNhap((PhieuNhapDTO) dto));
-        return rs != null && rs;
+        return sendForSuccess(RequestBuilder.createPhieuNhap((PhieuNhapDTO) dto));
     }
 
     public boolean cancelPhieuNhap(String maPN) {
-        Boolean rs = send(RequestBuilder.cancelPhieuNhap(maPN));
-        return rs != null && rs;
+        return sendForSuccess(RequestBuilder.cancelPhieuNhap(maPN));
     }
 
     // =========================================================
@@ -266,8 +258,7 @@ public class ClientManager {
     }
 
     public boolean createPhieuDat(Object dto) {
-        Boolean rs = send(RequestBuilder.createPhieuDat((PhieuDatThuocDTO) dto));
-        return rs != null && rs;
+        return sendForSuccess(RequestBuilder.createPhieuDat((PhieuDatThuocDTO) dto));
     }
 
     // =========================================================
@@ -279,7 +270,7 @@ public class ClientManager {
     }
 
     public boolean createChiTietHoaDon(Object dto) {
-        Boolean rs = send(RequestBuilder.createChiTietHoaDon((ChiTietHoaDonDTO) dto));
+        Boolean rs = sendForSuccess(RequestBuilder.createChiTietHoaDon((ChiTietHoaDonDTO) dto));
         return rs != null && rs;
     }
 
@@ -331,8 +322,7 @@ public class ClientManager {
     }
 
     public boolean createKhuyenMai(KhuyenMaiDTO khuyenMaiDTO) {
-        Boolean rs = send(RequestBuilder.createKhuyenMai(khuyenMaiDTO));
-        return rs != null && rs;
+        return sendForSuccess(RequestBuilder.createKhuyenMai(khuyenMaiDTO));
     }
 
     public List<LoThuocDTO> getLoThuocFefoByThuocId(String maThuoc) {
@@ -391,8 +381,7 @@ public class ClientManager {
     }
 
     public KhuyenMaiDTO getKhuyenMaiById(String maKM) {
-        KhuyenMaiDTO a = send(RequestBuilder.getKhuyenMaibyId());
-        return a;
+        return send(RequestBuilder.getKhuyenMaiById(maKM));
     }
 
     public boolean updateThuoc(ThuocDTO thuocDTO) {
@@ -416,16 +405,16 @@ public class ClientManager {
         return loThuocDTO;
     }
 
-    public void softDeleteChiTietHoaDon(String maHD, int maLoThuoc, String tinhTrang) {
-        send(RequestBuilder.softDeleteChiTietHoaDon(maHD, maLoThuoc, tinhTrang));
+    public boolean softDeleteChiTietHoaDon(String maHD, int maLoThuoc, String tinhTrang) {
+        return sendForSuccess(RequestBuilder.softDeleteChiTietHoaDon(maHD, maLoThuoc, tinhTrang));
     }
 
-    public void updateLoThuocQuantity(int maLoThuoc, int soLuong) {
-        send(RequestBuilder.updateLoThuocQuantity(maLoThuoc,soLuong));
+    public boolean updateLoThuocQuantity(int maLoThuoc, int soLuong) {
+        return sendForSuccess(RequestBuilder.updateLoThuocQuantity(maLoThuoc,soLuong));
     }
 
-    public void updateHoaDonTongTien(String maHD, double v) {
-        send(RequestBuilder.updateHoaDonTongTien(maHD,v));
+    public boolean updateHoaDonTongTien(String maHD, double v) {
+        return sendForSuccess(RequestBuilder.updateHoaDonTongTien(maHD,v));
     }
 
 
@@ -525,11 +514,7 @@ public class ClientManager {
                     .timestamp(System.currentTimeMillis())
                     .build();
 
-            Response response = sendCommandWithAutoConnect(command);
-            if (!response.isSuccess()) {
-                LOGGER.warning(errorLog + ": " + response.getMessage());
-            }
-            return response.isSuccess();
+            return sendForSuccess(command);
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, errorLog, e);
             return false;
@@ -537,9 +522,6 @@ public class ClientManager {
     }
 
 
-    public boolean restoreKhuyenMai(String maKM) {
-        return executeKhuyenMaiIdWrite(CommandType.RESTORE_KHUYENMAI, maKM, "Error restoring KhuyenMai");
-    }
 
     private boolean executeKhuyenMaiWrite(CommandType commandType, KhuyenMaiDTO dto, String errorLog) {
         try {
@@ -553,16 +535,12 @@ public class ClientManager {
                     .timestamp(System.currentTimeMillis())
                     .build();
 
-            Response response = sendCommandWithAutoConnect(command);
-            if (!response.isSuccess()) {
-                LOGGER.warning(errorLog + ": " + response.getMessage());
-            }
-            return response.isSuccess();
-        } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, errorLog, e);
-            return false;
-        }
-    }
+            return sendForSuccess(command);
+         } catch (Exception e) {
+             LOGGER.log(Level.SEVERE, errorLog, e);
+             return false;
+         }
+     }
 
     public boolean updateKhuyenMai(KhuyenMaiDTO dto) {
         return executeKhuyenMaiWrite(CommandType.UPDATE_KHUYENMAI, dto, "Error updating KhuyenMai");
@@ -572,8 +550,12 @@ public class ClientManager {
         return executeKhuyenMaiIdWrite(CommandType.DELETE_KHUYENMAI, maKM, "Error deleting KhuyenMai");
     }
 
+    public boolean restoreKhuyenMai(String maKM) {
+        return executeKhuyenMaiIdWrite(CommandType.RESTORE_KHUYENMAI, maKM, "Error restoring KhuyenMai");
+    }
 
-    public int getTongSoThuoc() {
+
+     public int getTongSoThuoc() {
         try {
             Command command = Command.builder()
                     .type(CommandType.GET_THONGKE_TRANGCHINH)
@@ -832,4 +814,3 @@ public class ClientManager {
         }
     }
 }
-
