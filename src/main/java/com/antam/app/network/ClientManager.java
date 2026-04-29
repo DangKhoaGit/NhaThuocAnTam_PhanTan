@@ -331,8 +331,7 @@ public class ClientManager {
     }
 
     public boolean createKhuyenMai(KhuyenMaiDTO khuyenMaiDTO) {
-        Boolean rs = send(RequestBuilder.createKhuyenMai(khuyenMaiDTO));
-        return rs != null && rs;
+        return sendForSuccess(RequestBuilder.createKhuyenMai(khuyenMaiDTO));
     }
 
     public List<LoThuocDTO> getLoThuocFefoByThuocId(String maThuoc) {
@@ -391,8 +390,7 @@ public class ClientManager {
     }
 
     public KhuyenMaiDTO getKhuyenMaiById(String maKM) {
-        KhuyenMaiDTO a = send(RequestBuilder.getKhuyenMaibyId());
-        return a;
+        return send(RequestBuilder.getKhuyenMaiById(maKM));
     }
 
     public boolean updateThuoc(ThuocDTO thuocDTO) {
@@ -525,11 +523,7 @@ public class ClientManager {
                     .timestamp(System.currentTimeMillis())
                     .build();
 
-            Response response = sendCommandWithAutoConnect(command);
-            if (!response.isSuccess()) {
-                LOGGER.warning(errorLog + ": " + response.getMessage());
-            }
-            return response.isSuccess();
+            return sendForSuccess(command);
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, errorLog, e);
             return false;
@@ -537,9 +531,6 @@ public class ClientManager {
     }
 
 
-    public boolean restoreKhuyenMai(String maKM) {
-        return executeKhuyenMaiIdWrite(CommandType.RESTORE_KHUYENMAI, maKM, "Error restoring KhuyenMai");
-    }
 
     private boolean executeKhuyenMaiWrite(CommandType commandType, KhuyenMaiDTO dto, String errorLog) {
         try {
@@ -553,16 +544,12 @@ public class ClientManager {
                     .timestamp(System.currentTimeMillis())
                     .build();
 
-            Response response = sendCommandWithAutoConnect(command);
-            if (!response.isSuccess()) {
-                LOGGER.warning(errorLog + ": " + response.getMessage());
-            }
-            return response.isSuccess();
-        } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, errorLog, e);
-            return false;
-        }
-    }
+            return sendForSuccess(command);
+         } catch (Exception e) {
+             LOGGER.log(Level.SEVERE, errorLog, e);
+             return false;
+         }
+     }
 
     public boolean updateKhuyenMai(KhuyenMaiDTO dto) {
         return executeKhuyenMaiWrite(CommandType.UPDATE_KHUYENMAI, dto, "Error updating KhuyenMai");
@@ -572,8 +559,12 @@ public class ClientManager {
         return executeKhuyenMaiIdWrite(CommandType.DELETE_KHUYENMAI, maKM, "Error deleting KhuyenMai");
     }
 
+    public boolean restoreKhuyenMai(String maKM) {
+        return executeKhuyenMaiIdWrite(CommandType.RESTORE_KHUYENMAI, maKM, "Error restoring KhuyenMai");
+    }
 
-    public int getTongSoThuoc() {
+
+     public int getTongSoThuoc() {
         try {
             Command command = Command.builder()
                     .type(CommandType.GET_THONGKE_TRANGCHINH)
@@ -787,4 +778,3 @@ public class ClientManager {
 
     }
 }
-

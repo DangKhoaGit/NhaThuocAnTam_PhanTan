@@ -731,7 +731,7 @@ public class DoiThuocFormController extends DialogPane{
             if (t == null) {
                 continue;
             }
-            if (ct.getTinhTrang().equals("Thuốc Mới Khi Đổi")){
+            if ("Thuốc Mới Khi Đổi".equals(ct.getTinhTrang())){
                 tongTienKhiTra += ct.getThanhTien() * (1 + t.getThue());
             } else {
                 tongTienTraCoKM += ct.getThanhTien() * (1 + t.getThue());
@@ -787,6 +787,10 @@ public class DoiThuocFormController extends DialogPane{
             giam = tongTien * giaSo / 100.0;
         } else if (giaSo >= 1000) {
             giam = giaSo * (soLuongThuocDoi / soLuongThuoc);
+            if (soLuongThuoc <= 0) {
+                return tongTien;
+            }
+            giam = giaSo * ((double) soLuongThuocDoi / soLuongThuoc);
         }
         if (giam > tongTien) giam = tongTien;
         tongTien -= giam;

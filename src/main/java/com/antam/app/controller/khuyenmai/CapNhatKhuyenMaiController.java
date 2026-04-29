@@ -15,10 +15,10 @@ import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcons;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.concurrent.Task;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 
-import java.sql.Connection;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import javafx.geometry.Insets;
@@ -42,7 +42,6 @@ public class CapNhatKhuyenMaiController extends ScrollPane{
     private final ClientManager clientManager;
     private ObservableList<KhuyenMaiDTO> khuyenMaiList = FXCollections.observableArrayList();
     private ArrayList<KhuyenMaiDTO> arrayKhuyenMai = new ArrayList<>();
-    private KhuyenMai_Service khuyenMai_dao = new KhuyenMai_Service();
     public CapNhatKhuyenMaiController() {
         this.clientManager = ClientManager.getInstance();
         /** Giao diện **/
@@ -162,11 +161,6 @@ public class CapNhatKhuyenMaiController extends ScrollPane{
 
         this.setContent(root);
         /** Sự kiện **/
-        try {
-            Connection con = ConnectDB.getInstance().connect();
-        }catch (Exception e) {
-            throw new RuntimeException(e);
-        }
         this.btnTuyChon.setOnAction((e) -> {
             KhuyenMaiDTO selectKM = tableKhuyenMai.getSelectionModel().getSelectedItem();
             if (selectKM == null) {
@@ -214,9 +208,7 @@ public class CapNhatKhuyenMaiController extends ScrollPane{
             }
         });
         // load du lieu
-        arrayKhuyenMai = new ArrayList<>(clientManager.getKhuyenMaiList());
-        khuyenMaiList.setAll(arrayKhuyenMai);
-        tableKhuyenMai.setItems(khuyenMaiList);
+        updateTableKhuyenMai();
         // them combobox
         addCombobox();
         // su kien loc va tim kiem
@@ -244,24 +236,44 @@ public class CapNhatKhuyenMaiController extends ScrollPane{
     }
 
     public void addCombobox() {
-        cbLoaiKhuyenMai.getItems().clear();
-        cbLoaiKhuyenMai.getItems().add("Tất cả");
-
-        for (LoaiKhuyenMaiDTO loaiKhuyenMai : clientManager.getLoaiKhuyenMaiList()) {
-            String tenLoai = safeText(loaiKhuyenMai.getTenLKM());
-            if (!tenLoai.isBlank() && !cbLoaiKhuyenMai.getItems().contains(tenLoai)) {
-                cbLoaiKhuyenMai.getItems().add(tenLoai);
+        Task<ArrayList<LoaiKhuyenMaiDTO>> loadTask = new Task<>() {
+            @Override
+            protected ArrayList<LoaiKhuyenMaiDTO> call() {
+                return new ArrayList<>(clientManager.getLoaiKhuyenMaiList());
             }
-        }
-        cbLoaiKhuyenMai.getSelectionModel().selectFirst();
+        };
 
-        cbTrangThai.getItems().addAll("Tất cả", "Chưa bắt đầu", "Đang diễn ra", "Đã kết thúc");
-        cbTrangThai.getSelectionModel().selectFirst();
+        loadTask.setOnSucceeded(e -> {
+            cbLoaiKhuyenMai.getItems().clear();
+            cbLoaiKhuyenMai.getItems().add("Tất cả");
+            for (LoaiKhuyenMaiDTO loaiKhuyenMai : loadTask.getValue()) {
+                String tenLoai = safeText(loaiKhuyenMai.getTenLKM());
+                if (!tenLoai.isBlank() && !cbLoaiKhuyenMai.getItems().contains(tenLoai)) {
+                    cbLoaiKhuyenMai.getItems().add(tenLoai);
+                }
+            }
+            cbLoaiKhuyenMai.getSelectionModel().selectFirst();
+
+            cbTrangThai.getItems().setAll("Tất cả", "Chưa bắt đầu", "Đang diễn ra", "Đã kết thúc");
+            cbTrangThai.getSelectionModel().selectFirst();
+        });
+        loadTask.setOnFailed(e -> {
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("Lỗi tải dữ liệu");
+            alert.setHeaderText(null);
+            Throwable ex = loadTask.getException();
+            alert.setContentText(ex == null ? "Không tải được loại khuyến mãi" : "Không tải được loại khuyến mãi: " + ex.getMessage());
+            alert.showAndWait();
+        });
+
+        Thread loadThread = new Thread(loadTask, "load-loai-khuyenmai-update-list-task");
+        loadThread.setDaemon(true);
+        loadThread.start();
     }
 
     public void fiterAndSearch() {
-        String loaiKhuyenMai = cbLoaiKhuyenMai.getValue();
-        String trangThai = cbTrangThai.getValue();
+        String loaiKhuyenMai = cbLoaiKhuyenMai.getValue() == null ? "Tất cả" : cbLoaiKhuyenMai.getValue();
+        String trangThai = cbTrangThai.getValue() == null ? "Tất cả" : cbTrangThai.getValue();
         LocalDate tuNgay = dpTuNgay.getValue();
         LocalDate denNgay = dpDenNgay.getValue();
         String tuKhoa = txtTiemKiemKhuyenMai.getText().trim().toLowerCase();
@@ -270,7 +282,7 @@ public class CapNhatKhuyenMaiController extends ScrollPane{
             Alert alert = new Alert(Alert.AlertType.WARNING);
             alert.setTitle("Lỗi nhập ngày");
             alert.setHeaderText(null);
-            alert.setContentText("Ngày kết thúc không được nhỏ hơn ngày bắt đầu!");
+            alert.setContentText("Ngày kết thúc không ��ược nhỏ hơn ngày bắt đầu!");
             alert.showAndWait();
 
             khuyenMaiList.clear();
@@ -314,8 +326,12 @@ public class CapNhatKhuyenMaiController extends ScrollPane{
     }
 
     public void clearFilters() {
-        cbLoaiKhuyenMai.getSelectionModel().selectFirst();
-        cbTrangThai.getSelectionModel().selectFirst();
+        if (!cbLoaiKhuyenMai.getItems().isEmpty()) {
+            cbLoaiKhuyenMai.getSelectionModel().selectFirst();
+        }
+        if (!cbTrangThai.getItems().isEmpty()) {
+            cbTrangThai.getSelectionModel().selectFirst();
+        }
         dpTuNgay.setValue(null);
         dpDenNgay.setValue(null);
         txtTiemKiemKhuyenMai.clear();
@@ -323,11 +339,30 @@ public class CapNhatKhuyenMaiController extends ScrollPane{
     }
 
     public void updateTableKhuyenMai() {
-        khuyenMaiList.clear();
-        tableKhuyenMai.refresh();
-        arrayKhuyenMai = new ArrayList<>(clientManager.getKhuyenMaiList());
-        khuyenMaiList.addAll(arrayKhuyenMai);
-        tableKhuyenMai.setItems(khuyenMaiList);
+        Task<ArrayList<KhuyenMaiDTO>> loadTask = new Task<>() {
+            @Override
+            protected ArrayList<KhuyenMaiDTO> call() {
+                return new ArrayList<>(clientManager.getKhuyenMaiList());
+            }
+        };
+
+        loadTask.setOnSucceeded(e -> {
+            arrayKhuyenMai = new ArrayList<>(loadTask.getValue());
+            khuyenMaiList.setAll(arrayKhuyenMai);
+            tableKhuyenMai.setItems(khuyenMaiList);
+        });
+        loadTask.setOnFailed(e -> {
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("Lỗi tải dữ liệu");
+            alert.setHeaderText(null);
+            Throwable ex = loadTask.getException();
+            alert.setContentText(ex == null ? "Không tải được danh sách khuyến mãi" : "Không tải được danh sách khuyến mãi: " + ex.getMessage());
+            alert.showAndWait();
+        });
+
+        Thread loadThread = new Thread(loadTask, "load-khuyenmai-update-list-task");
+        loadThread.setDaemon(true);
+        loadThread.start();
     }
 
     private String safeText(String value) { return value == null ? "" : value; }

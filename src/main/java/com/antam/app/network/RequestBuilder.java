@@ -192,7 +192,7 @@ public class RequestBuilder {
     }
 
     public static Command createKhuyenMai(KhuyenMaiDTO khuyenMaiDTO) {
-        return build(CommandType.CREATE_KHUYENMAI, map("MaKM", khuyenMaiDTO));
+        return build(CommandType.CREATE_KHUYENMAI, map("khuyenMai", khuyenMaiDTO));
     }
 
     public static Command tonTaiCTHD(String maHD, int maLoThuoc) {
@@ -228,8 +228,8 @@ public class RequestBuilder {
         return build(CommandType.GET_LOTHUOC_LIST);
     }
 
-    public static Command getKhuyenMaibyId() {
-        return build(CommandType.GET_KHUYENMAI_BY_ID);
+    public static Command getKhuyenMaiById(String maKM) {
+        return build(CommandType.GET_KHUYENMAI_BY_ID, map("maKM", maKM));
     }
 
     public static Command updateThuoc(ThuocDTO thuocDTO) {

@@ -8,15 +8,13 @@ package com.antam.app.controller.khuyenmai;
 
 import com.antam.app.connect.ConnectDB;
 import com.antam.app.network.ClientManager;
-import com.antam.app.service.impl.KhuyenMai_Service;
-import com.antam.app.service.impl.LoaiKhuyenMai_Service;
 import com.antam.app.dto.KhuyenMaiDTO;
 import com.antam.app.dto.LoaiKhuyenMaiDTO;
+import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
 import javafx.scene.control.*;
 import javafx.scene.text.Text;
 
-import java.sql.Connection;
 import java.util.ArrayList;
 import javafx.geometry.Insets;
 import javafx.scene.layout.*;
@@ -37,8 +35,6 @@ public class CapNhatKhuyenMaiFormController extends DialogPane{
     private DatePicker dpNgayBacDau, dpNgayKetThuc;
     
     private Text txtThongBao;
-    private KhuyenMai_Service khuyenMai_dao = new KhuyenMai_Service();
-    private LoaiKhuyenMai_Service loaiKhuyenMai_dao = new LoaiKhuyenMai_Service();
     private KhuyenMaiDTO khuyenMaiDTO;
     private final ClientManager clientManager;
 
@@ -180,7 +176,7 @@ public class CapNhatKhuyenMaiFormController extends DialogPane{
         root.getChildren().add(vbox);
 
         this.setContent(root);
-        /** Sự kiện **/
+        // Sự kiện
         // them button vao dialog
         ButtonType closeButton = new ButtonType("Đóng", ButtonBar.ButtonData.CANCEL_CLOSE);
         ButtonType applyButtonUpdate = new ButtonType("Sửa", ButtonBar.ButtonData.APPLY);
@@ -188,37 +184,17 @@ public class CapNhatKhuyenMaiFormController extends DialogPane{
         // them button vao dialog
         this.getButtonTypes().addAll(applyButtonUpdate, applyButtonDelete, closeButton);
 
-        try {
-            ConnectDB.getInstance().getConnection();
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
         // su kien button
         Button applyBtnUpdate = (Button) this.lookupButton(applyButtonUpdate);
         Button applyBtnDelete = (Button) this.lookupButton(applyButtonDelete);
 
         applyBtnUpdate.addEventFilter(ActionEvent.ACTION, e -> {
+            e.consume();
             if (!validate()) {
-                e.consume();
-            } else {
-                String maKM = txtMaKhuyenMai.getText().trim();
-                String tenKM = txtTenKhuyenMai.getText().trim();
-                LoaiKhuyenMaiDTO loaiKM = cbLoaiKhuyenMai.getSelectionModel().getSelectedItem();
-                int so = spSo.getValue();
-                int soLuongToiDa = spSoLuongToiDa.getValue();
-                java.time.LocalDate ngayBatDau = dpNgayBacDau.getValue();
-                java.time.LocalDate ngayKetThuc = dpNgayKetThuc.getValue();
-
-                KhuyenMaiDTO updatedKhuyenMaiDTO = new KhuyenMaiDTO(maKM, tenKM, ngayBatDau, ngayKetThuc, loaiKM, so, soLuongToiDa, false);
-                boolean success = clientManager.updateKhuyenMai(updatedKhuyenMaiDTO);
-                if (success) {
-                    txtThongBao.setText("Cập nhật khuyến mãi thành công");
-                    khuyenMaiDTO = updatedKhuyenMaiDTO;
-                } else {
-                    txtThongBao.setText("Cập nhật khuyến mãi thất bại");
-                    e.consume();
-                }
+                return;
             }
+
+            handleUpdateKhuyenMaiAsync(buildKhuyenMaiDTO(), applyBtnUpdate, applyBtnDelete);
         });
 
         applyBtnDelete.addEventFilter(ActionEvent.ACTION, e -> {
@@ -230,14 +206,8 @@ public class CapNhatKhuyenMaiFormController extends DialogPane{
             if (result != ButtonType.OK) {
                 e.consume();
             } else {
-                String maKM = txtMaKhuyenMai.getText().trim();
-                boolean success = clientManager.deleteKhuyenMai(maKM);
-                if (success) {
-                    txtThongBao.setText("Xóa khuyến mãi thành công");
-                } else {
-                    txtThongBao.setText("Xóa khuyến mãi thất bại");
-                    e.consume();
-                }
+                e.consume();
+                handleDeleteKhuyenMaiAsync(txtMaKhuyenMai.getText().trim(), applyBtnUpdate, applyBtnDelete);
             }
         });
         // set ma khuyen mai
@@ -265,11 +235,125 @@ public class CapNhatKhuyenMaiFormController extends DialogPane{
         return tf;
     }
 
+    private KhuyenMaiDTO buildKhuyenMaiDTO() {
+        return new KhuyenMaiDTO(
+                txtMaKhuyenMai.getText().trim(),
+                txtTenKhuyenMai.getText().trim(),
+                dpNgayBacDau.getValue(),
+                dpNgayKetThuc.getValue(),
+                cbLoaiKhuyenMai.getValue(),
+                spSo.getValue(),
+                spSoLuongToiDa.getValue(),
+                false
+        );
+    }
+
+    private void handleUpdateKhuyenMaiAsync(KhuyenMaiDTO updatedKhuyenMaiDTO, Button applyBtnUpdate, Button applyBtnDelete) {
+        Task<Boolean> updateTask = new Task<>() {
+            @Override
+            protected Boolean call() {
+                return clientManager.updateKhuyenMai(updatedKhuyenMaiDTO);
+            }
+        };
+
+        updateTask.setOnRunning(e -> {
+            setFormDisabled(true, applyBtnUpdate, applyBtnDelete);
+            txtThongBao.setText("Đang cập nhật dữ liệu...");
+        });
+
+        updateTask.setOnSucceeded(e -> {
+            setFormDisabled(false, applyBtnUpdate, applyBtnDelete);
+            if (Boolean.TRUE.equals(updateTask.getValue())) {
+                txtThongBao.setText("Cập nhật khuyến mãi thành công");
+                khuyenMaiDTO = updatedKhuyenMaiDTO;
+                if (getScene() != null && getScene().getWindow() != null) {
+                    getScene().getWindow().hide();
+                }
+            } else {
+                txtThongBao.setText("Cập nhật khuyến mãi thất bại");
+            }
+        });
+
+        updateTask.setOnFailed(e -> {
+            setFormDisabled(false, applyBtnUpdate, applyBtnDelete);
+            Throwable ex = updateTask.getException();
+            txtThongBao.setText(ex == null ? "Lỗi kết nối tới server!" : "Lỗi kết nối: " + ex.getMessage());
+        });
+
+        Thread updateThread = new Thread(updateTask, "cap-nhat-khuyenmai-task");
+        updateThread.setDaemon(true);
+        updateThread.start();
+    }
+
+    private void handleDeleteKhuyenMaiAsync(String maKM, Button applyBtnUpdate, Button applyBtnDelete) {
+        Task<Boolean> deleteTask = new Task<>() {
+            @Override
+            protected Boolean call() {
+                return clientManager.deleteKhuyenMai(maKM);
+            }
+        };
+
+        deleteTask.setOnRunning(e -> {
+            setFormDisabled(true, applyBtnUpdate, applyBtnDelete);
+            txtThongBao.setText("Đang xoá khuyến mãi...");
+        });
+
+        deleteTask.setOnSucceeded(e -> {
+            setFormDisabled(false, applyBtnUpdate, applyBtnDelete);
+            if (Boolean.TRUE.equals(deleteTask.getValue())) {
+                txtThongBao.setText("Xóa khuyến mãi thành công");
+                if (getScene() != null && getScene().getWindow() != null) {
+                    getScene().getWindow().hide();
+                }
+            } else {
+                txtThongBao.setText("Xóa khuyến mãi thất bại");
+            }
+        });
+
+        deleteTask.setOnFailed(e -> {
+            setFormDisabled(false, applyBtnUpdate, applyBtnDelete);
+            Throwable ex = deleteTask.getException();
+            txtThongBao.setText(ex == null ? "Lỗi kết nối tới server!" : "Lỗi kết nối: " + ex.getMessage());
+        });
+
+        Thread deleteThread = new Thread(deleteTask, "xoa-khuyenmai-task");
+        deleteThread.setDaemon(true);
+        deleteThread.start();
+    }
+
+    private void setFormDisabled(boolean disabled, Button applyBtnUpdate, Button applyBtnDelete) {
+        txtMaKhuyenMai.setDisable(disabled);
+        txtTenKhuyenMai.setDisable(disabled);
+        cbLoaiKhuyenMai.setDisable(disabled);
+        spSo.setDisable(disabled);
+        spSoLuongToiDa.setDisable(disabled);
+        dpNgayBacDau.setDisable(disabled);
+        dpNgayKetThuc.setDisable(disabled);
+        applyBtnUpdate.setDisable(disabled);
+        applyBtnDelete.setDisable(disabled);
+    }
+
     public void loadLoaiKhuyenMai(){
-        ArrayList<LoaiKhuyenMaiDTO> listLoaiKhuyenMai = new ArrayList<>(clientManager.getLoaiKhuyenMaiList());
-        cbLoaiKhuyenMai.getItems().clear();
-        cbLoaiKhuyenMai.getItems().addAll(listLoaiKhuyenMai);
-        cbLoaiKhuyenMai.getSelectionModel().selectFirst();
+        Task<ArrayList<LoaiKhuyenMaiDTO>> loadTask = new Task<>() {
+            @Override
+            protected ArrayList<LoaiKhuyenMaiDTO> call() {
+                return new ArrayList<>(clientManager.getLoaiKhuyenMaiList());
+            }
+        };
+
+        loadTask.setOnSucceeded(e -> {
+            cbLoaiKhuyenMai.getItems().setAll(loadTask.getValue());
+            cbLoaiKhuyenMai.getSelectionModel().selectFirst();
+            applySpinnerRangeForLoai(cbLoaiKhuyenMai.getSelectionModel().getSelectedItem());
+        });
+        loadTask.setOnFailed(e -> {
+            Throwable ex = loadTask.getException();
+            txtThongBao.setText(ex == null ? "Không tải được loại khuyến mãi" : "Không tải được loại khuyến mãi: " + ex.getMessage());
+        });
+
+        Thread loadThread = new Thread(loadTask, "load-loai-khuyenmai-update-task");
+        loadThread.setDaemon(true);
+        loadThread.start();
     }
 
     private void applySpinnerRangeForLoai(LoaiKhuyenMaiDTO selectedLoai) {
