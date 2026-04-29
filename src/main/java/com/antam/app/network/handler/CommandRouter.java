@@ -1673,8 +1673,8 @@ public class CommandRouter {
             if (command.getPayload() == null || !command.getPayload().containsKey("maDVT")) {
                 return Response.builder().success(false).message("Invalid payload for delete DonViTinh").errorCode("INVALID_PAYLOAD").build();
             }
-            String maDVT = (String) command.getPayload().get("maDVT");
-            DonViTinhDTO dvt = serviceLocator.getDonViTinhService().getDVTTheoMaDVT(Integer.parseInt(maDVT));
+            int maDVT = (int) command.getPayload().get("maDVT");
+            DonViTinhDTO dvt = serviceLocator.getDonViTinhService().getDVTTheoMaDVT((maDVT));
             if (dvt == null) {
                 return Response.builder().success(false).message("DonViTinh not found").errorCode("DONVITINH_NOT_FOUND").build();
             }
@@ -1691,7 +1691,7 @@ public class CommandRouter {
             if (command.getPayload() == null || !command.getPayload().containsKey("maDVT")) {
                 return Response.builder().success(false).message("Invalid payload for restore DonViTinh").errorCode("INVALID_PAYLOAD").build();
             }
-            int maDVT = (Integer) command.getPayload().get("maDVT");
+            int maDVT = (int) command.getPayload().get("maDVT");
             DonViTinhDTO donViTinhDTO = serviceLocator.getDonViTinhService().getDVTTheoMaDVT(maDVT);
             if (donViTinhDTO == null) {
                 return Response.builder().success(false).message("DonViTinh not found").errorCode("DONVITINH_NOT_FOUND").build();

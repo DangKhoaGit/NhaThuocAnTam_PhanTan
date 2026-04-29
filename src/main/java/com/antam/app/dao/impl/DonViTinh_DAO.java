@@ -186,6 +186,22 @@ public class DonViTinh_DAO implements I_DonViTinh_DAO {
         }
     }
 
+    @Override
+    public int getMaxMaDVT() {
+        String sql = "SELECT MAX(MaDVT) AS maxMa FROM DonViTinh";
+        try {
+            Connection con = ensureConnection();
+            try (Statement statement = con.createStatement(); ResultSet rs = statement.executeQuery(sql)) {
+                if (rs.next()) {
+                    return rs.getInt("maxMa");
+                }
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Loi khi lay max MaDVT", e);
+        }
+        return 0; // If no records, return 0
+    }
+
     private Connection ensureConnection() throws SQLException {
         Connection con = ConnectDB.getConnection();
         if (con == null || con.isClosed()) {

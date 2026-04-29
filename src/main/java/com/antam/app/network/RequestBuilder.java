@@ -281,4 +281,16 @@ public class RequestBuilder {
     public static Command getMaxHashNhanVien() {
         return  build(CommandType.GET_MAX_HASH_NHANVIEN);
     }
+
+    public static Command updateDonViTinh(DonViTinhDTO donViTinhDTO) {
+        return build(CommandType.UPDATE_DONVITINH, map("donViTinh", donViTinhDTO));
+    }
+
+    public static Command deleteDonViTinh(DonViTinhDTO donViTinhDTO) {
+        return build(CommandType.DELETE_DONVITINH, map("maDVT", donViTinhDTO.getMaDVT()));
+    }
+
+    public static Command khoiPhucDonViTinh(DonViTinhDTO donViTinhDTO) {
+        return build(CommandType.RESTORE_DONVITINH, map("maDVT", donViTinhDTO.getMaDVT()));
+    }
 }
