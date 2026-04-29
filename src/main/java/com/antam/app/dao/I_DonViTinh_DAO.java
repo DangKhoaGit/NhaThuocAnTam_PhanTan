@@ -35,4 +35,6 @@ public interface I_DonViTinh_DAO {
     int xoaDonViTinh(DonViTinh donViTinh);
 
     int khoiPhucDonViTinh(DonViTinh dvt);
+
+    int getMaxMaDVT();
 }

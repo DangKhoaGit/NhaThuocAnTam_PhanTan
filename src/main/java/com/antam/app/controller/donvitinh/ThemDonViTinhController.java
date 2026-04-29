@@ -5,12 +5,14 @@
 
 package com.antam.app.controller.donvitinh;
 
+import com.antam.app.network.ClientManager;
 import com.antam.app.service.I_DonViTinh_Service;
 import com.antam.app.service.impl.DonViTinh_Service;
 import com.antam.app.dto.DonViTinhDTO;
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcon;
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcons;
 import javafx.beans.property.SimpleStringProperty;
+import javafx.concurrent.Task;
 import javafx.scene.control.*;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -21,6 +23,7 @@ import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class ThemDonViTinhController extends ScrollPane {
 
@@ -29,8 +32,8 @@ public class ThemDonViTinhController extends ScrollPane {
     private TableColumn<DonViTinhDTO, String> colMaThuoc, colTenThuoc,colTrangThai;
     private Button btnThem;
 
-    DonViTinh_Service donViTinh_dao = new DonViTinh_Service();
     ArrayList<DonViTinhDTO> listDVT ;
+    ClientManager clientManager = ClientManager.getInstance();
 
     public ThemDonViTinhController() {
         /** Giao diện **/
@@ -135,17 +138,42 @@ public class ThemDonViTinhController extends ScrollPane {
                 int maInt = Integer.parseInt(ma);
                 String ten = txtTen.getText();
                 DonViTinhDTO donViTinhDTO = new DonViTinhDTO(maInt, ten, false);
-                donViTinh_dao.themDonViTinh(donViTinhDTO);
+
+                Task<Void> task = new Task<>() {
+                    @Override
+                    protected Void call() throws Exception {
+                        I_DonViTinh_Service service = new DonViTinh_Service();
+                        service.themDonViTinh(donViTinhDTO);
+                        return null;
+                    }
+                };
+
+                task.setOnSucceeded(event -> {
+                    Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                    alert.setTitle("Thành công");
+                    alert.setHeaderText(null);
+                    alert.setContentText("Đã thêm đơn vị tính thành công!");
+                    alert.showAndWait();
+                });
+
+                task.setOnFailed(event -> {
+                    Alert alert = new Alert(Alert.AlertType.ERROR);
+                });
+
+                Thread thread = new Thread(task);
+                thread.start();
+
                 loadTable();
             }catch (Exception ex) {
                 // Hiển thị thông báo lỗi nếu có
             }
+            loadTable();
         });
 
         txtMa.setEditable(false);
         try {
             I_DonViTinh_Service service = new DonViTinh_Service();
-            int maxMa = Integer.parseInt(service.getHashDVT());
+            int maxMa = service.getMaxMaDVT();
             txtMa.setText(String.valueOf(++maxMa));
         } catch (Exception e) {
             e.printStackTrace();
@@ -162,13 +190,28 @@ public class ThemDonViTinhController extends ScrollPane {
     }
 
     private void loadTable() {
-            listDVT = donViTinh_dao.getTatCaDonViTinh();
+//            listDVT = donViTinh_dao.getTatCaDonViTinh();
 
-            // Loại bỏ các đơn vị đã xóa
-            listDVT.removeIf(DonViTinhDTO::isDelete);
+            Task<List<DonViTinhDTO>> task = new Task<List<DonViTinhDTO>>() {
+                @Override
+                protected List<DonViTinhDTO> call() throws Exception {
+                    return clientManager.getDonViTinhList();
+                }
+            };
 
-            // Cập nhật dữ liệu cho TableView
-            tableThuoc.getItems().setAll(listDVT);
+            task.setOnSucceeded(event -> {
+                List<DonViTinhDTO> result = task.getValue();
+                listDVT = new ArrayList<>(result);
+                // Loại bỏ các đơn vị đã xóa
+                listDVT.removeIf(DonViTinhDTO::isDelete);
+
+                // Cập nhật dữ liệu cho TableView
+                tableThuoc.getItems().setAll(listDVT);
+            });
+
+           task.setOnFailed(event -> {});
+           Thread thread = new Thread(task);
+           thread.start();
 
     }
 }

@@ -2,9 +2,11 @@ package com.antam.app.controller.caidattaikhoan;
 
 import com.antam.app.dto.PhienNguoiDungDTO;
 import com.antam.app.helper.MaKhoaMatKhau;
+import com.antam.app.network.ClientManager;
 import com.antam.app.service.impl.NhanVien_Service;
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcon;
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcons;
+import javafx.concurrent.Task;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.scene.text.FontWeight;
@@ -22,7 +24,7 @@ public class CaiDatTaiKhoanController extends ScrollPane{
     private Button btnDoiMK;
     private Text txtTK, txtVaiTro;
 
-    NhanVien_Service nhanVienService = new NhanVien_Service();
+    private ClientManager clientManager = ClientManager.getInstance();
 
     public CaiDatTaiKhoanController() {
         /** Giao diện **/
@@ -200,14 +202,21 @@ public class CaiDatTaiKhoanController extends ScrollPane{
         String hashCode = MaKhoaMatKhau.hashPassword(mkNew, 10);
         PhienNguoiDungDTO.getMaNV().setMatKhau(hashCode);
 
-        boolean result = nhanVienService.updateNhanVienTrongDBS(PhienNguoiDungDTO.getMaNV());
-        if (result) {
+        Task<Boolean> task = new Task<>() {
+            @Override
+            protected Boolean call() throws Exception {
+                return ClientManager.getInstance().updateNhanVien(PhienNguoiDungDTO.getMaNV());
+            }
+        };
+        task.setOnSucceeded(evt -> {
+            boolean result = task.getValue();
             showAlert("Thành công", "Đổi mật khẩu thành công!");
             txtMKnow.clear();
             txtMKnew.clear();
-        } else {
+        });
+        task.setOnFailed(evt -> {
             showAlert("Thất bại", "Đổi mật khẩu thất bại!");
-        }
+        });
     }
 
     private void loadThongTin() {

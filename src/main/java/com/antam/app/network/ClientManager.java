@@ -831,5 +831,23 @@ public class ClientManager {
             return false;
         }
     }
+
+    public boolean updateDonViTInh(DonViTinhDTO donViTinhDTO) {
+        Boolean rs = send(RequestBuilder.updateDonViTinh((DonViTinhDTO) donViTinhDTO));
+        return rs != null && rs;
+    }
+
+    public Boolean deleteDonViTInh(DonViTinhDTO dvt) {
+        boolean rs = send(RequestBuilder.deleteDonViTinh(dvt));
+        return rs;
+    }
+
+    public List<DonViTinhDTO> getTatCaDonViTinh() {
+        return send(RequestBuilder.getDonViTinhList());
+    }
+
+    public Boolean khoiPhucDonViTinh(DonViTinhDTO donViTinhDTO) {
+        return send(RequestBuilder.khoiPhucDonViTinh(donViTinhDTO));
+    }
 }
 

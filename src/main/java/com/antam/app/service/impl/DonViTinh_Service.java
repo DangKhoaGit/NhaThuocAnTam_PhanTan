@@ -128,6 +128,15 @@ public class DonViTinh_Service implements I_DonViTinh_Service {
         }
     }
 
+    @Override
+    public int getMaxMaDVT() {
+        try {
+            return donViTinhDAO.getMaxMaDVT();
+        } catch (Exception e) {
+            throw new RuntimeException("Loi khi lay max MaDVT", e);
+        }
+    }
+
     public DonViTinhDTO mapEntityToDTO(DonViTinh entity) {
         if (entity == null) {
             return null;

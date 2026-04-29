@@ -5,14 +5,17 @@
 
 package com.antam.app.controller.donvitinh;
 
+import com.antam.app.network.ClientManager;
 import com.antam.app.service.I_DonViTinh_Service;
 import com.antam.app.service.impl.DonViTinh_Service;
 import com.antam.app.dto.DonViTinhDTO;
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcon;
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcons;
 import javafx.beans.property.SimpleStringProperty;
+import javafx.concurrent.Task;
 import javafx.scene.control.*;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 import javafx.geometry.Insets;
@@ -29,8 +32,8 @@ public class CapNhatDonViTinhController extends ScrollPane {
     private TableColumn<DonViTinhDTO, String> colMaThuoc, colTenThuoc,colTrangThai;
     private Button btnXoa,btnCapNhat, btnKhoiPhuc;
 
-    DonViTinh_Service donViTinh_dao = new DonViTinh_Service();
-    ArrayList<DonViTinhDTO> listDVT ;
+    public ArrayList<DonViTinhDTO> listDVT ;
+    public ClientManager clientManager = ClientManager.getInstance();
 
     public CapNhatDonViTinhController() {
         /** Giao diện **/
@@ -157,34 +160,86 @@ public class CapNhatDonViTinhController extends ScrollPane {
         this.setContent(root);
         /** Sự kiện **/
         btnCapNhat.setOnAction( e-> {
+            if (tableThuoc.getSelectionModel().getSelectedItem() == null) {
+                showMess("Lỗi","Vui lòng chọn đơn vị tính cần cập nhật");
+                return;
+            }
+
+            if (tableThuoc.getSelectionModel().getSelectedItem().isDelete()) {
+                showMess("Lỗi","Không thể cập nhật đơn vị tính đã bị xóa");
+                return;
+            }
+
             try {
                 String ma = txtMa.getText();
                 int maInt = Integer.parseInt(ma);
                 String ten = txtTen.getText();
                 DonViTinhDTO donViTinhDTO = new DonViTinhDTO(maInt, ten, false);
-                donViTinh_dao.updateDonViTinh(donViTinhDTO);
+                Task<Boolean> task = new Task<>() {
+                    @Override
+                    protected Boolean call() throws Exception {
+                        return clientManager.updateDonViTInh(donViTinhDTO);
+                    }
+                };
+
+                task.setOnSucceeded(event -> {
+
+                });
+
+                task.setOnFailed(event -> {
+
+                });
+
+                Thread thread = new Thread(task);
+                thread.start();
                 loadTable();
             }catch (Exception ex) {
-                // Hiển thị thông báo lỗi nếu có
+                showMess("Lỗi","Không thể cập nhật đơn vị tính");
             }
+
         });
 
         btnXoa.setOnAction( e-> {
+            if (tableThuoc.getSelectionModel().getSelectedItem() == null) {
+                showMess("Lỗi","Vui lòng chọn đơn vị tính cần xóa");
+            }
+            if (tableThuoc.getSelectionModel().getSelectedItem().isDelete()) {
+                showMess("Lỗi","Đơn vị tính đã bị xóa");
+                return;
+            }
             try {
                 String ma = txtMa.getText();
                 int maInt = Integer.parseInt(ma);
                 String ten = txtTen.getText();
                 DonViTinhDTO donViTinhDTO = new DonViTinhDTO(maInt, ten,false);
-                donViTinh_dao.xoaDonViTinh(donViTinhDTO);
+
+                Task<Boolean> task = new Task<>() {
+                    @Override
+                    protected Boolean call() throws Exception {
+                        return clientManager.deleteDonViTInh(donViTinhDTO);
+                    }
+                };
+
+                task.setOnSucceeded(event -> {
+                    // Xóa thành công, làm mới bảng
+                    loadTable();
+                });
+
+                task.setOnFailed(event -> {
+                    // Xóa thất bại, hiển thị thông báo lỗi
+                });
+
+                Thread thread = new Thread(task);
+                thread.start();
                 loadTable();
             }catch (Exception ex) {
-                // Hiển thị thông báo lỗi nếu có
+                showMess("Lỗi","Không thể xóa đơn vị tính");
             }
         });
         txtMa.setEditable(false);
         try {
             DonViTinh_Service donViTinhService = new DonViTinh_Service();
-            int maxMa = Integer.parseInt(donViTinhService.getHashDVT());
+            int maxMa = donViTinhService.getMaxMaDVT();
             txtMa.setText(String.valueOf(++maxMa));
         } catch (Exception e) {
             e.printStackTrace();
@@ -203,15 +258,34 @@ public class CapNhatDonViTinhController extends ScrollPane {
         btnKhoiPhuc.setOnAction(e->{
             DonViTinhDTO selected = tableThuoc.getSelectionModel().getSelectedItem();
             if (selected == null) return;
-
+            if (!selected.isDelete()){
+                showMess("Thông báo","Đơn vị tính đang hoạt động");
+                return;
+            }
             if (selected.isDelete()){
                 if (showConfirm()){
                     String ma = txtMa.getText();
                     int maInt = Integer.parseInt(ma);
                     String ten = txtTen.getText();
                     DonViTinhDTO donViTinhDTO = new DonViTinhDTO(maInt, ten,false);
-                    donViTinh_dao.khoiPhucDonViTinh(donViTinhDTO);
-                    loadTable();
+                    Task<Boolean> task = new Task<>() {
+                        @Override
+                        protected Boolean call() throws Exception {
+                            return clientManager.khoiPhucDonViTinh(donViTinhDTO);
+                        }
+                    };
+
+                    task.setOnSucceeded(event -> {
+                        // Khôi phục thành công, làm mới bảng
+                        loadTable();
+                    });
+
+                    task.setOnFailed(event -> {
+                        // Khôi phục thất bại, hiển thị thông báo lỗi
+                    });
+
+                    Thread thread = new Thread(task);
+                    thread.start();
                 }
             }else{
                 showMess("Thông báo","Đơn vị tính đang hoạt động");
@@ -245,10 +319,26 @@ public class CapNhatDonViTinhController extends ScrollPane {
     }
 
     private void loadTable() {
-        listDVT = donViTinh_dao.getTatCaDonViTinh();
+        Task<List<DonViTinhDTO>> task = new Task<>() {
+            @Override
+            protected ArrayList<DonViTinhDTO> call() throws Exception {
+                return (ArrayList<DonViTinhDTO>) clientManager.getTatCaDonViTinh();
+            }
+        };
 
-        // Cập nhật dữ liệu cho TableView
-        tableThuoc.getItems().setAll(listDVT);
+        task.setOnSucceeded(e -> {
+            List<DonViTinhDTO> result = task.getValue();
+            listDVT = new ArrayList<>(result);
 
+            // Cập nhật dữ liệu cho TableView
+            tableThuoc.getItems().setAll(listDVT);
+        });
+
+        task.setOnFailed(event -> {
+
+        });
+
+        Thread thread = new Thread(task);
+        thread.start();
     }
 }
