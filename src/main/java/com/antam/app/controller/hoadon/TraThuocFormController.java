@@ -5,12 +5,12 @@
 
 package com.antam.app.controller.hoadon;
 
-import com.antam.app.connect.ConnectDB;
 import com.antam.app.network.ClientManager;
 import com.antam.app.service.impl.*;
 import com.antam.app.dto.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
@@ -20,8 +20,6 @@ import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
-import java.sql.Connection;
-import java.sql.SQLException;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -35,15 +33,15 @@ import javafx.scene.text.Font;
 
 
 public class TraThuocFormController extends DialogPane{
-    private VBox vbListChiTietHoaDon;
-    private TextField txtMaHoaDonTra, txtKhachHangTra;
-    private Text txtTongTienTra;
-    private ComboBox<String> cbLyDoTra;
+    private final VBox vbListChiTietHoaDon;
+    private final TextField txtMaHoaDonTra, txtKhachHangTra;
+    private final Text txtTongTienTra;
+    private final ComboBox<String> cbLyDoTra;
 
 
     private final ClientManager clientManager;
     private HoaDonDTO hoaDonDTO;
-    private ArrayList<ChiTietHoaDonDTO> selectedItems = new ArrayList<>();
+    private final ArrayList<ChiTietHoaDonDTO> selectedItems = new ArrayList<>();
 
     public void setHoaDon(HoaDonDTO hoaDonDTO) {
         this.hoaDonDTO = hoaDonDTO;
@@ -56,7 +54,12 @@ public class TraThuocFormController extends DialogPane{
     // Hiển thị thông tin hóa đơn và chi tiết hóa đơn
     public void showData(HoaDonDTO hoaDonDTO) {
         HoaDonDTO hd = (HoaDonDTO) clientManager.getHoaDonById(hoaDonDTO.getMaHD());
-        ArrayList<ChiTietHoaDonDTO> chiTietHoaDons = new ArrayList<ChiTietHoaDonDTO>((Collection<? extends ChiTietHoaDonDTO>) clientManager.getChiTietHoaDon(hoaDonDTO.getMaHD()));
+        ArrayList<ChiTietHoaDonDTO> chiTietHoaDons = new ArrayList<>();
+        for (Object item : clientManager.getChiTietHoaDon(hoaDonDTO.getMaHD())) {
+            if (item instanceof ChiTietHoaDonDTO dto) {
+                chiTietHoaDons.add(dto);
+            }
+        }
         txtMaHoaDonTra.setText(hoaDonDTO.getMaHD());
         vbListChiTietHoaDon.getChildren().clear();
         selectedItems.clear();
@@ -192,9 +195,12 @@ public class TraThuocFormController extends DialogPane{
         contentRoot.getChildren().add(mainVBox);
 
         this.setContent(contentRoot);
-        this.getStylesheets().add(getClass().getResource("/com/antam/app/styles/dashboard_style.css").toExternalForm());
+        var css = getClass().getResource("/com/antam/app/styles/dashboard_style.css");
+        if (css != null) {
+            this.getStylesheets().add(css.toExternalForm());
+        }
 
-        /** Sự kiện **/
+        // Sự kiện
         ButtonType cancelButton = new ButtonType("Huỷ", ButtonData.CANCEL_CLOSE);
         ButtonType applyButton = new ButtonType("Xác nhận trả thuốc", ButtonData.APPLY);
         this.getButtonTypes().add(cancelButton);
@@ -204,85 +210,47 @@ public class TraThuocFormController extends DialogPane{
         Button applyBtn = (Button) this.lookupButton(applyButton);
         applyBtn.addEventFilter(ActionEvent.ACTION, event -> {
             if (selectedItems.isEmpty()) {
-                Alert alert = new Alert(Alert.AlertType.WARNING);
-                alert.setTitle("Cảnh báo");
-                alert.setHeaderText("Chưa chọn thuốc để trả");
-                alert.setContentText("Vui lòng chọn ít nhất một thuốc để trả.");
-                alert.showAndWait();
+                showWarning("Cảnh báo", "Chưa chọn thuốc để trả", "Vui lòng chọn ít nhất một thuốc để trả.");
                 event.consume();
-            } else {
-                String lyDoTra = cbLyDoTra.getValue();
-                if (lyDoTra == null || lyDoTra.trim().isEmpty()) {
-                    Alert alert = new Alert(Alert.AlertType.WARNING);
-                    alert.setTitle("Cảnh báo");
-                    alert.setHeaderText("Chưa chọn lý do trả thuốc");
-                    alert.setContentText("Vui lòng chọn lý do trả trước khi xác nhận.");
-                    alert.showAndWait();
-                    event.consume();
-                    return;
-                }
-
-                for (ChiTietHoaDonDTO ct : selectedItems) {
-                    clientManager.softDeleteChiTietHoaDon(ct.getMaHD().getMaHD(), ct.getMaLoThuocDTO().getMaLoThuoc(), "Trả");
-
-                    switch (lyDoTra) {
-                        // Các lý do KHÔNG cộng lại vào kho
-                        case "Hết hạn sử dụng":
-                        case "Bao bì bị hư hỏng":
-                        case "Thuốc lỗi / hư hỏng":
-                        case "Thuốc bị thu hồi":
-                            // Không làm gì cả
-                            break;
-
-                        // Các lý do CÓ cộng lại vào kho
-                        case "Khách hàng đổi ý":
-                        case "Nhập nhầm lô / dư":
-                        case "Sai thông tin đơn / bảo hiểm":
-                            clientManager.updateLoThuocQuantity(ct.getMaLoThuocDTO().getMaLoThuoc(), ct.getSoLuong());
-                            break;
-
-                        default:
-                            // Nếu có giá trị không nằm trong danh sách trên
-                            System.out.println("Lý do trả không hợp lệ: " + lyDoTra);
-                            break;
-                    }
-
-                }
-                if (clientManager.getChiTietHoaDonConBanByHoaDonId(hoaDonDTO.getMaHD()).isEmpty()) {
-                    clientManager.deleteHoaDon(hoaDonDTO.getMaHD());
-                    clientManager.updateHoaDonTongTien(hoaDonDTO.getMaHD(), 0);
-                } else {
-                    double tongTienCu = hoaDonDTO.getTongTien();
-                    double tongTienTra = 0;
-                    double tongTienCoKM = 0;
-                    for (ChiTietHoaDonDTO ct : selectedItems) {
-                        LoThuocDTO ctt = ct.getMaLoThuocDTO();
-                        ThuocDTO t = clientManager.getThuocById(ctt.getMaThuocDTO().getMaThuoc());
-                        if (t == null) {
-                            continue;
-                        }
-                        if (ct.getTinhTrang().equals("Thuốc Mới Khi Đổi")){
-                            tongTienTra += ct.getThanhTien() * (1 + t.getThue());
-                        } else {
-                            tongTienCoKM += ct.getThanhTien() * (1 + t.getThue());
-                        }
-                    }
-                    KhuyenMaiDTO km = null;
-
-                    if (hoaDonDTO.getMaKM() != null) {
-                        km = clientManager.getKhuyenMaiById(hoaDonDTO.getMaKM().getMaKM());
-                    }
-
-                    if (km != null) {
-                        tongTienCoKM = TinhTienKhuyenMai(tongTienCoKM, km.getSo());
-                    }
-
-                    double tongMoi = tongTienCu - tongTienTra - tongTienCoKM;
-                    hoaDonDTO.setTongTien(tongMoi);
-                    clientManager.updateHoaDonTongTien(hoaDonDTO.getMaHD(), tongMoi);
-
-                }
+                return;
             }
+
+            String lyDoTra = cbLyDoTra.getValue();
+            if (lyDoTra == null || lyDoTra.trim().isEmpty()) {
+                showWarning("Cảnh báo", "Chưa chọn lý do trả thuốc", "Vui lòng chọn lý do trả trước khi xác nhận.");
+                event.consume();
+                return;
+            }
+
+            ArrayList<ChiTietHoaDonDTO> selectedSnapshot = new ArrayList<>(selectedItems);
+            Task<Boolean> applyTask = new Task<>() {
+                @Override
+                protected Boolean call() {
+                    return processTraThuoc(lyDoTra, selectedSnapshot);
+                }
+            };
+
+            applyTask.setOnRunning(e -> setFormDisabled(true, applyBtn));
+            applyTask.setOnSucceeded(e -> {
+                setFormDisabled(false, applyBtn);
+                if (Boolean.TRUE.equals(applyTask.getValue())) {
+                    if (getScene() != null && getScene().getWindow() != null) {
+                        getScene().getWindow().hide();
+                    }
+                } else {
+                    showWarning("Cảnh báo", "Không thể thực hiện giao dịch", "Server không xử lý được yêu cầu trả thuốc.");
+                }
+            });
+            applyTask.setOnFailed(e -> {
+                setFormDisabled(false, applyBtn);
+                Throwable ex = applyTask.getException();
+                showWarning("Lỗi", "Trả thuốc thất bại", ex == null ? "Lỗi kết nối tới server!" : ex.getMessage());
+            });
+
+            Thread thread = new Thread(applyTask, "tra-thuoc-apply-task");
+            thread.setDaemon(true);
+            thread.start();
+            event.consume();
         });
 
         // Thêm giá trị vào combobox lý do trả
@@ -293,19 +261,22 @@ public class TraThuocFormController extends DialogPane{
         double tongTien = 0;
         double tongTienKhiTra = 0;
         for (ChiTietHoaDonDTO ct : selectedItems){
+            if (ct == null || ct.getMaLoThuocDTO() == null || ct.getMaLoThuocDTO().getMaThuocDTO() == null) {
+                continue;
+            }
             LoThuocDTO ctt = ct.getMaLoThuocDTO();
             ThuocDTO t = clientManager.getThuocById(ctt.getMaThuocDTO().getMaThuoc());
             if (t == null) {
                 continue;
             }
-            if (ct.getTinhTrang().equals("Thuốc Mới Khi Đổi")){
+            if (isThuocMoiKhiDoi(ct)){
                 tongTienKhiTra += ct.getThanhTien() * (1 + t.getThue());
             } else {
                 tongTien += ct.getThanhTien() * (1 + t.getThue());
             }
         }
         DecimalFormat df = new DecimalFormat("#,### đ");
-        if (hoaDonDTO.getMaKM() != null) {
+        if (hoaDonDTO != null && hoaDonDTO.getMaKM() != null) {
             String maKM = hoaDonDTO.getMaKM().getMaKM();
             KhuyenMaiDTO km = clientManager.getKhuyenMaiById(maKM);
 
@@ -334,18 +305,21 @@ public class TraThuocFormController extends DialogPane{
     }
 
     public HBox renderChiTietHoaDon(ChiTietHoaDonDTO chiTietHoaDonDTO) {
-        if (chiTietHoaDonDTO.getTinhTrang() == null) {
+        if (chiTietHoaDonDTO == null) {
             HBox h = new HBox();
             h.setVisible(false);
             h.setManaged(false);
             return h;
         }
-        if (chiTietHoaDonDTO.getTinhTrang().equals("Trả") || chiTietHoaDonDTO.getTinhTrang().equals("Trả Khi Đổi")) {
+        if (chiTietHoaDonDTO.getMaLoThuocDTO() == null || chiTietHoaDonDTO.getMaLoThuocDTO().getMaThuocDTO() == null) {
             HBox h = new HBox();
             h.setVisible(false);
             h.setManaged(false);
             return h;
         }
+
+        boolean daTra = isDaTra(chiTietHoaDonDTO);
+
         HBox hBox = new HBox();
         hBox.setSpacing(20);
         hBox.setStyle(
@@ -354,6 +328,7 @@ public class TraThuocFormController extends DialogPane{
         );
 
         CheckBox checkBox = new CheckBox();
+        checkBox.setDisable(daTra);
         checkBox.setOnAction(event -> {
             if (checkBox.isSelected()) {
                 if (!selectedItems.contains(chiTietHoaDonDTO)) {
@@ -374,11 +349,17 @@ public class TraThuocFormController extends DialogPane{
         DecimalFormat df = new DecimalFormat("#,### đ");
         Text txtDonGia = new Text(df.format(chiTietHoaDonDTO.getThanhTien()));
         txtDonGia.setStyle("-fx-font-size: 15px;");
+
         String valueBtn = "Bình thường";
-        if (chiTietHoaDonDTO.getTinhTrang().equals("Thuốc Mới Khi Đổi")){
+        if (isThuocMoiKhiDoi(chiTietHoaDonDTO)) {
             valueBtn = "Thuốc đổi";
         }
+        if (daTra) {
+            valueBtn = "Đã trả";
+        }
+
         Button btn = new Button(valueBtn);
+        btn.setDisable(daTra);
         btn.setStyle(
                 "-fx-background-color: #e0f2fe;" +
                 "-fx-text-fill: #0369a1;" +
@@ -408,7 +389,104 @@ public class TraThuocFormController extends DialogPane{
             giam = giaSo;
         }
         if (giam > tongTien) giam = tongTien;
-        tongTien -= giam;
-        return tongTien;
+        return tongTien - giam;
+    }
+
+    private void setFormDisabled(boolean disabled, Button applyBtn) {
+        txtMaHoaDonTra.setDisable(disabled);
+        txtKhachHangTra.setDisable(disabled);
+        cbLyDoTra.setDisable(disabled);
+        applyBtn.setDisable(disabled);
+        vbListChiTietHoaDon.setDisable(disabled);
+    }
+
+    private void showWarning(String title, String header, String content) {
+        Alert alert = new Alert(Alert.AlertType.WARNING);
+        alert.setTitle(title);
+        alert.setHeaderText(header);
+        alert.setContentText(content);
+        alert.showAndWait();
+    }
+
+    private boolean processTraThuoc(String lyDoTra, ArrayList<ChiTietHoaDonDTO> selectedSnapshot) {
+        try {
+            if (hoaDonDTO == null || selectedSnapshot == null || selectedSnapshot.isEmpty()) {
+                return false;
+            }
+
+            for (ChiTietHoaDonDTO ct : selectedSnapshot) {
+                if (ct == null || ct.getMaHD() == null || ct.getMaLoThuocDTO() == null) {
+                    return false;
+                }
+                if (!clientManager.softDeleteChiTietHoaDon(ct.getMaHD().getMaHD(), ct.getMaLoThuocDTO().getMaLoThuoc(), "Trả")) {
+                    return false;
+                }
+
+                if (canCongLaiKho(lyDoTra)) {
+                    if (!clientManager.updateLoThuocQuantity(ct.getMaLoThuocDTO().getMaLoThuoc(), ct.getSoLuong())) {
+                        return false;
+                    }
+                }
+            }
+
+            if (clientManager.getChiTietHoaDonConBanByHoaDonId(hoaDonDTO.getMaHD()).isEmpty()) {
+                // Keep invoice for history; only set total to 0.
+                hoaDonDTO.setTongTien(0);
+                return clientManager.updateHoaDonTongTien(hoaDonDTO.getMaHD(), 0);
+            }
+
+            double tongTienCu = hoaDonDTO.getTongTien();
+            double tongTienTra = 0;
+            double tongTienCoKM = 0;
+            for (ChiTietHoaDonDTO ct : selectedSnapshot) {
+                LoThuocDTO ctt = ct == null ? null : ct.getMaLoThuocDTO();
+                ThuocDTO t = ctt == null || ctt.getMaThuocDTO() == null ? null : clientManager.getThuocById(ctt.getMaThuocDTO().getMaThuoc());
+                if (t == null) {
+                    continue;
+                }
+                if (isThuocMoiKhiDoi(ct)) {
+                    tongTienTra += ct.getThanhTien() * (1 + t.getThue());
+                } else {
+                    tongTienCoKM += ct.getThanhTien() * (1 + t.getThue());
+                }
+            }
+            KhuyenMaiDTO km = null;
+
+            if (hoaDonDTO.getMaKM() != null) {
+                km = clientManager.getKhuyenMaiById(hoaDonDTO.getMaKM().getMaKM());
+            }
+
+            if (km != null) {
+                tongTienCoKM = TinhTienKhuyenMai(tongTienCoKM, km.getSo());
+            }
+
+            double tongMoi = tongTienCu - tongTienTra - tongTienCoKM;
+            hoaDonDTO.setTongTien(tongMoi);
+            return clientManager.updateHoaDonTongTien(hoaDonDTO.getMaHD(), tongMoi);
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    private boolean isTrangThai(ChiTietHoaDonDTO chiTietHoaDonDTO, String tinhTrang) {
+        return chiTietHoaDonDTO != null && tinhTrang != null && tinhTrang.equals(chiTietHoaDonDTO.getTinhTrang());
+    }
+
+    private boolean isThuocMoiKhiDoi(ChiTietHoaDonDTO chiTietHoaDonDTO) {
+        return isTrangThai(chiTietHoaDonDTO, "Thuốc Mới Khi Đổi");
+    }
+
+    private boolean isDaTra(ChiTietHoaDonDTO chiTietHoaDonDTO) {
+        return isTrangThai(chiTietHoaDonDTO, "Trả") || isTrangThai(chiTietHoaDonDTO, "Trả Khi Đổi");
+    }
+
+    private boolean canCongLaiKho(String lyDoTra) {
+        if (lyDoTra == null) {
+            return false;
+        }
+        return switch (lyDoTra) {
+            case "Khách hàng đổi ý", "Nhập nhầm lô / dư", "Sai thông tin đơn / bảo hiểm" -> true;
+            default -> false;
+        };
     }
 }

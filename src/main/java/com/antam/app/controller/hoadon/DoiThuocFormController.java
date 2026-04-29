@@ -9,6 +9,7 @@ import com.antam.app.connect.ConnectDB;
 import com.antam.app.network.ClientManager;
 import com.antam.app.dto.*;
 import javafx.collections.ObservableList;
+import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -48,6 +49,18 @@ public class DoiThuocFormController extends DialogPane{
     private ArrayList<ChiTietHoaDonDTO> chiTietHoaDons;
     private int soLuongThuoc = 0;
     private int soLuongThuocDoi = 0;
+
+    private static final class ThuocMoiSelection {
+        private final ThuocDTO thuoc;
+        private final DonViTinhDTO donViTinh;
+        private final int soLuong;
+
+        private ThuocMoiSelection(ThuocDTO thuoc, DonViTinhDTO donViTinh, int soLuong) {
+            this.thuoc = thuoc;
+            this.donViTinh = donViTinh;
+            this.soLuong = soLuong;
+        }
+    }
 
     public void setHoaDon(HoaDonDTO hoaDonDTO) {
         this.hoaDonDTO = hoaDonDTO;
@@ -299,228 +312,57 @@ public class DoiThuocFormController extends DialogPane{
         btnApply.addEventFilter(ActionEvent.ACTION, event -> {
             String lyDo = cbLyDoDoi.getValue();
             if (lyDo == null || lyDo.trim().isEmpty()) {
-                Alert alert = new Alert(Alert.AlertType.WARNING);
-                alert.setTitle("Cảnh báo");
-                alert.setHeaderText("Chưa chọn lý do trả thuốc");
-                alert.setContentText("Vui lòng chọn lý do trả trước khi xác nhận.");
-                alert.showAndWait();
+                showWarning("Cảnh báo", "Chưa chọn lý do trả thuốc", "Vui lòng chọn lý do trả trước khi xác nhận.");
                 event.consume();
                 return;
             }
             if (selectedItems.isEmpty()) {
-                Alert alert = new Alert(Alert.AlertType.WARNING);
-                alert.setTitle("Cảnh báo");
-                alert.setHeaderText("Chưa chọn thuốc để đổi");
-                alert.setContentText("Vui lòng chọn ít nhất một thuốc để đổi.");
-                alert.showAndWait();
+                showWarning("Cảnh báo", "Chưa chọn thuốc để đổi", "Vui lòng chọn ít nhất một thuốc để đổi.");
                 event.consume();
+                return;
             }
             if (vhDSCTHDM.getChildren().isEmpty()) {
-                Alert alert = new Alert(Alert.AlertType.WARNING);
-                alert.setTitle("Cảnh báo");
-                alert.setHeaderText("Chưa thêm thuốc mới để đổi");
-                alert.setContentText("Vui lòng thêm ít nhất một thuốc mới để đổi.");
-                alert.showAndWait();
+                showWarning("Cảnh báo", "Chưa thêm thuốc mới để đổi", "Vui lòng thêm ít nhất một thuốc mới để đổi.");
                 event.consume();
+                return;
             }
             if (!checkThongTinThuoc()) {
-                Alert alert = new Alert(Alert.AlertType.WARNING);
-                alert.setTitle("Cảnh báo");
-                alert.setHeaderText("Thông tin thuốc mới không hợp lệ");
-                alert.setContentText("Vui lòng kiểm tra lại thông tin thuốc mới.");
-                alert.showAndWait();
+                showWarning("Cảnh báo", "Thông tin thuốc mới không hợp lệ", "Vui lòng kiểm tra lại thông tin thuốc mới.");
                 event.consume();
+                return;
             }
-            else {
-                // BƯỚC 1: Validate tất cả dữ liệu TRƯỚC khi xóa/sửa gì cả
-                boolean validationPassed = true;
-                String validationMessage = "";
 
-                for (Node node : vhDSCTHDM.getChildren()) {
-                    if (node instanceof HBox hBox) {
-                        VBox vbThuoc = (VBox) hBox.getChildren().get(0);
-                        VBox vbDVT = (VBox) hBox.getChildren().get(1);
-                        VBox vbSoLuong = (VBox) hBox.getChildren().get(2);
+            ArrayList<ChiTietHoaDonDTO> selectedSnapshot = new ArrayList<>(selectedItems);
+            ArrayList<ThuocMoiSelection> thuocMoiSelections = collectThuocMoiSelections();
 
-                        ComboBox<ThuocDTO> comboThuoc = (ComboBox<ThuocDTO>) vbThuoc.getChildren().get(1);
-                        ComboBox<DonViTinhDTO> comboDonVi = (ComboBox<DonViTinhDTO>) vbDVT.getChildren().get(1);
-                        Spinner<Integer> spinnerSoLuong = (Spinner<Integer>) vbSoLuong.getChildren().get(1);
+            Task<Boolean> applyTask = new Task<>() {
+                @Override
+                protected Boolean call() {
+                    return processDoiThuoc(lyDo, selectedSnapshot, thuocMoiSelections);
+                }
+            };
 
-                        if (comboThuoc.getValue() != null && comboDonVi.getValue() != null && spinnerSoLuong.getValue() != null) {
-                            ThuocDTO t = comboThuoc.getValue();
-                            int soLuong = spinnerSoLuong.getValue();
-                            ArrayList<LoThuocDTO> listCTT = new ArrayList<>(clientManager.getLoThuocFefoByThuocId(t.getMaThuoc()));
-                            ArrayList<LoThuocDTO> danhSachLoHopLe = new ArrayList<>();
-                            int tongSoLuong = 0;
-
-                            for (LoThuocDTO cts : listCTT) {
-                                boolean daTonTaiTrongHoaDon = clientManager.tonTaiChiTietHoaDon(
-                                        hoaDonDTO.getMaHD(),
-                                        cts.getMaLoThuoc()
-                                );
-                                if (!daTonTaiTrongHoaDon) {
-                                    danhSachLoHopLe.add(cts);
-                                    tongSoLuong += cts.getSoLuong();
-                                }
-                            }
-
-                            if (tongSoLuong < soLuong) {
-                                validationPassed = false;
-                                validationMessage = "Số lượng thuốc trong kho không đủ hoặc bị trùng lô";
-                                break;
-                            }
-
-                            // Check xem đã có 2 dòng "Thuốc Mới Khi Đổi" cho lô nào không
-                            for (LoThuocDTO ctt : danhSachLoHopLe) {
-                                int countThuocMoiKhiDoi = chiTietHoaDons.stream()
-                                    .filter(ct -> ct.getMaLoThuocDTO().getMaLoThuoc() == ctt.getMaLoThuoc()
-                                               && "Thuốc Mới Khi Đổi".equals(ct.getTinhTrang()))
-                                    .toList()
-                                    .size();
-
-                                if (countThuocMoiKhiDoi >= 2) {
-                                    validationPassed = false;
-                                    validationMessage = "Lô thuốc này đã được mua 2 lần trong hóa đơn này. Không thể mua thêm nữa.";
-                                    break;
-                                }
-                            }
-
-                            if (!validationPassed) {
-                                break;
-                            }
-                        }
+            applyTask.setOnRunning(e -> setFormDisabled(true, btnApply));
+            applyTask.setOnSucceeded(e -> {
+                setFormDisabled(false, btnApply);
+                if (Boolean.TRUE.equals(applyTask.getValue())) {
+                    if (getScene() != null && getScene().getWindow() != null) {
+                        getScene().getWindow().hide();
                     }
+                } else {
+                    showWarning("Cảnh báo", "Không thể thực hiện giao dịch", "Server không xử lý được yêu cầu đổi thuốc.");
                 }
+            });
+            applyTask.setOnFailed(e -> {
+                setFormDisabled(false, btnApply);
+                Throwable ex = applyTask.getException();
+                showWarning("Lỗi", "Đổi thuốc thất bại", ex == null ? "Lỗi kết nối tới server!" : ex.getMessage());
+            });
 
-                // Nếu validation không pass, hiển thị cảnh báo và RETURN (không làm gì cả)
-                if (!validationPassed) {
-                    Alert alert = new Alert(Alert.AlertType.WARNING);
-                    alert.setTitle("Cảnh báo");
-                    alert.setHeaderText("Không thể thực hiện giao dịch");
-                    alert.setContentText(validationMessage);
-                    alert.showAndWait();
-                    event.consume();
-                    return;
-                }
-
-                // BƯỚC 2: Validation passed, giờ mới bắt đầu xóa/sửa
-                for (ChiTietHoaDonDTO ct : selectedItems) {
-                    clientManager.softDeleteChiTietHoaDon(ct.getMaHD().getMaHD(), ct.getMaLoThuocDTO().getMaLoThuoc(), "Trả Khi Đổi");
-                    switch (lyDo) {
-                        // Các lý do KHÔNG cộng lại vào kho
-                        case "Hết hạn sử dụng":
-                        case "Bao bì bị hư hỏng":
-                        case "Thuốc lỗi / hư hỏng":
-                        case "Thuốc bị thu hồi":
-                            // Không làm gì cả
-                            break;
-
-                        // Các lý do CÓ cộng lại vào kho
-                        case "Khách hàng đổi ý":
-                        case "Nhập nhầm lô / dư":
-                        case "Sai thông tin đơn / bảo hiểm":
-                            clientManager.updateLoThuocQuantity(
-                                    ct.getMaLoThuocDTO().getMaLoThuoc(),
-                                    ct.getSoLuong()
-                            );
-                            break;
-
-                        default:
-                            System.out.println("Lý do trả không hợp lệ: " + lyDo);
-                            break;
-                    }
-                }
-
-                // BƯỚC 3: Insert các chi tiết hóa đơn mới
-                for (Node node : vhDSCTHDM.getChildren()) {
-                    if (node instanceof HBox hBox) {
-                        VBox vbThuoc = (VBox) hBox.getChildren().get(0);
-                        VBox vbDVT = (VBox) hBox.getChildren().get(1);
-                        VBox vbSoLuong = (VBox) hBox.getChildren().get(2);
-
-                        ComboBox<ThuocDTO> comboThuoc = (ComboBox<ThuocDTO>) vbThuoc.getChildren().get(1);
-                        ComboBox<DonViTinhDTO> comboDonVi = (ComboBox<DonViTinhDTO>) vbDVT.getChildren().get(1);
-                        Spinner<Integer> spinnerSoLuong = (Spinner<Integer>) vbSoLuong.getChildren().get(1);
-
-                        if (comboThuoc.getValue() != null && comboDonVi.getValue() != null && spinnerSoLuong.getValue() != null) {
-                            ThuocDTO t = comboThuoc.getValue();
-                            int soLuong = spinnerSoLuong.getValue();
-                            ArrayList<LoThuocDTO> listCTT = new ArrayList<>(clientManager.getLoThuocFefoByThuocId(t.getMaThuoc()));
-                            ArrayList<LoThuocDTO> danhSachLoHopLe = new ArrayList<>();
-                            double tongTienMua = 0;
-
-                            for (LoThuocDTO cts : listCTT) {
-                                boolean daTonTaiTrongHoaDon = clientManager.tonTaiChiTietHoaDon(
-                                        hoaDonDTO.getMaHD(),
-                                        cts.getMaLoThuoc()
-                                );
-                                if (!daTonTaiTrongHoaDon) {
-                                    danhSachLoHopLe.add(cts);
-                                }
-                            }
-
-                            for (LoThuocDTO ctt : danhSachLoHopLe) {
-                                if (ctt.getSoLuong() >= soLuong) {
-                                    ChiTietHoaDonDTO newCTHD = new ChiTietHoaDonDTO(
-                                            hoaDonDTO,
-                                            ctt,
-                                            soLuong,
-                                            comboDonVi.getValue(),
-                                            "Thuốc Mới Khi Đổi",
-                                            t.getGiaBan() * soLuong
-                                    );
-                                    clientManager.createChiTietHoaDon(newCTHD);
-                                    clientManager.updateLoThuocQuantity(ctt.getMaLoThuoc(), -soLuong);
-                                    tongTienMua += Math.round(t.getGiaBan() * soLuong * (1 + t.getThue()) * 100.0) / 100.0;
-                                    break;
-                                } else {
-                                    soLuong -= ctt.getSoLuong();
-                                    ChiTietHoaDonDTO newCTHD = new ChiTietHoaDonDTO(
-                                            hoaDonDTO,
-                                            ctt,
-                                            ctt.getSoLuong(),
-                                            comboDonVi.getValue(),
-                                            "Thuốc Mới Khi Đổi",
-                                            t.getGiaBan() * ctt.getSoLuong()
-                                    );
-                                    clientManager.createChiTietHoaDon(newCTHD);
-                                    clientManager.updateLoThuocQuantity(ctt.getMaLoThuoc(), -ctt.getSoLuong());
-                                    tongTienMua += Math.round(t.getGiaBan() * ctt.getSoLuong() * (1 + t.getThue()) * 100.0) / 100.0;
-                                }
-                            }
-
-                            double tongTienCu = hoaDonDTO.getTongTien();
-                            double tongTienTra = 0;
-                            double tongTienCoKM = 0;
-                            for (ChiTietHoaDonDTO ct : selectedItems) {
-                                LoThuocDTO ctt = ct.getMaLoThuocDTO();
-                                ThuocDTO thuocDTO = clientManager.getThuocById(ctt.getMaThuocDTO().getMaThuoc());
-                                if (thuocDTO == null) {
-                                    continue;
-                                }
-                                if (!ct.getTinhTrang().equals("Thuốc Mới Khi Đổi")){
-                                    tongTienCoKM += ct.getThanhTien() * (1 + thuocDTO.getThue());
-                                }else{
-                                    tongTienTra += ct.getThanhTien() * (1 + thuocDTO.getThue());
-                                }
-                            }
-                            if (hoaDonDTO.getMaKM() != null) {
-                                String maKM = hoaDonDTO.getMaKM().getMaKM();
-                                KhuyenMaiDTO km = clientManager.getKhuyenMaiById(maKM);
-
-                                if (km != null) {
-                                    tongTienCoKM = TinhTienKhuyenMai(tongTienCoKM, km.getSo());
-                                }
-                            }
-
-                            clientManager.updateHoaDonTongTien(hoaDonDTO.getMaHD(), tongTienCu - tongTienCoKM - tongTienTra + tongTienMua);
-
-                        }
-
-                    }
-                }
-
-            }
+            Thread thread = new Thread(applyTask, "doi-thuoc-apply-task");
+            thread.setDaemon(true);
+            thread.start();
+            event.consume();
         });
         // Them gia tri cho combobox ly do
         addValueCombobox();
@@ -550,7 +392,7 @@ public class DoiThuocFormController extends DialogPane{
             h.setManaged(false);
             return h;
         }
-        if (chiTietHoaDonDTO.getTinhTrang().equals("Trả") || chiTietHoaDonDTO.getTinhTrang().equals("Trả Khi Đổi")) {
+        if (isDaTra(chiTietHoaDonDTO)) {
             HBox h = new HBox();
             h.setVisible(false);
             h.setManaged(false);
@@ -565,11 +407,13 @@ public class DoiThuocFormController extends DialogPane{
 
         CheckBox checkBox = new CheckBox();
         checkBox.setOnAction(event -> {
-            if (chiTietHoaDonDTO.getTinhTrang().equals("Bán")) {
+            if (isBan(chiTietHoaDonDTO)) {
                 soLuongThuocDoi += checkBox.isSelected() ? 1 : -1;
             }
             if (checkBox.isSelected()) {
-                selectedItems.add(chiTietHoaDonDTO);
+                if (!selectedItems.contains(chiTietHoaDonDTO)) {
+                    selectedItems.add(chiTietHoaDonDTO);
+                }
             } else {
                 selectedItems.remove(chiTietHoaDonDTO);
             }
@@ -586,11 +430,7 @@ public class DoiThuocFormController extends DialogPane{
         Text txtDonGia = new Text(df.format(chiTietHoaDonDTO.getThanhTien()));
         txtDonGia.setStyle("-fx-font-size: 15px;");
         String valueBtn = "Bình thường";
-        if (chiTietHoaDonDTO.getTinhTrang().equals("Trả")) {
-            valueBtn = "Đã trả";
-        } else if (chiTietHoaDonDTO.getTinhTrang().equals("Trả Khi Đổi")) {
-            valueBtn = "Đã đổi";
-        } else if (chiTietHoaDonDTO.getTinhTrang().equals("Thuốc Mới Khi Đổi")){
+        if (isThuocMoiKhiDoi(chiTietHoaDonDTO)) {
             valueBtn = "Thuốc đổi";
         }
         Button btn = new Button(valueBtn);
@@ -605,33 +445,30 @@ public class DoiThuocFormController extends DialogPane{
         return hBox;
     }
 
-
     public void renderChiTietHoaDonDoi(VBox vbox) {
-        HBox hBox = new HBox();
-        hBox.setSpacing(20);
-        hBox.setStyle(
-                "-fx-background-color: #f8fafc;" +
-                "-fx-padding: 10;"
-        );
-        hBox.setAlignment(Pos.CENTER);
-        VBox vbThuoc = new VBox();
+        HBox hBox = new HBox(20);
+        hBox.setAlignment(Pos.CENTER_LEFT);
+        hBox.setStyle("-fx-background-color: #f8fafc; -fx-padding: 10;");
+
+        VBox vbThuoc = new VBox(4);
+        VBox vbDVT = new VBox(4);
+        VBox vbSoLuong = new VBox(4);
+
         ComboBox<ThuocDTO> comboBoxThuoc = new ComboBox<>();
         configureThuocComboBox(comboBoxThuoc);
-        comboBoxThuoc.getStylesheets().add(
-                getClass().getResource("/com/antam/app/styles/dashboard_style.css").toExternalForm()
-        );
+        comboBoxThuoc.getStylesheets().add(getClass().getResource("/com/antam/app/styles/dashboard_style.css").toExternalForm());
         comboBoxThuoc.setPromptText("Chọn thuốc");
-
-        ArrayList<ThuocDTO> thuocs = new ArrayList<ThuocDTO>((Collection<? extends ThuocDTO>) clientManager.getThuocList());
-        for (ThuocDTO t : thuocs) {
-            comboBoxThuoc.getItems().add(t);
+        for (Object obj : clientManager.getThuocList()) {
+            if (obj instanceof ThuocDTO thuocDTO) {
+                comboBoxThuoc.getItems().add(thuocDTO);
+            }
         }
-        VBox vbDVT = new VBox();
+
         ComboBox<DonViTinhDTO> comboBoxDVT = new ComboBox<>();
         configureDonViTinhComboBox(comboBoxDVT);
-        comboBoxDVT.getStylesheets().add(
-                getClass().getResource("/com/antam/app/styles/dashboard_style.css").toExternalForm()
-        );
+        comboBoxDVT.getStylesheets().add(getClass().getResource("/com/antam/app/styles/dashboard_style.css").toExternalForm());
+        comboBoxDVT.setPromptText("Chọn đơn vị tính");
+
         comboBoxThuoc.setOnAction(event -> {
             comboBoxDVT.getItems().clear();
             ThuocDTO selectedThuoc = comboBoxThuoc.getValue();
@@ -644,40 +481,104 @@ public class DoiThuocFormController extends DialogPane{
             }
             tinhTongTien();
         });
-        comboBoxDVT.setOnAction(event -> {
-            tinhTongTien();
-        });
-        comboBoxDVT.setPromptText("Chọn đơn vị tính");
-        VBox vbSoLuong = new VBox();
+        comboBoxDVT.setOnAction(event -> tinhTongTien());
+
         Spinner<Integer> spinnerSoLuong = new Spinner<>();
-        spinnerSoLuong.getStylesheets().add(
-                getClass().getResource("/com/antam/app/styles/dashboard_style.css").toExternalForm()
-        );
-        spinnerSoLuong.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(1, 1000, 0, 1));
+        spinnerSoLuong.getStylesheets().add(getClass().getResource("/com/antam/app/styles/dashboard_style.css").toExternalForm());
+        spinnerSoLuong.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(1, 1000, 1, 1));
+        spinnerSoLuong.valueProperty().addListener((obs, oldValue, newValue) -> tinhTongTien());
 
-        spinnerSoLuong.valueProperty().addListener((obs, oldValue, newValue) -> {
-            tinhTongTien();
-        });
-        spinnerSoLuong.setPromptText("Nhập số lượng");
-        Button btn = new Button("X");
-        btn.setStyle(
-                "-fx-padding: 10 15 10 15;" +
-                "-fx-background-color: #ef4444;" +
-                "-fx-background-radius: 50%;" +
-                "-fx-text-fill: white;" +
-                "-fx-font-size: 12px;" +
-                "-fx-font-weight: BOLD;"
-        );
+        vbThuoc.getChildren().addAll(new Text("Thuốc đổi:"), comboBoxThuoc);
+        vbDVT.getChildren().addAll(new Text("Đơn vị tính:"), comboBoxDVT);
+        vbSoLuong.getChildren().addAll(new Text("Số lượng:"), spinnerSoLuong);
 
-        btn.setOnAction(event -> {
+        Button btnRemove = new Button("X");
+        btnRemove.setStyle("-fx-padding: 10 15 10 15; -fx-background-color: #ef4444; -fx-background-radius: 50%; -fx-text-fill: white; -fx-font-weight: BOLD;");
+        btnRemove.setOnAction(event -> {
             vbox.getChildren().remove(hBox);
             tinhTongTien();
         });
-        vbThuoc.getChildren().addAll(new Text("Thuốc Bán: "),comboBoxThuoc);
-        vbDVT.getChildren().addAll(new Text("Đơn Vị Tính: "),comboBoxDVT);
-        vbSoLuong.getChildren().addAll(new Text("Số Lượng: "),spinnerSoLuong);
-        hBox.getChildren().addAll(vbThuoc, vbDVT, vbSoLuong , btn);
+
+        hBox.getChildren().addAll(vbThuoc, vbDVT, vbSoLuong, btnRemove);
         vbox.getChildren().add(hBox);
+        tinhTongTien();
+    }
+
+    public void tinhTongTien() {
+        double tongTienTraCoKM = 0;
+        double tongTienKhiTra = 0;
+        for (ChiTietHoaDonDTO ct : selectedItems) {
+            if (ct == null || ct.getMaLoThuocDTO() == null || ct.getMaLoThuocDTO().getMaThuocDTO() == null) {
+                continue;
+            }
+            LoThuocDTO ctt = ct.getMaLoThuocDTO();
+            ThuocDTO t = clientManager.getThuocById(ctt.getMaThuocDTO().getMaThuoc());
+            if (t == null) {
+                continue;
+            }
+            if (isThuocMoiKhiDoi(ct)) {
+                tongTienKhiTra += ct.getThanhTien() * (1 + t.getThue());
+            } else {
+                tongTienTraCoKM += ct.getThanhTien() * (1 + t.getThue());
+            }
+        }
+
+        double tongTienMua = 0;
+        for (Node node : vhDSCTHDM.getChildren()) {
+            if (node instanceof HBox hBox) {
+                VBox vbThuoc = (VBox) hBox.getChildren().get(0);
+                VBox vbDVT = (VBox) hBox.getChildren().get(1);
+                VBox vbSoLuong = (VBox) hBox.getChildren().get(2);
+                ComboBox<ThuocDTO> comboThuoc = (ComboBox<ThuocDTO>) vbThuoc.getChildren().get(1);
+                ComboBox<DonViTinhDTO> comboDonVi = (ComboBox<DonViTinhDTO>) vbDVT.getChildren().get(1);
+                Spinner<Integer> spinnerSoLuong = (Spinner<Integer>) vbSoLuong.getChildren().get(1);
+                if (comboThuoc.getValue() != null && comboDonVi.getValue() != null && spinnerSoLuong.getValue() != null) {
+                    ThuocDTO t = comboThuoc.getValue();
+                    tongTienMua += t.getGiaBan() * spinnerSoLuong.getValue() * (1 + t.getThue());
+                }
+            }
+        }
+
+        DecimalFormat df = new DecimalFormat("#,### đ");
+        KhuyenMaiDTO km = null;
+        if (hoaDonDTO != null && hoaDonDTO.getMaKM() != null) {
+            km = clientManager.getKhuyenMaiById(hoaDonDTO.getMaKM().getMaKM());
+        }
+
+        if (km != null && tongTienTraCoKM > 0) {
+            tongTienTraCoKM = TinhTienKhuyenMai(tongTienTraCoKM, km.getSo());
+            txtTongTienTra.setText(df.format(tongTienTraCoKM + tongTienKhiTra) + " (KM chỉ áp dụng cho thuốc mua)");
+        } else {
+            txtTongTienTra.setText(df.format(tongTienTraCoKM + tongTienKhiTra));
+        }
+
+        txtTongTienMua.setText(df.format(tongTienMua));
+        double tienDoi = tongTienMua - (tongTienTraCoKM + tongTienKhiTra);
+        if (tienDoi >= 0) {
+            txtTongTienDoi.setText("Tổng kết: " + df.format(tienDoi));
+            txtThongBaoDoi.setText("Khách hàng cần trả thêm");
+        } else {
+            txtTongTienDoi.setText("Tổng kết: " + df.format(-tienDoi));
+            txtThongBaoDoi.setText("Tiền thừa trả khách");
+        }
+    }
+
+    public boolean checkThongTinThuoc() {
+        for (Node node : vhDSCTHDM.getChildren()) {
+            if (node instanceof HBox hBox) {
+                VBox vbThuoc = (VBox) hBox.getChildren().get(0);
+                VBox vbDVT = (VBox) hBox.getChildren().get(1);
+                VBox vbSoLuong = (VBox) hBox.getChildren().get(2);
+
+                ComboBox<ThuocDTO> comboThuoc = (ComboBox<ThuocDTO>) vbThuoc.getChildren().get(1);
+                ComboBox<DonViTinhDTO> comboDonVi = (ComboBox<DonViTinhDTO>) vbDVT.getChildren().get(1);
+                Spinner<Integer> spinnerSoLuong = (Spinner<Integer>) vbSoLuong.getChildren().get(1);
+                if (comboThuoc.getValue() == null || comboDonVi.getValue() == null || spinnerSoLuong.getValue() == null || spinnerSoLuong.getValue() <= 0) {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 
     private void configureThuocComboBox(ComboBox<ThuocDTO> comboBox) {
@@ -722,96 +623,246 @@ public class DoiThuocFormController extends DialogPane{
         });
     }
 
-    public void tinhTongTien() {
-        double tongTienTraCoKM = 0;
-        double tongTienKhiTra = 0;
-        for (ChiTietHoaDonDTO ct : selectedItems) {
-            LoThuocDTO ctt = ct.getMaLoThuocDTO();
-            ThuocDTO t = clientManager.getThuocById(ctt.getMaThuocDTO().getMaThuoc());
-            if (t == null) {
-                continue;
-            }
-            if ("Thuốc Mới Khi Đổi".equals(ct.getTinhTrang())){
-                tongTienKhiTra += ct.getThanhTien() * (1 + t.getThue());
-            } else {
-                tongTienTraCoKM += ct.getThanhTien() * (1 + t.getThue());
-            }
+    private String getDisplayTenThuoc(ThuocDTO thuocDTO, LoThuocDTO loThuocDTO) {
+        if (thuocDTO != null && thuocDTO.getTenThuoc() != null) {
+            return thuocDTO.getTenThuoc();
         }
-
-        double tongTienMua = 0;
-        for (Node node : vhDSCTHDM.getChildren()) {
-            if (node instanceof HBox hBox) {
-                VBox vbThuoc = (VBox) hBox.getChildren().get(0);
-                VBox vbDVT = (VBox) hBox.getChildren().get(1);
-                VBox vbSoLuong = (VBox) hBox.getChildren().get(2);
-
-                ComboBox<ThuocDTO> comboThuoc = (ComboBox<ThuocDTO>) vbThuoc.getChildren().get(1);
-                ComboBox<DonViTinhDTO> comboDonVi = (ComboBox<DonViTinhDTO>) vbDVT.getChildren().get(1);
-                Spinner<Integer> spinnerSoLuong = (Spinner<Integer>) vbSoLuong.getChildren().get(1);
-                if (comboThuoc.getValue() != null && comboDonVi.getValue() != null && spinnerSoLuong.getValue() != null) {
-                    ThuocDTO t = comboThuoc.getValue();
-                    int soLuong = spinnerSoLuong.getValue();
-                    tongTienMua += t.getGiaBan() * soLuong * (1 + t.getThue());
-                }
-            }
+        if (loThuocDTO != null && loThuocDTO.getMaThuocDTO() != null && loThuocDTO.getMaThuocDTO().getTenThuoc() != null) {
+            return loThuocDTO.getMaThuocDTO().getTenThuoc();
         }
-
-        DecimalFormat df = new DecimalFormat("#,### đ");
-        KhuyenMaiDTO km = null;
-
-        if (hoaDonDTO.getMaKM() != null) {
-            km = clientManager.getKhuyenMaiById(hoaDonDTO.getMaKM().getMaKM());
-        }
-
-        if (km != null && tongTienTraCoKM > 0) {
-            tongTienTraCoKM = TinhTienKhuyenMai(tongTienTraCoKM, km.getSo());
-            txtTongTienTra.setText(df.format(tongTienTraCoKM + tongTienKhiTra) + " (KM chỉ áp dụng cho thuốc mua)");
-        } else {
-            txtTongTienTra.setText(df.format(tongTienTraCoKM + tongTienKhiTra));
-        }
-
-        txtTongTienMua.setText(df.format(tongTienMua));
-
-        double tienDoi = tongTienMua - (tongTienTraCoKM + tongTienKhiTra);
-        if (tienDoi >= 0) {
-            txtTongTienDoi.setText("Tổng kết: " + df.format(tienDoi));
-            txtThongBaoDoi.setText("Khách hàng cần trả thêm");
-        } else {
-            txtTongTienDoi.setText("Tổng kết: " + df.format(-tienDoi));
-            txtThongBaoDoi.setText("Tiền thừa trả khách");
-        }
+        return "";
     }
+
     public double TinhTienKhuyenMai(double tongTien, double giaSo){
+        if (giaSo >= 1000 && soLuongThuoc <= 0) {
+            return tongTien;
+        }
         double giam = 0;
         if (giaSo < 100) {
             giam = tongTien * giaSo / 100.0;
         } else if (giaSo >= 1000) {
-            giam = giaSo * (soLuongThuocDoi / soLuongThuoc);
-            if (soLuongThuoc <= 0) {
-                return tongTien;
-            }
             giam = giaSo * ((double) soLuongThuocDoi / soLuongThuoc);
         }
         if (giam > tongTien) giam = tongTien;
-        tongTien -= giam;
-        return tongTien;
+        return tongTien - giam;
+    }
+    private void setFormDisabled(boolean disabled, Button btnApply) {
+        txtMaHoaDonDoi.setDisable(disabled);
+        txtKhachHangDoi.setDisable(disabled);
+        cbLyDoDoi.setDisable(disabled);
+        btnThemMoiThuoc.setDisable(disabled);
+        btnApply.setDisable(disabled);
+        vhDSCTHD.setDisable(disabled);
+        vhDSCTHDM.setDisable(disabled);
     }
 
-    public boolean checkThongTinThuoc() {
-        for (Node node : vhDSCTHDM.getChildren()) {
-            if (node instanceof HBox hBox) {
-                VBox vbThuoc = (VBox) hBox.getChildren().get(0);
-                VBox vbDVT = (VBox) hBox.getChildren().get(1);
-                VBox vbSoLuong = (VBox) hBox.getChildren().get(2);
+    private void showWarning(String title, String header, String content) {
+        Alert alert = new Alert(Alert.AlertType.WARNING);
+        alert.setTitle(title);
+        alert.setHeaderText(header);
+        alert.setContentText(content);
+        alert.showAndWait();
+    }
 
-                ComboBox<ThuocDTO> comboThuoc = (ComboBox<ThuocDTO>) vbThuoc.getChildren().get(1);
-                ComboBox<DonViTinhDTO> comboDonVi = (ComboBox<DonViTinhDTO>) vbDVT.getChildren().get(1);
-                Spinner<Integer> spinnerSoLuong = (Spinner<Integer>) vbSoLuong.getChildren().get(1);
-                if (comboThuoc.getValue() == null || comboDonVi.getValue() == null || spinnerSoLuong.getValue() == null || spinnerSoLuong.getValue() <= 0) {
+    private boolean processDoiThuoc(String lyDo, ArrayList<ChiTietHoaDonDTO> selectedSnapshot, ArrayList<ThuocMoiSelection> thuocMoiSelections) {
+        try {
+            if (hoaDonDTO == null) {
+                return false;
+            }
+
+            if (!validateThuocMoiSelections(thuocMoiSelections, selectedSnapshot)) {
+                return false;
+            }
+
+            double tongTienCu = hoaDonDTO.getTongTien();
+            double tongTienTra = 0;
+            double tongTienCoKM = 0;
+            double tongTienMua = 0;
+
+            // 1) Tạo chi tiết thuốc mới trước để tránh trạng thái hóa đơn bị "rỗng" khi có lỗi giữa chừng.
+            for (ThuocMoiSelection selection : thuocMoiSelections) {
+                ThuocDTO t = selection.thuoc;
+                if (t == null || t.getMaThuoc() == null) {
+                    return false;
+                }
+                ArrayList<LoThuocDTO> listCTT = new ArrayList<>(clientManager.getLoThuocFefoByThuocId(t.getMaThuoc()));
+                ArrayList<LoThuocDTO> danhSachLoHopLe = new ArrayList<>();
+                for (LoThuocDTO cts : listCTT) {
+                    if (cts != null && !clientManager.tonTaiChiTietHoaDon(hoaDonDTO.getMaHD(), cts.getMaLoThuoc())) {
+                        danhSachLoHopLe.add(cts);
+                    }
+                }
+
+                int soLuong = selection.soLuong;
+                for (LoThuocDTO ctt : danhSachLoHopLe) {
+                    if (ctt == null) {
+                        continue;
+                    }
+                    int soLuongDung = Math.min(soLuong, ctt.getSoLuong());
+                    if (soLuongDung <= 0) {
+                        continue;
+                    }
+                    ChiTietHoaDonDTO newCTHD = new ChiTietHoaDonDTO(
+                            hoaDonDTO,
+                            ctt,
+                            soLuongDung,
+                            selection.donViTinh,
+                            "Thuốc Mới Khi Đổi",
+                            t.getGiaBan() * soLuongDung
+                    );
+                    if (!clientManager.createChiTietHoaDon(newCTHD)) {
+                        return false;
+                    }
+                    if (!clientManager.updateLoThuocQuantity(ctt.getMaLoThuoc(), -soLuongDung)) {
+                        return false;
+                    }
+                    tongTienMua += Math.round(t.getGiaBan() * soLuongDung * (1 + t.getThue()) * 100.0) / 100.0;
+                    soLuong -= soLuongDung;
+                    if (soLuong <= 0) {
+                        break;
+                    }
+                }
+            }
+
+            // 2) Tính tiền phần thuốc cũ trước khi đổi trạng thái.
+            for (ChiTietHoaDonDTO ct : selectedSnapshot) {
+                LoThuocDTO ctt = ct == null ? null : ct.getMaLoThuocDTO();
+                ThuocDTO thuocDTO = ctt == null || ctt.getMaThuocDTO() == null ? null : clientManager.getThuocById(ctt.getMaThuocDTO().getMaThuoc());
+                if (thuocDTO == null || ct == null || ct.getTinhTrang() == null) {
+                    continue;
+                }
+                if (!isThuocMoiKhiDoi(ct)) {
+                    tongTienCoKM += ct.getThanhTien() * (1 + thuocDTO.getThue());
+                } else {
+                    tongTienTra += ct.getThanhTien() * (1 + thuocDTO.getThue());
+                }
+            }
+
+            // 3) Sau khi thêm thuốc mới thành công mới soft-delete thuốc cũ.
+            for (ChiTietHoaDonDTO ct : selectedSnapshot) {
+                if (ct == null || ct.getMaHD() == null || ct.getMaLoThuocDTO() == null) {
+                    return false;
+                }
+                if (!clientManager.softDeleteChiTietHoaDon(ct.getMaHD().getMaHD(), ct.getMaLoThuocDTO().getMaLoThuoc(), "Trả Khi Đổi")) {
+                    return false;
+                }
+                if (canCongLaiKho(lyDo)) {
+                    if (!clientManager.updateLoThuocQuantity(ct.getMaLoThuocDTO().getMaLoThuoc(), ct.getSoLuong())) {
+                        return false;
+                    }
+                }
+            }
+
+            if (hoaDonDTO.getMaKM() != null) {
+                KhuyenMaiDTO km = clientManager.getKhuyenMaiById(hoaDonDTO.getMaKM().getMaKM());
+                if (km != null) {
+                    tongTienCoKM = TinhTienKhuyenMai(tongTienCoKM, km.getSo());
+                }
+            }
+
+            return clientManager.updateHoaDonTongTien(hoaDonDTO.getMaHD(), tongTienCu - tongTienCoKM - tongTienTra + tongTienMua);
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    private boolean validateThuocMoiSelections(ArrayList<ThuocMoiSelection> thuocMoiSelections, ArrayList<ChiTietHoaDonDTO> selectedSnapshot) {
+        if (thuocMoiSelections == null || thuocMoiSelections.isEmpty()) {
+            return false;
+        }
+        for (ThuocMoiSelection selection : thuocMoiSelections) {
+            if (selection == null || selection.thuoc == null || selection.donViTinh == null || selection.soLuong <= 0) {
+                return false;
+            }
+            ArrayList<LoThuocDTO> listCTT = new ArrayList<>(clientManager.getLoThuocFefoByThuocId(selection.thuoc.getMaThuoc()));
+            ArrayList<LoThuocDTO> danhSachLoHopLe = new ArrayList<>();
+            int tongSoLuong = 0;
+            for (LoThuocDTO cts : listCTT) {
+                if (cts == null) {
+                    continue;
+                }
+                boolean daTonTaiTrongHoaDon = clientManager.tonTaiChiTietHoaDon(hoaDonDTO.getMaHD(), cts.getMaLoThuoc());
+                if (!daTonTaiTrongHoaDon || isSelectedLotForReplace(cts.getMaLoThuoc(), selectedSnapshot)) {
+                    danhSachLoHopLe.add(cts);
+                    tongSoLuong += cts.getSoLuong();
+                }
+            }
+            if (tongSoLuong < selection.soLuong) {
+                return false;
+            }
+            for (LoThuocDTO ctt : danhSachLoHopLe) {
+                long countThuocMoiKhiDoi = selectedSnapshot.stream()
+                        .filter(ct -> ct != null && ct.getMaLoThuocDTO() != null && ct.getMaLoThuocDTO().getMaLoThuoc() == ctt.getMaLoThuoc() && isThuocMoiKhiDoi(ct))
+                        .count();
+                if (countThuocMoiKhiDoi >= 2) {
                     return false;
                 }
             }
         }
         return true;
+    }
+
+    private ArrayList<ThuocMoiSelection> collectThuocMoiSelections() {
+        ArrayList<ThuocMoiSelection> results = new ArrayList<>();
+        for (Node node : vhDSCTHDM.getChildren()) {
+            if (node instanceof HBox hBox) {
+                VBox vbThuoc = (VBox) hBox.getChildren().get(0);
+                VBox vbDVT = (VBox) hBox.getChildren().get(1);
+                VBox vbSoLuong = (VBox) hBox.getChildren().get(2);
+
+                ComboBox<ThuocDTO> comboThuoc = (ComboBox<ThuocDTO>) vbThuoc.getChildren().get(1);
+                ComboBox<DonViTinhDTO> comboDonVi = (ComboBox<DonViTinhDTO>) vbDVT.getChildren().get(1);
+                Spinner<Integer> spinnerSoLuong = (Spinner<Integer>) vbSoLuong.getChildren().get(1);
+                ThuocDTO thuoc = comboThuoc.getValue();
+                DonViTinhDTO dvt = comboDonVi.getValue();
+                Integer soLuong = spinnerSoLuong.getValue();
+                if (thuoc != null && dvt != null && soLuong != null && soLuong > 0) {
+                    results.add(new ThuocMoiSelection(thuoc, dvt, soLuong));
+                }
+            }
+        }
+        return results;
+    }
+
+    private boolean isSelectedLotForReplace(int maLoThuoc, ArrayList<ChiTietHoaDonDTO> selectedSnapshot) {
+        if (selectedSnapshot == null) {
+            return false;
+        }
+        for (ChiTietHoaDonDTO ct : selectedSnapshot) {
+            if (ct != null && ct.getMaLoThuocDTO() != null && ct.getMaLoThuocDTO().getMaLoThuoc() == maLoThuoc) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean isTrangThai(ChiTietHoaDonDTO chiTietHoaDonDTO, String trangThai) {
+        return chiTietHoaDonDTO != null && trangThai != null && trangThai.equals(chiTietHoaDonDTO.getTinhTrang());
+    }
+
+    private boolean isDaTra(ChiTietHoaDonDTO chiTietHoaDonDTO) {
+        return isTrangThai(chiTietHoaDonDTO, "Trả") || isTrangThai(chiTietHoaDonDTO, "Trả Khi Đổi");
+    }
+
+    private boolean isThuocMoiKhiDoi(ChiTietHoaDonDTO chiTietHoaDonDTO) {
+        return isTrangThai(chiTietHoaDonDTO, "Thuốc Mới Khi Đổi");
+    }
+
+    private boolean isBan(ChiTietHoaDonDTO chiTietHoaDonDTO) {
+        return isTrangThai(chiTietHoaDonDTO, "Bán");
+    }
+
+    private boolean canCongLaiKho(String lyDo) {
+        if (lyDo == null) {
+            return false;
+        }
+        switch (lyDo) {
+            case "Khách hàng đổi ý":
+            case "Nhập nhầm lô / dư":
+            case "Sai thông tin đơn / bảo hiểm":
+                return true;
+            default:
+                return false;
+        }
     }
 }
