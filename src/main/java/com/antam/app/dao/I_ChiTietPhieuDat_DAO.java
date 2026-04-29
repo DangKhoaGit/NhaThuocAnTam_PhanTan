@@ -11,7 +11,7 @@ import java.util.List;
  * @version: 1.0
  */
 public interface I_ChiTietPhieuDat_DAO {
-    void themChiTietPhieuDatVaoDBS(ChiTietPhieuDatThuoc ct);
+    boolean themChiTietPhieuDatVaoDBS(ChiTietPhieuDatThuoc ct);
 
     /**
      * Lấy danh sách chi tiết phiếu đặt thuốc theo mã phiếu đặt thuốc

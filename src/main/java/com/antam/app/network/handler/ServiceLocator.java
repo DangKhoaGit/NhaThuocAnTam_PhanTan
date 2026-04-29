@@ -26,8 +26,15 @@ public class ServiceLocator {
     private final DangDieuChe_Service dangDieuCheService;
     private final Ke_Service keService;
     private final ThongKeTrangChinh_Service thongKeTrangChinhService;
+    private final ThongKeDoanhThu_Service thongKeDoanhThuService;
+    private final ChiTietPhieuDat_Service chiTietPhieuDatService;
+    private final ChiTietPhieuNhap_Service chiTietPhieuNhapService;
+
 
     private ServiceLocator() {
+        this.chiTietPhieuDatService = new ChiTietPhieuDat_Service();
+        this.chiTietPhieuNhapService = new ChiTietPhieuNhap_Service();
+        this.thongKeDoanhThuService = new  ThongKeDoanhThu_Service();
         this.hoaDonService = new HoaDon_Service();
         this.chiTietHoaDonService = new ChiTietHoaDon_Service();
         this.nhanVienService = new NhanVien_Service();
@@ -106,5 +113,17 @@ public class ServiceLocator {
 
     public ThongKeTrangChinh_Service getThongKeTrangChinhService() {
         return thongKeTrangChinhService;
+    }
+
+    public ThongKeDoanhThu_Service getThongKeDoanhThuService() {
+        return thongKeDoanhThuService;
+    }
+
+    public ChiTietPhieuDat_Service getChiTietPhieuDatService() {
+        return chiTietPhieuDatService;
+    }
+
+    public ChiTietPhieuNhap_Service getChiTietPhieuNhapService() {
+        return chiTietPhieuNhapService;
     }
 }

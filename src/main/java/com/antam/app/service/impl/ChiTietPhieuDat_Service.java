@@ -34,10 +34,10 @@ public class ChiTietPhieuDat_Service  implements I_ChiTietPhieuDat_Service {
     }
 
     @Override
-    public void themChiTietPhieuDatVaoDBS(ChiTietPhieuDatThuocDTO ct) {
+    public boolean themChiTietPhieuDatVaoDBS(ChiTietPhieuDatThuocDTO ct) {
         try {
             ChiTietPhieuDatThuoc entity = mapDTOToEntity(ct);
-            chiTietDAO.themChiTietPhieuDatVaoDBS(entity);
+            return chiTietDAO.themChiTietPhieuDatVaoDBS(entity);
         } catch (Exception e) {
             throw new RuntimeException("Loi khi them chi tiet phieu dat", e);
         }
