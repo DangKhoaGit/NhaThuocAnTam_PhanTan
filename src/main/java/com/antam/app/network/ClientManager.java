@@ -831,4 +831,33 @@ public class ClientManager {
     public Boolean khoiPhucDonViTinh(DonViTinhDTO donViTinhDTO) {
         return send(RequestBuilder.khoiPhucDonViTinh(donViTinhDTO));
     }
+
+    public List<DangDieuCheDTO> getDangDieuCheList() {
+        return  send(RequestBuilder.getDangDieuCheList());
+    }
+
+    public String taoMaDCCTuDong() {
+        return send(RequestBuilder.taoMaDCCTuDong());
+    }
+
+    public Boolean createDangDieuChe(DangDieuCheDTO dangDieuCheDTO) {
+        return send(RequestBuilder.createDangDieuChe(dangDieuCheDTO));
+    }
+
+    public DangDieuCheDTO getDDCTheoName(String tenDDC) {
+        return send(RequestBuilder.getDDCTheoName(tenDDC));
+
+    }
+
+    public Boolean suaDangDieuChe(DangDieuCheDTO dangDieuCheDTO) {
+        return send(RequestBuilder.suaDangDieuChe(dangDieuCheDTO));
+    }
+
+    public Boolean xoaDangDieuChe(int i) {
+        return send(RequestBuilder.xoaDangDieuChe(i));
+    }
+
+    public Boolean khoiPhucDangDieuChe(int i) {
+        return send(RequestBuilder.khoiPhucDangDieuChe(i));
+    }
 }

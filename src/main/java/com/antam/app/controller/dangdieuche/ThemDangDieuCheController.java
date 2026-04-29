@@ -6,18 +6,22 @@
 package com.antam.app.controller.dangdieuche;
 
 import com.antam.app.connect.ConnectDB;
-import com.antam.app.service.impl.DangDieuChe_Service;
+import com.antam.app.network.ClientManager;
 import com.antam.app.dto.DangDieuCheDTO;
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcon;
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcons;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.concurrent.Task;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
+
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.effect.DropShadow;
@@ -31,8 +35,7 @@ public class ThemDangDieuCheController extends ScrollPane{
     private TableView<DangDieuCheDTO> tbDangDieuChe;
     private TextField tfMaDangDieuChe, tfTenDangDieuChe;
     private Button btnThem;
-    private DangDieuChe_Service dangDieuChe_DAO = new DangDieuChe_Service();
-
+    private ClientManager clientManager = ClientManager.getInstance();
     /* Lấy dữ liệu từ DAO */
     private ArrayList<DangDieuCheDTO> dsDangDieuChe;
     private ObservableList<DangDieuCheDTO> data = FXCollections.observableArrayList();
@@ -142,29 +145,108 @@ public class ThemDangDieuCheController extends ScrollPane{
             throw new RuntimeException(e);
         }
 
-        dsDangDieuChe =  dangDieuChe_DAO.getTatCaDangDieuChe();
-        data.setAll(dsDangDieuChe);
-        tbDangDieuChe.setItems(data);
+        Task<List<DangDieuCheDTO>> loadDataTask = new Task<List<DangDieuCheDTO>>() {
+            @Override
+            protected List<DangDieuCheDTO> call() throws Exception {
+                return clientManager.getDangDieuCheList();
+            }
+        };
+
+        loadDataTask.setOnSucceeded(e -> {
+
+            dsDangDieuChe =  new ArrayList<>(loadDataTask.getValue());
+            data.setAll(dsDangDieuChe);
+            tbDangDieuChe.setItems(data);
+        });
+
+//        loadDataTask.setOnFailed(e -> {
+//            showCanhBao("Lỗi kết nối", "Không thể tải dữ liệu dạng điều chế từ server.");
+//        });
+
+        Thread thread = new Thread(loadDataTask);
+        thread.setDaemon(true);
+        thread.start();
 
         loadDanhSachDangDieuChe();
 
         //Tạo mã kệ tự động khi mở form
-        tfMaDangDieuChe.setText(dangDieuChe_DAO.taoMaDDCTuDong());
+        Task<String> taskTaoMa = new Task<>() {
+            @Override
+            protected String call() throws Exception {
+                return clientManager.taoMaDCCTuDong();
+            }
+        };
+        taskTaoMa.setOnSucceeded(e -> {
+
+            tfMaDangDieuChe.setText(taskTaoMa.getValue());
+        });
+
+        taskTaoMa.setOnFailed(e -> {
+            showCanhBao("Lỗi kết nối", "Không thể tạo mã dạng điều chế tự động.");
+        });
+        Thread threadTaoMa = new Thread(taskTaoMa);
+        threadTaoMa.setDaemon(true);
+        threadTaoMa.start();
+
         tfMaDangDieuChe.setEditable(false);
 
         //Sự kiện click thêm
         btnThem.setOnAction(e ->{
             if (kiemTraHopLe()){
-                dangDieuChe_DAO.themDDC(new DangDieuCheDTO(Integer.parseInt(tfMaDangDieuChe.getText()), tfTenDangDieuChe.getText(), false));
-                showCanhBao("Thêm dạng điều chế","Thêm dạng điều chế thành công!");
-                //Cập nhật lại bảng
-                dsDangDieuChe =  dangDieuChe_DAO.getTatCaDangDieuChe();
-                data.setAll(dsDangDieuChe);
-                tbDangDieuChe.setItems(data);
-                //Tạo mã kệ tự động mới
-                tfMaDangDieuChe.setText(dangDieuChe_DAO.taoMaDDCTuDong());
-                //Xoá trắng các trường nhập liệu
-                tfTenDangDieuChe.clear();
+               Task<Boolean> taskThem = new Task<>() {
+                   @Override
+                   public Boolean call() throws Exception {
+                       return clientManager.createDangDieuChe(new DangDieuCheDTO(Integer.parseInt(tfMaDangDieuChe.getText()), tfTenDangDieuChe.getText(), false));
+                   }
+               };
+               taskThem.setOnSucceeded(evt -> {
+                   boolean result = taskThem.getValue();
+                   if (result) {
+                       showCanhBao("Thêm dạng điều chế", "Thêm dạng điều chế thành công!");
+                       //Cập nhật lại bảng
+                       Task<List<DangDieuCheDTO>> reloadTask = new Task<List<DangDieuCheDTO>>() {
+                           @Override
+                           protected List<DangDieuCheDTO> call() throws Exception {
+                               return clientManager.getDangDieuCheList();
+                           }
+                       };
+                       reloadTask.setOnSucceeded(reloadEvt -> {
+                           dsDangDieuChe = new ArrayList<>(reloadTask.getValue());
+                           data.setAll(dsDangDieuChe);
+                           tbDangDieuChe.setItems(data);
+                           //Tạo mã kệ tự động mới
+                           Task<String> newTaskTaoMa = new Task<>() {
+                               @Override
+                               protected String call() throws Exception {
+                                   return clientManager.taoMaDCCTuDong();
+                               }
+                           };
+                           newTaskTaoMa.setOnSucceeded(newEvt -> {
+                               tfMaDangDieuChe.setText(newTaskTaoMa.getValue());
+                           });
+                           newTaskTaoMa.setOnFailed(newEvt -> {
+                               showCanhBao("Lỗi kết nối", "Không thể tạo mã dạng điều chế tự động.");
+                           });
+                           Thread newThreadTaoMa = new Thread(newTaskTaoMa);
+                           newThreadTaoMa.setDaemon(true);
+                           newThreadTaoMa.start();
+                           //Xoá trắng các trường nhập liệu
+                           tfTenDangDieuChe.clear();
+                       });
+                       Thread reloadThread = new Thread(reloadTask);
+                       reloadThread.setDaemon(true);
+                       reloadThread.start();
+                   } else {
+                       showCanhBao("Lỗi", "Thêm dạng điều chế thất bại. Vui lòng thử lại.");
+                   };
+               });
+               taskThem.setOnFailed(evt -> {
+                   showCanhBao("Lỗi kết nối", "Không thể thêm dạng điều chế mới. Vui lòng thử lại.");
+               });
+
+               Thread threadThem = new Thread(taskThem);
+               threadThem.setDaemon(true);
+               threadThem.start();
             }
         });
     }
@@ -209,7 +291,28 @@ public class ThemDangDieuCheController extends ScrollPane{
             return false;
         }
 
-        if (dangDieuChe_DAO.getDDCTheoName(tenDDC) != null){
+        Task<DangDieuCheDTO> taskGetDangDieuCheTheoName = new Task<>() {
+            @Override
+            protected DangDieuCheDTO call() throws Exception {
+                return clientManager.getDDCTheoName(tenDDC);
+            }
+        };
+        AtomicReference<DangDieuCheDTO> nameDDC  = new AtomicReference<>();
+        taskGetDangDieuCheTheoName.setOnSucceeded(event -> {
+            nameDDC.set(taskGetDangDieuCheTheoName.getValue());
+        });
+
+        Thread threadCheck = new Thread(taskGetDangDieuCheTheoName);
+        threadCheck.setDaemon(true);
+        threadCheck.start();
+        try {
+            threadCheck.join(); // Wait for the task to complete
+        } catch (InterruptedException e) {
+            showCanhBao("Lỗi", "Không thể kiểm tra tên dạng điều chế.");
+            return false;
+        }
+
+        if (nameDDC.get() != null){
             showCanhBao("Lỗi nhập liệu","Dạng điều chế đã tồn tại trong hệ thống!");
             tfTenDangDieuChe.requestFocus();
             return false;

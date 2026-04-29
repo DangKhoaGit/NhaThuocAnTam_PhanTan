@@ -293,4 +293,32 @@ public class RequestBuilder {
     public static Command khoiPhucDonViTinh(DonViTinhDTO donViTinhDTO) {
         return build(CommandType.RESTORE_DONVITINH, map("maDVT", donViTinhDTO.getMaDVT()));
     }
+
+    public static Command getDangDieuCheList() {
+        return build(CommandType.GET_DANGDIEUCHE_LIST);
+    }
+
+    public static Command taoMaDCCTuDong() {
+        return build(CommandType.GENERATE_DANGDIEUCHE_CODE);
+    }
+
+    public static Command createDangDieuChe(DangDieuCheDTO dangDieuCheDTO) {
+        return build(CommandType.CREATE_DANGDIEUCHE, map("dangDieuChe", dangDieuCheDTO));
+    }
+
+    public static Command getDDCTheoName(String tenDDC) {
+        return build(CommandType.GET_DANGDIEUCHE_BY_NAME, map("tenDDC", tenDDC));
+    }
+
+    public static Command suaDangDieuChe(DangDieuCheDTO dangDieuCheDTO) {
+        return build(CommandType.UPDATE_DANGDIEUCHE, map("dangDieuChe", dangDieuCheDTO));
+    }
+
+    public static Command xoaDangDieuChe(int i) {
+        return build(CommandType.DELETE_DANGDIEUCHE, map("maDDC", i));
+    }
+
+    public static Command khoiPhucDangDieuChe(int i) {
+        return build(CommandType.RESTORE_DANGDIEUCHE, map("maDDC", i));
+    }
 }

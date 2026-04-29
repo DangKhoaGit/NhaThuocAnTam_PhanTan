@@ -7,17 +7,22 @@ package com.antam.app.controller.dangdieuche;
 
 import com.antam.app.connect.ConnectDB;
 
+import com.antam.app.network.ClientManager;
 import com.antam.app.service.impl.DangDieuChe_Service;
 import com.antam.app.dto.DangDieuCheDTO;
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcon;
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcons;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.concurrent.Task;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
+
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.effect.DropShadow;
@@ -32,7 +37,7 @@ public class CapNhatDangDieuCheController extends ScrollPane{
     private TableView<DangDieuCheDTO> tbDangDieuChe = new TableView<>();
     private TextField tfMaDangDieuChe, tfTenDangDieuChe ;
     private Button btnCapNhat, btnXoa, btnKhoiPhuc;
-    private DangDieuChe_Service DangDieuChe_DAO = new DangDieuChe_Service();
+    ClientManager clientManager = ClientManager.getInstance();
 
     /* Lấy dữ liệu từ DAO */
     private ArrayList<DangDieuCheDTO> dsDangDieuCheThuoc;
@@ -178,9 +183,24 @@ public class CapNhatDangDieuCheController extends ScrollPane{
             throw new RuntimeException(e);
         }
 
-        dsDangDieuCheThuoc =  DangDieuChe_DAO.getTatCaDangDieuChe();
-        data.setAll(dsDangDieuCheThuoc);
-        tbDangDieuChe.setItems(data);
+        Task<List<DangDieuCheDTO>> taskGetAll = new Task<>() {
+            @Override
+            protected List<DangDieuCheDTO> call() throws Exception {
+                return clientManager.getDangDieuCheList();
+            }
+        };
+
+        taskGetAll.setOnSucceeded(e -> {
+            dsDangDieuCheThuoc  = (ArrayList<DangDieuCheDTO>) taskGetAll.getValue();
+            data.setAll(dsDangDieuCheThuoc);
+            tbDangDieuChe.setItems(data);
+        });
+        taskGetAll.setOnFailed(e -> {
+                    showCanhBao("Lỗi", "Không thể tải danh sách dạng điều chế!");
+                });
+        Thread threadLoadList = new Thread(taskGetAll);
+        threadLoadList.setDaemon(true);
+        threadLoadList.start();
 
         loadDanhSachDangDieuCheThuoc();
 
@@ -199,15 +219,41 @@ public class CapNhatDangDieuCheController extends ScrollPane{
         //Sự kiện cho nút sửa dạng điều chế
         btnCapNhat.setOnAction(e -> {
             if (kiemTraHopLe()){
-                DangDieuChe_DAO.suaDangDieuChe(new DangDieuCheDTO(Integer.parseInt(tfMaDangDieuChe.getText()), tfTenDangDieuChe.getText()));
-                showCanhBao("Thông báo","Cập nhật dạng điều chế thành công!");
-                //Cập nhật lại bảng
-                dsDangDieuCheThuoc =  DangDieuChe_DAO.getTatCaDangDieuChe();
-                data.setAll(dsDangDieuCheThuoc);
-                tbDangDieuChe.setItems(data);
-                //Xoá trắng các trường nhập liệu
-                tfMaDangDieuChe.clear();
-                tfTenDangDieuChe.clear();
+                Task<Boolean> taskSua = new Task<>() {
+                    @Override
+                    protected Boolean call() throws Exception {
+                        return clientManager.suaDangDieuChe(new DangDieuCheDTO(Integer.parseInt(tfMaDangDieuChe.getText()), tfTenDangDieuChe.getText()));
+                    }
+                };
+                taskSua.setOnSucceeded(evt -> {
+                    if (taskSua.getValue() != null && taskSua.getValue()) {
+                        showCanhBao("Thông báo","Cập nhật dạng điều chế thành công!");
+                        //Cập nhật lại bảng
+                        Task<List<DangDieuCheDTO>> reloadTask = new Task<>() {
+                            @Override
+                            protected List<DangDieuCheDTO> call() throws Exception {
+                                return clientManager.getDangDieuCheList();
+                            }
+                        };
+                        reloadTask.setOnSucceeded(reloadEvt -> {
+                            dsDangDieuCheThuoc = (ArrayList<DangDieuCheDTO>) reloadTask.getValue();
+                            data.setAll(dsDangDieuCheThuoc);
+                            tbDangDieuChe.setItems(data);
+                            //Xoá trắng các trường nhập liệu
+                            tfMaDangDieuChe.clear();
+                            tfTenDangDieuChe.clear();
+                        });
+                        Thread reloadThread = new Thread(reloadTask);
+                        reloadThread.setDaemon(true);
+                        reloadThread.start();
+                    } else {
+                        showCanhBao("Lỗi","Cập nhật dạng điều chế thất bại!");
+                    }
+                });
+                taskSua.setOnFailed(evt -> {
+                    showCanhBao("Lỗi","Có lỗi xảy ra khi cập nhật dạng điều chế!");
+                });
+                new Thread(taskSua).start();
             }
         });
 
@@ -216,19 +262,47 @@ public class CapNhatDangDieuCheController extends ScrollPane{
                 DangDieuCheDTO selected = tbDangDieuChe.getSelectionModel().getSelectedItem();
                 if (selected == null) return;
                 if (!selected.isDeleteAt()) {
-                    DangDieuChe_DAO.xoaDangDieuChe(Integer.parseInt(tfMaDangDieuChe.getText()));
-                    showCanhBao("Thông báo","Xoá dạng điều chế thành công!");
-                    //Cập nhật lại bảng
-                    dsDangDieuCheThuoc =  DangDieuChe_DAO.getTatCaDangDieuChe();
-                    data.setAll(dsDangDieuCheThuoc);
-                    tbDangDieuChe.setItems(data);
-                    //Xoá trắng các trường nhập liệu
-                    tfMaDangDieuChe.clear();
-                    tfTenDangDieuChe.clear();
+                    Task<Boolean> taskXoa = new Task<>() {
+                        @Override
+                        protected Boolean call() throws Exception {
+                            return clientManager.xoaDangDieuChe(Integer.parseInt(tfMaDangDieuChe.getText()));
+                        }
+                    };
+                    taskXoa.setOnSucceeded(evt -> {
+                        Boolean resultXoa = taskXoa.getValue();
+                        if (resultXoa != null && resultXoa) {
+                            showCanhBao("Thông báo","Xoá dạng điều chế thành công!");
+                        }
+                        // Always reload the table
+                        Task<List<DangDieuCheDTO>> reloadTask = new Task<>() {
+                            @Override
+                            protected List<DangDieuCheDTO> call() throws Exception {
+                                return clientManager.getDangDieuCheList();
+                            }
+                        };
+                        reloadTask.setOnSucceeded(reloadEvt -> {
+                            dsDangDieuCheThuoc = (ArrayList<DangDieuCheDTO>) reloadTask.getValue();
+                            data.setAll(dsDangDieuCheThuoc);
+                            tbDangDieuChe.setItems(data);
+                            //Xoá trắng các trường nhập liệu
+                            tfMaDangDieuChe.clear();
+                            tfTenDangDieuChe.clear();
+                        });
+                        Thread reloadThread = new Thread(reloadTask);
+                        reloadThread.setDaemon(true);
+                        reloadThread.start();
+                    });
+                    taskXoa.setOnFailed(evt -> {
+                        showCanhBao("Lỗi","Có lỗi xảy ra khi xoá dạng điều chế!");
+                    });
+
+                    Thread threadXoa = new Thread(taskXoa);
+                    threadXoa.setDaemon(true);
+                    threadXoa.start();
                 }else{
                     showCanhBao("Thông báo","Dạng điều chế đang bị xoá!");
                 }
-            }else{
+           }else{
                 showCanhBao("Lỗi","Vui lòng chọn dạng điều chế cần xoá!");
             }
         });
@@ -238,15 +312,42 @@ public class CapNhatDangDieuCheController extends ScrollPane{
                 DangDieuCheDTO selected = tbDangDieuChe.getSelectionModel().getSelectedItem();
                 if (selected == null) return;
                 if (selected.isDeleteAt()){
-                    DangDieuChe_DAO.khoiPhucDangDieuChe(Integer.parseInt(tfMaDangDieuChe.getText()));
-                    showCanhBao("Thông báo","Khôi phục dạng điều chế thành công!");
-                    //Cập nhật lại bảng
-                    dsDangDieuCheThuoc =  DangDieuChe_DAO.getTatCaDangDieuChe();
-                    data.setAll(dsDangDieuCheThuoc);
-                    tbDangDieuChe.setItems(data);
-                    //Xoá trắng các trường nhập liệu
-                    tfMaDangDieuChe.clear();
-                    tfTenDangDieuChe.clear();
+                    Task<Boolean> taskKhoiPhuc = new Task<>() {
+                        @Override
+                        protected Boolean call() throws Exception {
+                            return clientManager.khoiPhucDangDieuChe(Integer.parseInt(tfMaDangDieuChe.getText()));
+                        }
+                    };
+                    taskKhoiPhuc.setOnSucceeded(evt -> {
+                        Boolean resultKhoiPhuc = taskKhoiPhuc.getValue();
+                        if (resultKhoiPhuc != null && resultKhoiPhuc) {
+                            showCanhBao("Thông báo","Khôi phục dạng điều chế thành công!");
+                        }
+                        // Always reload the table
+                        Task<List<DangDieuCheDTO>> reloadTask = new Task<>() {
+                            @Override
+                            protected List<DangDieuCheDTO> call() throws Exception {
+                                return clientManager.getDangDieuCheList();
+                            }
+                        };
+                        reloadTask.setOnSucceeded(reloadEvt -> {
+                            dsDangDieuCheThuoc = (ArrayList<DangDieuCheDTO>) reloadTask.getValue();
+                            data.setAll(dsDangDieuCheThuoc);
+                            tbDangDieuChe.setItems(data);
+                            //Xoá trắng các trường nhập liệu
+                            tfMaDangDieuChe.clear();
+                            tfTenDangDieuChe.clear();
+                        });
+                        Thread reloadThread = new Thread(reloadTask);
+                        reloadThread.setDaemon(true);
+                        reloadThread.start();
+                    });
+                    taskKhoiPhuc.setOnFailed(evt -> {
+                        showCanhBao("Lỗi","Có lỗi xảy ra khi khôi phục dạng điều chế!");
+                    });
+                    Thread threadKhoiPhuc = new Thread(taskKhoiPhuc);
+                    threadKhoiPhuc.setDaemon(true);
+                    threadKhoiPhuc.start();
                 }else{
                     showCanhBao("Thông báo","Dạng điều chế đang hoạt động!");
                 }
@@ -301,8 +402,28 @@ public class CapNhatDangDieuCheController extends ScrollPane{
             tfTenDangDieuChe.requestFocus();
             return false;
         }
+        String tenDDC = tfTenDangDieuChe.getText();
+        Task<DangDieuCheDTO> taskGetDangDieuCheTheoName = new Task<>() {
+            @Override
+            protected DangDieuCheDTO call() throws Exception {
+                return clientManager.getDDCTheoName(tenDDC);
+            }
+        };
+        AtomicReference<DangDieuCheDTO> nameDDC  = new AtomicReference<>();
+        taskGetDangDieuCheTheoName.setOnSucceeded(event -> {
+            nameDDC.set(taskGetDangDieuCheTheoName.getValue());
+        });
 
-        if (DangDieuChe_DAO.getDDCTheoName(tenDangDieuChe) != null){
+        Thread thread = new Thread(taskGetDangDieuCheTheoName);
+        thread.start();
+        try {
+            thread.join(); // Wait for the task to complete
+        } catch (InterruptedException e) {
+            showCanhBao("Lỗi", "Không thể kiểm tra tên dạng điều chế.");
+            return false;
+        }
+
+        if (nameDDC.get() != null){
             showCanhBao("Lỗi nhập liệu","Tên dạng điều chế đã tồn tại!");
             tfTenDangDieuChe.requestFocus();
             return false;
