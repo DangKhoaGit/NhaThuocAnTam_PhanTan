@@ -6,8 +6,7 @@
 package com.antam.app.controller.phieudat;
 
 import com.antam.app.connect.ConnectDB;
-import com.antam.app.service.I_ChiTietPhieuDat_Service;
-import com.antam.app.service.I_NhanVien_Service;
+import com.antam.app.network.ClientManager;
 import com.antam.app.service.I_PhieuDat_Service;
 import com.antam.app.service.impl.ChiTietPhieuDat_Service;
 import com.antam.app.service.impl.LoThuoc_Service;
@@ -15,13 +14,13 @@ import com.antam.app.dto.ChiTietPhieuDatThuocDTO;
 import com.antam.app.dto.LoThuocDTO;
 import com.antam.app.dto.NhanVienDTO;
 import com.antam.app.dto.PhieuDatThuocDTO;
-import com.antam.app.service.impl.NhanVien_Service;
 import com.antam.app.service.impl.PhieuDat_Service;
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcon;
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcons;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.concurrent.Task;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
@@ -36,7 +35,6 @@ import java.sql.Connection;
 import java.text.DecimalFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 import java.util.List;
 
 public class KhoiPhucPhieuDatController extends ScrollPane{
@@ -68,14 +66,16 @@ public class KhoiPhucPhieuDatController extends ScrollPane{
 
     public static PhieuDatThuocDTO selectedPDT;
 
-    private I_PhieuDat_Service I_PhieuDat_Service = new PhieuDat_Service();
-    private ChiTietPhieuDat_Service I_ChiTietPhieuDat_Service = new ChiTietPhieuDat_Service();
-    List<PhieuDatThuocDTO> listPDT = I_PhieuDat_Service.getAllPhieuDatThuocFromDBS();
+//    private I_PhieuDat_Service I_PhieuDat_Service = new PhieuDat_Service();
+//    private ChiTietPhieuDat_Service I_ChiTietPhieuDat_Service = new ChiTietPhieuDat_Service();
+    List<PhieuDatThuocDTO> listPDT;
     public LoThuoc_Service ctThuoc_dao = new LoThuoc_Service();
-    private NhanVien_Service nhanVien_service = new NhanVien_Service();
-    List<NhanVienDTO> listNV = nhanVien_service.getAllNhanVien();
+//    private NhanVien_Service nhanVien_service = new NhanVien_Service();
+    List<NhanVienDTO> listNV;
     ObservableList<PhieuDatThuocDTO> origin;
     ObservableList<PhieuDatThuocDTO> filter= FXCollections.observableArrayList();
+
+    private ClientManager clientManager = ClientManager.getInstance();
 
     public KhoiPhucPhieuDatController() {
         this.setFitToHeight(true);
@@ -196,6 +196,38 @@ public class KhoiPhucPhieuDatController extends ScrollPane{
         tvPhieuDat.setPlaceholder(new Label("Chưa có phiếu đặt thuốc nào bị hủy"));
         /** Sự kiện **/
 
+//        List<PhieuDatThuocDTO> listPDT = I_PhieuDat_Service.getAllPhieuDatThuocFromDBS();
+        Task<List<PhieuDatThuocDTO>> loadDataTask = new Task<>() {
+            @Override
+            protected List<PhieuDatThuocDTO> call() throws Exception {
+                return clientManager.getPhieuiDatThuocDaXoa();
+            }
+        };
+
+        loadDataTask.setOnSucceeded(e -> {
+            listPDT = loadDataTask.getValue();
+        });
+        loadDataTask.setOnFailed(e -> {
+
+        });
+        Thread thread = new Thread(loadDataTask);
+        thread.start();
+
+//        List<NhanVienDTO> listNV = nhanVien_service.getAllNhanVien();
+        Task<List<NhanVienDTO>> loadDataTask2 = new Task<>() {
+            @Override
+            protected List<NhanVienDTO> call() throws Exception {
+                return clientManager.getNhanVienList();
+            }
+        };
+        loadDataTask2.setOnSucceeded(e -> {
+            listNV = loadDataTask2.getValue();
+        });
+        loadDataTask2.setOnFailed(e -> {});
+        Thread thread2 = new Thread(loadDataTask2);
+        thread2.start();
+
+
         setupBang();
         loadDataVaoBang();
         loadDataComboBox();
@@ -268,9 +300,30 @@ public class KhoiPhucPhieuDatController extends ScrollPane{
                 }
 
                 // 4. Khôi phục trạng thái chi tiết
-                I_ChiTietPhieuDat_Service.khoiPhucChiTietPhieu(
-                        selected.getMaPhieu()
-                );
+//                I_ChiTietPhieuDat_Service.khoiPhucChiTietPhieu(
+//                        selected.getMaPhieu();
+//                );
+                Task<Boolean> khoiPhucChiTietTask = new Task<>() {
+                    @Override
+                    protected Boolean call() throws Exception {
+                        return clientManager.khoiPhucChiTietPhieu(selected.getMaPhieu());
+                    }
+                };
+
+                khoiPhucChiTietTask.setOnSucceeded(ev -> {
+                    boolean kqChiTiet = khoiPhucChiTietTask.getValue();
+                    if (!kqChiTiet) {
+                        showMess("Lỗi",
+                                "Khôi phục chi tiết phiếu đặt thất bại. Dữ liệu đã được hoàn tác.");
+                        return;
+                    }
+                });
+                khoiPhucChiTietTask.setOnFailed(ev -> {
+                    showMess("Lỗi",
+                            "Khôi phục chi tiết phiếu đặt thất bại. Dữ liệu đã được hoàn tác.");
+                });
+                Thread khoiPhucThread = new Thread(khoiPhucChiTietTask);
+                khoiPhucThread.start();
 
                 con.commit();
 
@@ -435,7 +488,21 @@ public class KhoiPhucPhieuDatController extends ScrollPane{
     }
 
     private void loadDataVaoBang() {
-        listPDT = I_PhieuDat_Service.getAllPhieuDatThuocDaXoa();
+        Task<List<PhieuDatThuocDTO>> loadDataTask = new Task<>() {
+            @Override
+            protected List<PhieuDatThuocDTO> call() throws Exception {
+                return clientManager.getPhieuiDatThuocDaXoa();
+            }
+        };
+
+        loadDataTask.setOnSucceeded(e -> {
+            listPDT = loadDataTask.getValue();
+        });
+        loadDataTask.setOnFailed(e -> {
+
+        });
+        Thread thread = new Thread(loadDataTask);
+        thread.start();
         origin = FXCollections.observableArrayList(listPDT);
         filter = FXCollections.observableArrayList(origin);
         tvPhieuDat.setItems(filter);

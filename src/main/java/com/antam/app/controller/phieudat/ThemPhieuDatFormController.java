@@ -6,13 +6,14 @@
 package com.antam.app.controller.phieudat;
 
 import com.antam.app.connect.ConnectDB;
-import com.antam.app.service.*;
+import com.antam.app.network.ClientManager;
 import com.antam.app.service.impl.*;
 import com.antam.app.dto.*;
 import com.antam.app.helper.TuDongGoiY;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
 import javafx.geometry.HPos;
 import javafx.geometry.Pos;
@@ -29,8 +30,9 @@ import java.text.DecimalFormat;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 import javafx.geometry.Insets;
@@ -60,21 +62,16 @@ public class ThemPhieuDatFormController extends DialogPane {
     private Text txtCanhBaoKM = new Text();
     private Text txtThue = new Text();
 
-    private Thuoc_Service thuoc_dao = new Thuoc_Service();
-    private DonViTinh_Service donViTinh_dao = new DonViTinh_Service();
     private ArrayList<ThuocDTO> dsThuoc;
     private ArrayList<DonViTinhDTO> dsDonViTinh;
-    private DecimalFormat decimalFormat = new DecimalFormat("#,### đ");
     private ArrayList<ChiTietPhieuDatThuocDTO> list = new ArrayList<>();
     private ObservableList<ChiTietPhieuDatThuocDTO> obsThuoc = FXCollections.observableArrayList();
 
-    private KhachHang_Service khachHangDAO = new KhachHang_Service();
-    private ArrayList<KhachHangDTO> dsKhach = khachHangDAO.getAllKhachHang();
-    private KhuyenMai_Service KhuyenMai_DAO = new KhuyenMai_Service();
-    private ArrayList<KhuyenMaiDTO> dsKhuyenMai = new ArrayList<>();
-    private LoThuoc_Service chiTietThuoc_dao = new LoThuoc_Service();
-    private HoaDon_Service hoaDon_DAO = new HoaDon_Service();
-    private ObservableList<KhachHangDTO> autoKhach = FXCollections.observableArrayList(dsKhach);
+    private ArrayList<KhachHangDTO> dsKhach = new ArrayList<>();
+    private ArrayList<KhuyenMaiDTO> dsKhuyenMai;
+    private ObservableList<KhachHangDTO> autoKhach = FXCollections.observableArrayList();
+
+    private ClientManager clientManager = ClientManager.getInstance();
 
     public ThemPhieuDatFormController() {
         FlowPane header = new FlowPane();
@@ -169,19 +166,19 @@ public class ThemPhieuDatFormController extends DialogPane {
 
         VBox boxTen = new VBox();
         Text lblTenThuoc = new Text("Tên thuốc:");
-        cbTenThuoc = new ComboBox();
+        cbTenThuoc = new ComboBox<>();
         cbTenThuoc.setPrefSize(154, 26);
         boxTen.getChildren().addAll(lblTenThuoc, cbTenThuoc);
 
         VBox boxDonVi = new VBox();
         Text lblDV = new Text("Đơn vị:");
-        cbDonVi = new ComboBox();
+        cbDonVi = new ComboBox<>();
         cbDonVi.setPrefSize(161, 26);
         boxDonVi.getChildren().addAll(lblDV, cbDonVi);
 
         VBox boxSL = new VBox();
         Text lblSL = new Text("Số lượng:");
-        spSoLuong = new Spinner();
+        spSoLuong = new Spinner<>();
         spSoLuong.setPrefSize(150, 26);
         boxSL.getChildren().addAll(lblSL, spSoLuong);
 
@@ -203,26 +200,26 @@ public class ThemPhieuDatFormController extends DialogPane {
         Text lblKM = new Text("Áp dụng khuyến mãi:");
 
         hbCanhBaoKM.getChildren().addAll(lblKM, txtCanhBaoKM);
-        cbKhuyenMai = new ComboBox();
+        cbKhuyenMai = new ComboBox<>();
         cbKhuyenMai.setPrefSize(778, 44);
         cbKhuyenMai.setPromptText("Chọn khuyến mãi");
 
-        tbChonThuoc = new TableView();
+        tbChonThuoc = new TableView<>();
         tbChonThuoc.setPrefSize(785, 200);
 
-        colTenThuoc = new TableColumn("Tên thuốc");
+        colTenThuoc = new TableColumn<>("Tên thuốc");
         colTenThuoc.setPrefWidth(192.8);
 
-        colDonVi = new TableColumn("Đơn vị");
+        colDonVi = new TableColumn<>("Đơn vị");
         colDonVi.setPrefWidth(168.8);
 
-        colSoLuong = new TableColumn("Số lượng");
+        colSoLuong = new TableColumn<>("Số lượng");
         colSoLuong.setPrefWidth(110.4);
 
-        colDonGia = new TableColumn("Đơn giá");
+        colDonGia = new TableColumn<>("Đơn giá");
         colDonGia.setPrefWidth(166.4);
 
-        colThanhTien = new TableColumn("Thành tiền");
+        colThanhTien = new TableColumn<>("Thành tiền");
         colThanhTien.setPrefWidth(143.2);
 
         tbChonThuoc.getColumns().addAll(colTenThuoc, colDonVi, colSoLuong, colDonGia, colThanhTien);
@@ -281,27 +278,57 @@ public class ThemPhieuDatFormController extends DialogPane {
         this.getStylesheets().add(getClass().getResource("/com/antam/app/styles/dashboard_style.css").toExternalForm());
         this.setHeader(header);
         this.setContent(content);
-        /** Sự kiện **/
+
+        Task<ArrayList<KhachHangDTO>> loadKhachTask = new Task<>() {
+            @Override
+            protected ArrayList<KhachHangDTO> call() throws Exception {
+                return clientManager.getKhachHangList();
+            }
+        };
+        loadKhachTask.setOnSucceeded(event -> {
+            dsKhach = loadKhachTask.getValue();
+            autoKhach.addAll(dsKhach);
+        });
+        Thread loadKhachThread = new Thread(loadKhachTask);
+        loadKhachThread.start();
 
         ButtonType cancelButton = new ButtonType("Huỷ", ButtonData.CANCEL_CLOSE);
         ButtonType applyButton = new ButtonType("Lưu", ButtonData.APPLY);
         this.getButtonTypes().add(cancelButton);
         this.getButtonTypes().add(applyButton);
 
-        // tạo cổng kết nối
-        try {
-            Connection con = ConnectDB.getInstance().connect();
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
 
         // setup phụ
         txtDonGia.setEditable(false);
         cbDonVi.setDisable(true);
 
         // load ds đơn vị tính.
-        dsDonViTinh = donViTinh_dao.getTatCaDonViTinh();
-        dsThuoc = thuoc_dao.getAllThuoc();
+        Task<ArrayList<DonViTinhDTO>> loadDVTTask = new Task<>() {
+            @Override
+            protected ArrayList<DonViTinhDTO> call() throws Exception {
+                return clientManager.getDonViTinhList();
+            }
+        };
+
+        loadDVTTask.setOnSucceeded(event -> {
+            dsDonViTinh = loadDVTTask.getValue();
+        });
+        Thread loadDVTThread = new Thread(loadDVTTask);
+        loadDVTThread.start();
+
+        Task<ArrayList<ThuocDTO>> loadThuocTask = new Task<>() {
+            @Override
+            protected ArrayList<ThuocDTO> call() throws Exception {
+                return clientManager.getThuocList();
+            }
+        };
+        loadThuocTask.setOnSucceeded(event -> {
+            dsThuoc = loadThuocTask.getValue();
+        });
+
+        Thread loadThuocThread = new Thread(loadThuocTask);
+        loadThuocThread.start();
+
         cbDonVi.getItems().addAll(FXCollections.observableArrayList(dsDonViTinh));
         cbDonVi.getSelectionModel().selectFirst();
         // load comboBox thuốc
@@ -335,7 +362,19 @@ public class ThemPhieuDatFormController extends DialogPane {
         txtMa.setEditable(false);
 
         // Load khuyen mai after services are ready.
-        dsKhuyenMai = new ArrayList<>(KhuyenMai_DAO.getAllKhuyenMaiConHieuLuc());
+        Task<ArrayList<KhuyenMaiDTO>> loadKMTask = new Task<>() {
+            @Override
+            protected ArrayList<KhuyenMaiDTO> call() throws Exception {
+                return clientManager.getKhuyenMaiConHieuLuc();
+            }
+        };
+
+        dsKhuyenMai = new ArrayList<>();
+        loadKMTask.setOnSucceeded(event -> {
+            dsKhuyenMai = loadKMTask.getValue();
+        });
+        Thread  loadKMThread = new Thread(loadKMTask);
+        loadKMThread.start();
 
         // load ComboBox Khuyến mãi.
         KhuyenMaiDTO nothing = new KhuyenMaiDTO("None", "Không áp dụng");
@@ -376,7 +415,6 @@ public class ThemPhieuDatFormController extends DialogPane {
 
         //
         Button btnApply = (Button) this.lookupButton(applyButton);
-        Button btnCancel = (Button) this.lookupButton(cancelButton);
 
         // sự kiện thêm phiếu đặt
         btnApply.addEventFilter(ActionEvent.ACTION, event -> {
@@ -405,7 +443,23 @@ public class ThemPhieuDatFormController extends DialogPane {
                 return;
             }
             LocalDate today = LocalDate.now();
-            int soDaSuDung = hoaDon_DAO.soHoaDonDaCoKhuyenMaiVoiMa(km.getMaKM());
+
+            Task<Integer> task = new Task<>() {
+                @Override
+                protected Integer call() throws Exception {
+                    return clientManager.countHoaDonByKhuyenMai(km.getMaKM());
+                }
+            };
+
+
+            AtomicInteger soDaSuDung = new AtomicInteger();
+            task.setOnSucceeded(event -> {
+                soDaSuDung.set(task.getValue());
+            });
+
+            Thread th = new Thread(task);
+            th.start();
+
             // Chưa đến ngày bắt đầu
             if (km.getNgayBatDau().isAfter(today)) {
                 txtCanhBaoKM.setText("Khuyến mãi chưa bắt đầu");
@@ -413,7 +467,7 @@ public class ThemPhieuDatFormController extends DialogPane {
             // Đã hết hạn
             else if (km.getNgayKetThuc().isBefore(today)) {
                 txtCanhBaoKM.setText("Khuyến mãi đã hết hạn");
-            } else if (soDaSuDung >= km.getSoLuongToiDa()) {
+            } else if (soDaSuDung.get() >= km.getSoLuongToiDa()) {
                 txtCanhBaoKM.setText("Khuyến mãi đã đạt số lượng tối đa");
             }
             // Hợp lệ
@@ -507,13 +561,28 @@ public class ThemPhieuDatFormController extends DialogPane {
         }
 
         // Lấy chi tiết thuốc trong kho
-        ArrayList<LoThuocDTO> dsChiTiet = chiTietThuoc_dao.getAllCHiTietThuocTheoMaThuoc(selectedThuocDTO.getMaThuoc());
-        if (dsChiTiet.isEmpty()) {
+        Task<ArrayList<LoThuocDTO>> loadChiTietTask = new Task<>() {
+            @Override
+            protected ArrayList<LoThuocDTO> call() throws Exception {
+                return clientManager.getLoThuocFefoByThuocId(selectedThuocDTO.getMaThuoc());
+            }
+        };
+
+        AtomicReference<ArrayList<LoThuocDTO>> dsChiTiet = new AtomicReference<>();
+
+        loadChiTietTask.setOnSucceeded(e -> {
+            dsChiTiet.set(loadChiTietTask.getValue());
+        });
+
+        Thread thread = new Thread(loadChiTietTask);
+        thread.start();
+
+        if (dsChiTiet.get().isEmpty()) {
             showMess("Hết hàng", "Thuốc \"" + selectedThuocDTO.getTenThuoc() + "\" hiện không có trong kho.");
             return false;
         }
 
-        int tongSoLuongTrongKho = dsChiTiet.stream()
+        int tongSoLuongTrongKho = dsChiTiet.get().stream()
                 .filter(ctt -> ctt.getHanSuDung().isAfter(LocalDate.now()))
                 .mapToInt(LoThuocDTO::getSoLuong)
                 .sum();
@@ -521,7 +590,7 @@ public class ThemPhieuDatFormController extends DialogPane {
 
         int soLuongdaChon = 0;
         for (ChiTietPhieuDatThuocDTO ct : tbChonThuoc.getItems()) {
-            if (ct.getMaThuoc().getMaThuocDTO().equals(selectedThuocDTO.getMaThuoc())) {
+            if (ct.getMaThuoc().getMaThuocDTO().getMaThuoc().equals(selectedThuocDTO.getMaThuoc())) {
                 soLuongdaChon += ct.getSoLuong();
             }
         }
@@ -556,21 +625,32 @@ public class ThemPhieuDatFormController extends DialogPane {
             return;
 
         // 1. Lấy các lô còn hạn, sắp theo hạn tăng dần
-        ArrayList<LoThuocDTO> dsLo = chiTietThuoc_dao
-                .getAllChiTietThuocVoiMaChoCTPD(thuocDTO.getMaThuoc())
-                .stream()
-                .filter(ct -> ct.getHanSuDung().isAfter(LocalDate.now()))
-                .sorted(Comparator.comparing(LoThuocDTO::getHanSuDung))
-                .collect(Collectors.toCollection(ArrayList::new));
+        Task<ArrayList<LoThuocDTO>> loadChiTietTask = new Task<>() {
+            @Override
+            protected ArrayList<LoThuocDTO> call() throws Exception {
+                return clientManager.getLoThuocFefoByThuocId(thuocDTO.getMaThuoc());
+            }
+        };
 
-        int tongTon = dsLo.stream().mapToInt(LoThuocDTO::getSoLuong).sum();
+        AtomicReference<ArrayList<LoThuocDTO>> dsChiTiet = new AtomicReference<>(new ArrayList<>());
+        loadChiTietTask.setOnSucceeded(e -> {
+            dsChiTiet.set(loadChiTietTask.getValue().stream()
+                    .filter(ct -> ct.getHanSuDung().isAfter(LocalDate.now()))
+                    .sorted(Comparator.comparing(LoThuocDTO::getHanSuDung))
+                    .collect(Collectors.toCollection(ArrayList::new)));
+        });
+
+        Thread thread = new Thread(loadChiTietTask);
+        thread.start();
+
+        int tongTon = dsChiTiet.get().stream().mapToInt(LoThuocDTO::getSoLuong).sum();
         if (tongTon < soLuongCan) {
             showMess("Không đủ tồn", "Kho chỉ còn " + tongTon);
             return;
         }
 
         // 2. Chia số lượng cho từng lô
-        for (LoThuocDTO lo : dsLo) {
+        for (LoThuocDTO lo : dsChiTiet.get()) {
             if (soLuongCan <= 0)
                 break;
 
@@ -620,7 +700,25 @@ public class ThemPhieuDatFormController extends DialogPane {
         KhachHangDTO khach;
         if (isKhachHangMoi()) {
             khach = new KhachHangDTO(getMaKhachMoi(), ten, sdt, false);
-            khachHangDAO.insertKhachHang(khach);
+            Task<Boolean> insertKhachTask = new Task<>() {
+                @Override
+                protected Boolean call() throws Exception {
+                    return clientManager.insertKhachHang(khach);
+                }
+            };
+
+            insertKhachTask.setOnSucceeded(e -> {
+                if (insertKhachTask.getValue()) {
+                    dsKhach.add(khach);
+                    autoKhach.add(khach);
+                } else {
+                    showMess("Lỗi", "Không thể thêm khách hàng mới.");
+                }
+            });
+
+            Thread thread = new Thread(insertKhachTask);
+            thread.start();
+
         } else {
             khach = dsKhach.stream()
                     .filter(k -> k.getSoDienThoai().equals(sdt))
@@ -684,9 +782,19 @@ public class ThemPhieuDatFormController extends DialogPane {
                                 ct.getDonViTinhDTO()));
 
                 // Trừ kho đúng lô
-                chiTietThuoc_dao.CapNhatSoLuongChiTietThuoc(
-                        lo.getMaLoThuoc(),
-                        lo.getSoLuong() - soLuongDat);
+                Task<Boolean> updateKhoTask = new Task<>() {
+                    @Override
+                    protected Boolean call() throws Exception {
+                        return clientManager.updateSoLuongLoThuoc(lo.getMaLoThuoc(), lo.getSoLuong() - soLuongDat);
+                    }
+                };
+                updateKhoTask.setOnSucceeded(e -> {
+                    if (!updateKhoTask.getValue()) {
+                        showMess("Lỗi", "Không thể cập nhật kho cho lô " + lo.getMaLoThuoc());
+                    }
+                });
+                Thread thread = new Thread(updateKhoTask);
+                thread.start();
             }
 
             con.commit(); // OK
@@ -706,11 +814,22 @@ public class ThemPhieuDatFormController extends DialogPane {
     /**
      * Tạo mã khách hàng mới với đinh dạng KHxxxxxxxxx (x là số bất kì, có 9 số)
      * 
-     * @return
+     * @return mã khách hàng mới
      */
     private String getMaKhachMoi() {
-        int newNum = khachHangDAO.getMaxHash() + 1;
-        return String.format("KH%09d", newNum);
+        Task<Integer> loadKhachTask = new Task<>() {
+            @Override
+            protected Integer call() throws Exception {
+                return clientManager.getMaxHashKhachHang();
+            }
+        };
+
+        AtomicReference<Integer> newNum = new AtomicReference<>(0);
+        loadKhachTask.setOnSucceeded(e -> {
+           newNum.set(loadKhachTask.getValue() + 1);
+        });
+
+        return String.format("KH%09d", newNum.get());
     }
 
     /**
@@ -720,7 +839,7 @@ public class ThemPhieuDatFormController extends DialogPane {
      */
     private boolean isKhachHangMoi() {
         String sdt = txtSoDienThoai.getText().trim();
-        if (sdt == null || sdt.isEmpty())
+        if (sdt.isEmpty())
             return true;
 
         for (KhachHangDTO kh : dsKhach) {
@@ -769,8 +888,20 @@ public class ThemPhieuDatFormController extends DialogPane {
             }
             KhuyenMaiDTO khuyenMaiDTO = cbKhuyenMai.getSelectionModel().getSelectedItem();
             LoaiKhuyenMaiDTO loaiKM = khuyenMaiDTO.getLoaiKhuyenMaiDTO();
-            int soDaSuDung = hoaDon_DAO.soHoaDonDaCoKhuyenMaiVoiMa(khuyenMaiDTO.getMaKM());
-            if (soDaSuDung >= khuyenMaiDTO.getSoLuongToiDa()) {
+
+            Task<Integer> countUsedTask = new Task<>() {
+                @Override
+                protected Integer call() throws Exception {
+                    return clientManager.countHoaDonByKhuyenMai(khuyenMaiDTO.getMaKM());
+                }
+            };
+
+            AtomicInteger count = new AtomicInteger();
+            countUsedTask.setOnSucceeded(e -> {
+                count.set(countUsedTask.getValue());
+            });
+
+            if (count.get() >= khuyenMaiDTO.getSoLuongToiDa()) {
                 return tongTien > 0 ? tongTien : 0;
             } else {
                 if (loaiKM.getMaLKM() == 1) {
@@ -822,14 +953,12 @@ public class ThemPhieuDatFormController extends DialogPane {
         if (txtSoDienThoai.getText().trim().isEmpty()) {
             showMess("Thiếu thông tin số điện thọai khách hàng", "Vui lòng nhập số điện thoại khách hàng.");
             txtSoDienThoai.requestFocus();
-            ;
             return false;
         }
         if (!txtSoDienThoai.getText().matches("^0\\d{9}$")) {
             showMess("Thông tin số điện thọai khách hàng không hợp lệ",
                     "Số điện thoại khách hàng phải có 10 số và bắt đầu với 03, 05, 06, 07, 09.");
             txtSoDienThoai.requestFocus();
-            ;
             return false;
         }
         if (tbChonThuoc.getItems().isEmpty()) {
@@ -847,7 +976,7 @@ public class ThemPhieuDatFormController extends DialogPane {
     /**
      * hỗ trợ định dạng tiền
      * 
-     * @param tien
+     * @param tien số tiền cần định dạng
      * @return String - tiền đã được định dạng
      */
     public String dinhDangTien(double tien) {

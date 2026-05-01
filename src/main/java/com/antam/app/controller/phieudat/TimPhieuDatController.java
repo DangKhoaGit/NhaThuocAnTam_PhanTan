@@ -5,25 +5,22 @@
 
 package com.antam.app.controller.phieudat;
 
-import com.antam.app.service.I_NhanVien_Service;
-import com.antam.app.service.I_PhieuDat_Service;
+import com.antam.app.network.ClientManager;
 import com.antam.app.dto.NhanVienDTO;
 import com.antam.app.dto.PhieuDatThuocDTO;
-import com.antam.app.service.impl.NhanVien_Service;
-import com.antam.app.service.impl.PhieuDat_Service;
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcon;
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcons;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 
+import javafx.concurrent.Task;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import java.text.DecimalFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 import java.util.List;
 
 import javafx.scene.effect.BlurType;
@@ -60,12 +57,11 @@ public class TimPhieuDatController extends ScrollPane{
     private TableColumn<PhieuDatThuocDTO,String> colTotal = new TableColumn<>("Tổng tiền");
 
     public static PhieuDatThuocDTO selectedPhieuDatThuocDTO = null;
-    private I_PhieuDat_Service I_PhieuDat_Service = new PhieuDat_Service();
-    private List<PhieuDatThuocDTO> listPDT = I_PhieuDat_Service.getAllPhieuDatThuocFromDBS();
-    private NhanVien_Service nhanVien_service = new NhanVien_Service();
-    private List<NhanVienDTO> listNV = nhanVien_service.getAllNhanVien();
+    private List<PhieuDatThuocDTO> listPDT;
+    private List<NhanVienDTO> listNV ;
     private ObservableList<PhieuDatThuocDTO> origin;
     private ObservableList<PhieuDatThuocDTO> filter= FXCollections.observableArrayList();
+    private ClientManager clientManager = ClientManager.getInstance();
 
     public TimPhieuDatController() {
         this.setFitToHeight(true);
@@ -181,6 +177,37 @@ public class TimPhieuDatController extends ScrollPane{
 
 
         /** Sự kiện **/
+
+        Task<List<NhanVienDTO>> taskNV = new Task<>() {
+            @Override
+            protected List<NhanVienDTO> call() throws Exception {
+                return clientManager.getNhanVienList();
+            }
+        };
+        taskNV.setOnSucceeded(e -> {
+            listNV = taskNV.getValue();
+            loadDataComboBox();
+        });
+        taskNV.setOnFailed(e -> {
+            showMess("Lỗi", "Không thể tải dữ liệu nhân viên từ server!");
+        });
+        new Thread(taskNV).start();
+
+        Task<List<PhieuDatThuocDTO>> taskPDT = new Task<>() {
+            @Override
+            protected List<PhieuDatThuocDTO> call() throws Exception {
+                return (List<PhieuDatThuocDTO>) clientManager.getPhieuDatList();
+            }
+        };
+
+        taskPDT.setOnSucceeded(e -> {
+            listPDT = taskPDT.getValue();
+        });
+        taskPDT.setOnFailed(e -> {
+
+        });
+
+        new Thread(taskPDT).start();
 
         //cài đặt và load data vào giao diện
         loadDataComboBox();
@@ -371,10 +398,22 @@ public class TimPhieuDatController extends ScrollPane{
     }
 
     private void loadDataVaoBang() {
-        listPDT = I_PhieuDat_Service.getAllPhieuDatThuocFromDBS();
-        origin = FXCollections.observableArrayList(listPDT);
-        filter = FXCollections.observableArrayList(origin);
-        tvPhieuDat.setItems(filter);
+        Task<List<PhieuDatThuocDTO>> task = new Task<>() {
+            @Override
+            protected List<PhieuDatThuocDTO> call() throws Exception {
+                return (List<PhieuDatThuocDTO>) clientManager.getPhieuDatList();
+            }
+        };
+        task.setOnSucceeded(e -> {
+            listPDT = task.getValue();
+            origin = FXCollections.observableArrayList(listPDT);
+            filter = FXCollections.observableArrayList(origin);
+            tvPhieuDat.setItems(filter);
+        });
+        task.setOnFailed(e -> {
+            showMess("Lỗi", "Không thể tải dữ liệu phiếu đặt thuốc từ server!");
+        });
+        new Thread(task).start();
     }
 
 

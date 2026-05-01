@@ -201,9 +201,9 @@ public class ClientManager {
     // =========================================================
     // 👤 KHACHHANG
     // =========================================================
-    public List<?> getKhachHangList() {
-        List<?> rs = send(RequestBuilder.getKhachHangList());
-        return rs != null ? rs : new ArrayList<>();
+    public ArrayList<KhachHangDTO> getKhachHangList() {
+        List<KhachHangDTO> rs = send(RequestBuilder.getKhachHangList());
+        return rs != null ? (ArrayList<KhachHangDTO>) rs : new ArrayList<>();
     }
 
     public Object getKhachHangByPhone(String phone) {
@@ -223,9 +223,9 @@ public class ClientManager {
     // =========================================================
     // 💊 THUOC
     // =========================================================
-    public List<?> getThuocList() {
-        List<?> rs = send(RequestBuilder.getThuocList());
-        return rs != null ? rs : new ArrayList<>();
+    public ArrayList<ThuocDTO> getThuocList() {
+        List<ThuocDTO> rs = send(RequestBuilder.getThuocList());
+        return rs != null ? (ArrayList<ThuocDTO>) rs : new ArrayList<>();
     }
 
     public boolean createThuoc(Object dto) {
@@ -252,8 +252,8 @@ public class ClientManager {
     // =========================================================
     // 📦 PHIEUDAT
     // =========================================================
-    public List<?> getPhieuDatList() {
-        List<?> rs = send(RequestBuilder.getPhieuDatList());
+    public List<PhieuDatThuocDTO> getPhieuDatList() {
+        List<PhieuDatThuocDTO> rs = send(RequestBuilder.getPhieuDatList());
         return rs != null ? rs : new ArrayList<>();
     }
 
@@ -325,7 +325,7 @@ public class ClientManager {
         return sendForSuccess(RequestBuilder.createKhuyenMai(khuyenMaiDTO));
     }
 
-    public List<LoThuocDTO> getLoThuocFefoByThuocId(String maThuoc) {
+    public ArrayList<LoThuocDTO> getLoThuocFefoByThuocId(String maThuoc) {
         try {
             Map<String, Object> payload = new HashMap<>();
             payload.put("maThuoc", maThuoc);
@@ -339,7 +339,7 @@ public class ClientManager {
 
             Response response = sendCommandWithAutoConnect(command);
             if (response.isSuccess() && response.getData() instanceof List<?>) {
-                return toTypedList((List<?>) response.getData(), LoThuocDTO.class);
+                return (ArrayList<LoThuocDTO>) toTypedList((List<?>) response.getData(), LoThuocDTO.class);
             }
 
             LOGGER.warning("Failed to get LoThuoc FEFO by Thuoc ID: " + response.getMessage());
@@ -395,9 +395,9 @@ public class ClientManager {
         return send != null && send;
     }
 
-    public List<DonViTinhDTO> getDonViTinhList() {
-        List<?> list = send(RequestBuilder.getDonViTinhList());
-        return toTypedList(list, DonViTinhDTO.class);
+    public ArrayList<DonViTinhDTO> getDonViTinhList() {
+        List<DonViTinhDTO> list = send(RequestBuilder.getDonViTinhList());
+        return (ArrayList<DonViTinhDTO>) toTypedList(list, DonViTinhDTO.class);
     }
 
     public LoThuocDTO getLoThuocByLoThuocId(int maLoThuoc) {
@@ -859,5 +859,53 @@ public class ClientManager {
 
     public Boolean khoiPhucDangDieuChe(int i) {
         return send(RequestBuilder.khoiPhucDangDieuChe(i));
+    }
+
+    public List<ChiTietPhieuDatThuocDTO> getChiTietPDT(String maPhieu) {
+        return send(RequestBuilder.getChiTietPDT(maPhieu));
+    }
+
+    public List<PhieuDatThuocDTO> getPhieuiDatThuocDaXoa() {
+        return send(RequestBuilder.getPhieuDatThuocDaXoa());
+    }
+
+    public Boolean khoiPhucChiTietPhieu(String maPhieu) {
+        return send(RequestBuilder.khoiPhucChiTietPhieu(maPhieu));
+    }
+
+    public Boolean capNhatSoLuongChiTietThuoc(int maLoThuoc, int soMoi) {
+        return send(RequestBuilder.capNhatSoLuongChiTietThuoc(maLoThuoc, soMoi));
+    }
+
+    public Boolean huyChiTietPhieu(String maPhieu) {
+        return send(RequestBuilder.huyChiTietPhieu(maPhieu));
+    }
+
+    public Boolean xoaPhieuDat(String maPhieu) {
+        return send(RequestBuilder.xoaPhieuDat(maPhieu));
+    }
+
+    public Integer countHoaDonByKhuyenMai(String maKM) {
+        return send(RequestBuilder.countHoaDonByKhuyenMai(maKM));
+    }
+
+    public Boolean insertKhachHang(KhachHangDTO khach) {
+        return send(RequestBuilder.insertKhachHang(khach));
+    }
+
+    public Boolean updateSoLuongLoThuoc(int maLoThuoc, int i) {
+        return send(RequestBuilder.updateSoLuongLoThuoc(maLoThuoc, i));
+    }
+
+    public Integer getMaxHashKhachHang() {
+        return send(RequestBuilder.getMaxHashKhachHang());
+    }
+
+    public ArrayList<KhuyenMaiDTO> getKhuyenMaiConHieuLuc() {
+        return send(RequestBuilder.getKhuyenMaiConHieuLuc());
+    }
+
+    public Integer getMaxHashHoaDon() {
+        return send(RequestBuilder.getMaxHashHoaDon());
     }
 }

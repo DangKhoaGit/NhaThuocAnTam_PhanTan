@@ -5,18 +5,14 @@
 
 package com.antam.app.controller.phieudat;
 
-import com.antam.app.service.I_ChiTietPhieuDat_Service;
-import com.antam.app.service.I_PhieuDat_Service;
-import com.antam.app.service.impl.ChiTietHoaDon_Service;
-import com.antam.app.service.impl.ChiTietPhieuDat_Service;
-import com.antam.app.service.impl.HoaDon_Service;
+import com.antam.app.network.ClientManager;
 import com.antam.app.dto.*;
 import com.antam.app.helper.XuatHoaDonPDF;
-import com.antam.app.service.impl.PhieuDat_Service;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.concurrent.Task;
 import javafx.scene.control.*;
 import javafx.scene.control.ButtonBar.ButtonData;
 import javafx.scene.text.Text;
@@ -27,6 +23,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import javafx.geometry.Pos;
 import javafx.scene.layout.VBox;
@@ -42,22 +39,45 @@ import static com.antam.app.controller.phieudat.CapNhatPhieuDatController.select
 
 public class CapNhatPhieuDatFormController extends DialogPane{
 
-    private Text txtMa,txtNgay,txtSDT,txtStatus,txtTongTien,txtKM;
-    
-    private TableColumn<ChiTietPhieuDatThuocDTO,Integer> colSTT;
-    
-    private TableColumn<ChiTietPhieuDatThuocDTO,String> colTenThuoc,colThanhTien,colDonGia;
-    
-    private TableColumn<ChiTietPhieuDatThuocDTO,Integer> colSoLuong;
-    
-    private TableView<ChiTietPhieuDatThuocDTO> tbThuoc;
+    private final Text txtMa;
+    private final Text txtNgay;
+    private final Text txtSDT;
+    private final Text txtStatus;
+    private final Text txtTongTien;
+    private final Text txtKM;
 
-    private PhieuDatThuocDTO select = selectedPDT;
-    private ChiTietPhieuDat_Service chiTietPhieuDat_Service = new ChiTietPhieuDat_Service();
-    private List<ChiTietPhieuDatThuocDTO> listChiTiet = chiTietPhieuDat_Service.getChiTietTheoPhieu(select.getMaPhieu());
-    private HoaDon_Service hoaDon_dao = new HoaDon_Service();
+    private final TableColumn<ChiTietPhieuDatThuocDTO,Integer> colSTT;
+    private final TableColumn<ChiTietPhieuDatThuocDTO,String> colTenThuoc;
+    private final TableColumn<ChiTietPhieuDatThuocDTO,String> colThanhTien;
+    private final TableColumn<ChiTietPhieuDatThuocDTO,String> colDonGia;
+    private final TableColumn<ChiTietPhieuDatThuocDTO,Integer> colSoLuong;
+
+    private final TableView<ChiTietPhieuDatThuocDTO> tbThuoc;
+
+    private final PhieuDatThuocDTO select;
+    private List<ChiTietPhieuDatThuocDTO> listChiTiet;
+    private final ClientManager clientManager;
 
     public CapNhatPhieuDatFormController() {
+        // Initialize final fields
+        this.txtMa = new Text();
+        this.txtNgay = new Text();
+        this.txtSDT = new Text();
+        this.txtStatus = new Text();
+        this.txtTongTien = new Text();
+        this.txtKM = new Text();
+
+        this.colSTT = new TableColumn<>("STT");
+        this.colTenThuoc = new TableColumn<>("Tên thuốc");
+        this.colSoLuong = new TableColumn<>("Số lượng");
+        this.colDonGia = new TableColumn<>("Đơn giá");
+        this.colThanhTien = new TableColumn<>("Thành tiền");
+
+        this.tbThuoc = new TableView<>();
+
+        this.select = selectedPDT;
+        this.clientManager = ClientManager.getInstance();
+
         FlowPane header = new FlowPane();
         header.setAlignment(Pos.CENTER);
         header.setStyle("-fx-background-color: #1e3a8a;");
@@ -82,19 +102,15 @@ public class CapNhatPhieuDatFormController extends DialogPane{
         infoBox.setStyle("-fx-background-color: #2563eb; -fx-background-radius: 5px;");
         infoBox.setPadding(new Insets(10, 100, 10, 10));
 
-        txtMa = new Text("Mã phiếu đặt: PD001");
         txtMa.setFill(javafx.scene.paint.Color.WHITE);
         txtMa.setFont(Font.font("System Bold", 20));
 
-        txtNgay = new Text("Ngày đặt: 15/9/2025");
         txtNgay.setFill(javafx.scene.paint.Color.WHITE);
         txtNgay.setFont(Font.font(13));
 
-        txtSDT = new Text("Tên khách hàng: A");
         txtSDT.setFill(javafx.scene.paint.Color.WHITE);
         txtSDT.setFont(Font.font(13));
 
-        txtStatus = new Text("Trạng thái: Chờ xử lý");
         txtStatus.setFill(javafx.scene.paint.Color.WHITE);
         txtStatus.setFont(Font.font(13));
 
@@ -105,20 +121,14 @@ public class CapNhatPhieuDatFormController extends DialogPane{
 
         // ============================
         // TABLEVIEW
-        tbThuoc = new TableView();
         tbThuoc.setPrefSize(758, 282);
 
-        colSTT = new TableColumn("STT");
-        colTenThuoc = new TableColumn("Tên thuốc");
-        colSoLuong = new TableColumn("Số lượng");
-        colDonGia = new TableColumn("Đơn giá");
-        colThanhTien = new TableColumn("Thành tiền");
 
-        tbThuoc.getColumns().addAll(
-                colSTT, colTenThuoc, colSoLuong, colDonGia, colThanhTien
-        );
-
-        tbThuoc.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        tbThuoc.getColumns().add(colSTT);
+        tbThuoc.getColumns().add(colTenThuoc);
+        tbThuoc.getColumns().add(colSoLuong);
+        tbThuoc.getColumns().add(colDonGia);
+        tbThuoc.getColumns().add(colThanhTien);
 
         // ============================
         // GRID TỔNG TIỀN
@@ -139,7 +149,6 @@ public class CapNhatPhieuDatFormController extends DialogPane{
         kmLabel.setFill(javafx.scene.paint.Color.web("#374151"));
         kmLabel.setFont(Font.font(13));
 
-        txtKM = new Text("");
         txtKM.setFill(javafx.scene.paint.Color.web("#374151"));
         txtKM.setFont(Font.font(13));
         GridPane.setColumnIndex(txtKM, 1);
@@ -150,7 +159,6 @@ public class CapNhatPhieuDatFormController extends DialogPane{
         totalLabel.setFont(Font.font("System Bold", 18));
         GridPane.setRowIndex(totalLabel, 2);
 
-        txtTongTien = new Text("");
         txtTongTien.setFill(javafx.scene.paint.Color.web("#374151"));
         txtTongTien.setFont(Font.font("System Bold", 18));
         GridPane.setColumnIndex(txtTongTien, 1);
@@ -172,17 +180,30 @@ public class CapNhatPhieuDatFormController extends DialogPane{
         AnchorPane.setLeftAnchor(rootVBox, 0.0);
         AnchorPane.setRightAnchor(rootVBox, 0.0);
 
-        this.getStylesheets().add(getClass().getResource("/com/antam/app/styles/dashboard_style.css").toExternalForm());
+        var stylesheetUrl = getClass().getResource("/com/antam/app/styles/dashboard_style.css");
+        if (stylesheetUrl != null) {
+            this.getStylesheets().add(stylesheetUrl.toExternalForm());
+        }
         this.setContent(anchor);
-        /** Sự kiện **/
 
-        if (select.getKhuyenMaiDTO()==null || select.getKhuyenMaiDTO().getTenKM().equals("") ){
+        // Sự kiện
+
+        if (select.getKhuyenMaiDTO()==null || select.getKhuyenMaiDTO().getTenKM().isEmpty() ){
             txtKM.setText("Phiếu đặt thuốc không áp dụng khuyến mãi");
         }else{
             txtKM.setText("Áp dụng khuyến mãi: "+select.getKhuyenMaiDTO().getTenKM());
         }
 
+        Task<List<ChiTietPhieuDatThuocDTO>> loadChiTietTask = new Task<>() {
+            @Override
+            protected List<ChiTietPhieuDatThuocDTO> call() {
+                return clientManager.getChiTietPDT(select.getMaPhieu());
+            }
+        };
+        loadChiTietTask.setOnSucceeded(e -> listChiTiet = loadChiTietTask.getValue());
 
+        Thread thread = new Thread(loadChiTietTask);
+        thread.start();
 
         ButtonType cancelButton = new ButtonType("Huỷ", ButtonData.CANCEL_CLOSE);
         ButtonType applyButton = new ButtonType("Thanh Toán", ButtonData.APPLY);
@@ -215,49 +236,86 @@ public class CapNhatPhieuDatFormController extends DialogPane{
         txtTongTien.setText(dinhDangTien(tongTien));
     }
 
-    PhieuDat_Service  phieuDatService = new PhieuDat_Service();
     private void thanhToanPhieuDat() {
-        boolean capNhatOK = phieuDatService.capNhatThanhToanPhieuDat(select.getMaPhieu());
-        if (!capNhatOK) {
-            showMess("Lỗi", "Không thể cập nhật trạng thái phiếu đặt!");
-            return;
-        }
-
-        // Đồng bộ lại object trong RAM
+        // Cập nhật trạng thái thanh toán
         select.setThanhToan(true);
-        HoaDonDTO hoaDonDTO = new HoaDonDTO(getMaxHashHoaDon(),
-                LocalDate.now()
-                , PhienNguoiDungDTO.getMaNV()
-                , select.getKhachHang()
-                , select.getKhuyenMaiDTO()
-                ,select.getTongTien()
-                , false);
-        if (hoaDon_dao.insertHoaDon(hoaDonDTO)) {
-            ChiTietHoaDon_Service chiTietHoaDonDao = new ChiTietHoaDon_Service();
-            ArrayList<ChiTietHoaDonDTO> list = new ArrayList<>();
-            for (ChiTietPhieuDatThuocDTO e : tbThuoc.getItems()){
-                ChiTietHoaDonDTO i = new ChiTietHoaDonDTO();
-                i.setMaHD(hoaDonDTO);
-                i.setMaLoThuocDTO(e.getMaThuoc());
-                i.setThanhTien(e.getThanhTien());
-                i.setMaDVT(e.getDonViTinhDTO());
-                i.setSoLuong(e.getSoLuong());
-                i.setTinhTrang("Bán");
-                chiTietHoaDonDao.themChiTietHoaDon(i);
-                list.add(i);
-            }
-            //xuất pdf phiếu dặt
-            thongBaoVaXuatHoaDon(hoaDonDTO,list);
-        }else {
-            showMess("Lỗi","Thanh toán phiếu đặt thuốc thất bại");
-        }
+            HoaDonDTO hoaDonDTO = new HoaDonDTO(getMaxHashHoaDon(),
+                    LocalDate.now()
+                    , PhienNguoiDungDTO.getMaNV()
+                    , select.getKhachHang()
+                    , select.getKhuyenMaiDTO()
+                    ,select.getTongTien()
+                    , false);
+            Task<Boolean> insertHoaDonTask = new Task<>() {
+                @Override
+                protected Boolean call() {
+                    return clientManager.createHoaDon(hoaDonDTO);
+                }
+            };
+
+            insertHoaDonTask.setOnSucceeded(event -> {
+                boolean success = insertHoaDonTask.getValue();
+                if (success) {
+                    ArrayList<ChiTietHoaDonDTO> list = new ArrayList<>();
+                    for (ChiTietPhieuDatThuocDTO item : tbThuoc.getItems()){
+
+                        Task<Boolean> taskThemCTTHD = new Task<>() {
+                            @Override
+                            protected Boolean call() {
+                                return clientManager.createChiTietHoaDon(item);
+                            }
+                        };
+
+                        taskThemCTTHD.setOnSucceeded(ev -> {
+                            boolean ctSuccess = taskThemCTTHD.getValue();
+                            if (!ctSuccess) {
+                                showMess("Lỗi", "Không thể thêm chi tiết hóa đơn cho thuốc: " + item.getMaThuoc().getMaThuocDTO().getTenThuoc());
+                            }
+                        });
+
+                        ChiTietHoaDonDTO i = new ChiTietHoaDonDTO();
+                        i.setMaHD(hoaDonDTO);
+                        i.setMaLoThuocDTO(item.getMaThuoc());
+                        i.setThanhTien(item.getThanhTien());
+                        i.setMaDVT(item.getDonViTinhDTO());
+                        i.setSoLuong(item.getSoLuong());
+                        i.setTinhTrang("Bán");
+                        list.add(i);
+
+                        Thread thread = new Thread(taskThemCTTHD);
+                        thread.start();
+                    }
+                    //xuất pdf phiếu dặt
+                    thongBaoVaXuatHoaDon(hoaDonDTO,list);
+                }
+            });
+
+            insertHoaDonTask.setOnFailed(ex -> showMess("Lỗi", "Không thể tạo hóa đơn"));
+
+            Thread thread = new Thread(insertHoaDonTask);
+            thread.start();
     }
 
     private String getMaxHashHoaDon(){
-        int max = Integer.parseInt(hoaDon_dao.getMaxHash());
-        String hash;
-        hash = String.format("HD%03d", max + 1);
-        return hash;
+        Task<Integer> getMaxHashTask = new Task<>() {
+            @Override
+            protected Integer call() {
+                return clientManager.getMaxHashHoaDon();
+            }
+        };
+        AtomicInteger max = new AtomicInteger();
+        getMaxHashTask.setOnSucceeded(event -> max.set(getMaxHashTask.getValue()));
+
+        Thread thread = new Thread(getMaxHashTask);
+        thread.start();
+
+        try {
+            thread.join();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+
+        return String.format("HD%03d", max.get() + 1);
     }
 
     public void showMess(String tieuDe, String vanBan) {
@@ -348,8 +406,8 @@ public class CapNhatPhieuDatFormController extends DialogPane{
                     chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("PDF Files", "*.pdf"));
 
                     File file;
-                    if (owner instanceof Stage) {
-                        file = chooser.showSaveDialog((Stage) owner);
+                    if (owner instanceof Stage stage) {
+                        file = chooser.showSaveDialog(stage);
                     } else {
                         // fallback
                         file = chooser.showSaveDialog(null);
@@ -367,7 +425,7 @@ public class CapNhatPhieuDatFormController extends DialogPane{
                     showMess("Thành công", "Xuất hóa đơn PDF thành công!");
 
                 } catch (Exception ex) {
-                    ex.printStackTrace();
+                    System.err.println("Error exporting PDF: " + ex.getMessage());
                     showMess("Lỗi", "Không thể xuất hóa đơn PDF");
                 }
             }

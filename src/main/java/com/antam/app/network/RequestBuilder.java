@@ -321,4 +321,58 @@ public class RequestBuilder {
     public static Command khoiPhucDangDieuChe(int i) {
         return build(CommandType.RESTORE_DANGDIEUCHE, map("maDDC", i));
     }
+
+    public static Command getChiTietPDT(String maPhieu) {
+        return build(CommandType.GET_CHITIETPHIEUDAT_BY_PHIEUDAT_ID, map("maPhieu", maPhieu));
+    }
+
+    public static Command getPhieuDatThuocDaXoa() {
+        return  build(CommandType.GET_PHIEUDAT_DELETED_LIST);
+    }
+
+    public static Command khoiPhucChiTietPhieu(String maPhieu) {
+        return build(CommandType.RESTORE_CHITIETPHIEUDAT, map("maPhieu", maPhieu));
+    }
+
+    public static Command capNhatSoLuongChiTietThuoc(int maLoThuoc, int soMoi) {
+        return build(CommandType.UPDATE_LOTHUOC_QUANTITY, map(
+                "maLoThuoc", maLoThuoc,
+                "soLuongMoi", soMoi
+        ));
+    }
+
+    public static Command huyChiTietPhieu(String maPhieu) {
+        return build(CommandType.CANCEL_CHITIETPHIEUDAT, map("maPhieu", maPhieu));
+    }
+
+    public static Command xoaPhieuDat(String maPhieu) {
+        return build(CommandType.DELETE_PHIEUDAT, map("maPhieu", maPhieu));
+    }
+
+    public static Command countHoaDonByKhuyenMai(String maKM) {
+        return build(CommandType.COUNT_HOADON_BY_KHUYENMAI, map("maKM", maKM));
+    }
+
+    public static Command insertKhachHang(KhachHangDTO khach) {
+        return build(CommandType.CREATE_KHACHHANG, map("khachHang", khach));
+    }
+
+    public static Command updateSoLuongLoThuoc(int maLoThuoc, int i) {
+        return build(CommandType.UPDATE_LOTHUOC_QUANTITY, map(
+                "maLoThuoc", maLoThuoc,
+                "deltaSoLuong", i
+        ));
+    }
+
+    public static Command getMaxHashKhachHang() {
+        return build(CommandType.GET_MAX_HASH_KHACHHANG);
+    }
+
+    public static Command getKhuyenMaiConHieuLuc() {
+        return build(CommandType.GET_KHUYENMAI_ACTIVE_LIST);
+    }
+
+    public static Command getMaxHashHoaDon() {
+        return build(CommandType.GET_MAX_HASH_HOADON);
+    }
 }

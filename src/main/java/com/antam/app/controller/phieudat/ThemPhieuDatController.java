@@ -5,6 +5,7 @@
 
 package com.antam.app.controller.phieudat;
 
+import com.antam.app.network.ClientManager;
 import com.antam.app.service.I_NhanVien_Service;
 import com.antam.app.service.I_PhieuDat_Service;
 import com.antam.app.dto.NhanVienDTO;
@@ -16,6 +17,7 @@ import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcons;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.concurrent.Task;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
@@ -60,12 +62,13 @@ public class ThemPhieuDatController extends ScrollPane{
     private TableColumn<PhieuDatThuocDTO,String> colStatus = new TableColumn<>("Trạng thái");
     private TableColumn<PhieuDatThuocDTO,String> colTotal = new TableColumn<>("Tổng tiền");
 
-    private NhanVien_Service  nhanVienService = new NhanVien_Service();
-    private I_PhieuDat_Service I_PhieuDat_Service = new PhieuDat_Service();
-    private List<PhieuDatThuocDTO> listPDT = I_PhieuDat_Service.getAllPhieuDatThuocFromDBS();
-    private List<NhanVienDTO> listNV = nhanVienService.getAllNhanVien();
+//    private NhanVien_Service  nhanVienService = new NhanVien_Service();
+//    private I_PhieuDat_Service I_PhieuDat_Service = new PhieuDat_Service();
+    private List<PhieuDatThuocDTO> listPDT;
+    private List<NhanVienDTO> listNV;
     private ObservableList<PhieuDatThuocDTO> origin;
     private ObservableList<PhieuDatThuocDTO> filter= FXCollections.observableArrayList();
+    private ClientManager clientManager = ClientManager.getInstance();
 
     public ThemPhieuDatController() {
         this.setFitToHeight(true);
@@ -187,6 +190,42 @@ public class ThemPhieuDatController extends ScrollPane{
 
         tvPhieuDat.setPlaceholder(new Label("Không tìm thấy phiếu đặt thuốc"));
         /** Sự kiện **/
+
+        //Task load data từ server để tránh đơ UI
+        Task<List<PhieuDatThuocDTO>> taskLoadData = new Task<>() {
+            @Override
+            protected List<PhieuDatThuocDTO> call() throws Exception {
+                return clientManager.getPhieuDatList();
+            }
+        };
+
+        taskLoadData.setOnSucceeded(e -> {
+            listPDT = taskLoadData.getValue();
+        });
+        taskLoadData.setOnFailed(e -> {
+
+        });
+
+        Thread thread = new Thread(taskLoadData);
+        thread.start();
+
+//        private List<NhanVienDTO> listNV = nhanVienService.getAllNhanVien();
+        //Task lay data nhan vien
+        Task<List<NhanVienDTO>> taskLoadNV = new Task<>() {
+            @Override
+            protected List<NhanVienDTO> call() throws Exception {
+                return clientManager.getNhanVienList();
+            }
+        };
+
+        taskLoadNV.setOnSucceeded(e -> {
+            listNV = taskLoadNV.getValue();
+        });
+        taskLoadNV.setOnFailed(e -> {
+
+        });
+        thread = new Thread(taskLoadNV);
+        thread.start();
 
         // tạo phiếu đặt mới
         this.btnAddPurchaseOrder.setOnAction((e) -> {
@@ -394,7 +433,25 @@ public class ThemPhieuDatController extends ScrollPane{
     }
 
     private void loadDataVaoBang() {
-        listPDT = I_PhieuDat_Service.getAllPhieuDatThuocFromDBS();
+        //Task load data từ server để tránh đơ UI
+        Task<List<PhieuDatThuocDTO>> taskLoadData = new Task<>() {
+            @Override
+            protected List<PhieuDatThuocDTO> call() throws Exception {
+                return clientManager.getPhieuDatList();
+            }
+        };
+
+        taskLoadData.setOnSucceeded(e -> {
+//            listPDT = taskLoadData.getValue();
+            listPDT = taskLoadData.getValue();
+        });
+        taskLoadData.setOnFailed(e -> {
+
+        });
+
+        Thread thread = new Thread(taskLoadData);
+        thread.start();
+
         origin = FXCollections.observableArrayList(listPDT);
         filter = FXCollections.observableArrayList(origin);
         tvPhieuDat.setItems(filter);

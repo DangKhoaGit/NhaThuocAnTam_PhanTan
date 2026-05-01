@@ -5,21 +5,19 @@
 
 package com.antam.app.controller.phieudat;
 
+import com.antam.app.network.ClientManager;
 import com.antam.app.service.I_ChiTietPhieuDat_Service;
-import com.antam.app.service.I_NhanVien_Service;
 import com.antam.app.service.I_PhieuDat_Service;
-import com.antam.app.service.impl.ChiTietPhieuDat_Service;
-import com.antam.app.service.impl.LoThuoc_Service;
 import com.antam.app.dto.ChiTietPhieuDatThuocDTO;
 import com.antam.app.dto.LoThuocDTO;
 import com.antam.app.dto.NhanVienDTO;
 import com.antam.app.dto.PhieuDatThuocDTO;
-import com.antam.app.service.impl.NhanVien_Service;
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcon;
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcons;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.concurrent.Task;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
@@ -37,6 +35,7 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class CapNhatPhieuDatController extends ScrollPane{
     
@@ -68,16 +67,18 @@ public class CapNhatPhieuDatController extends ScrollPane{
 
 
     public static PhieuDatThuocDTO selectedPDT;
-    public LoThuoc_Service ctThuoc_dao = new LoThuoc_Service();
-    private NhanVien_Service nhanVien_service = new NhanVien_Service();
+//    public LoThuoc_Service ctThuoc_dao = new LoThuoc_Service();
+//    private NhanVien_Service nhanVien_service = new NhanVien_Service();
 
-    private I_PhieuDat_Service I_PhieuDat_Service = new com.antam.app.service.impl.PhieuDat_Service();
-    private I_ChiTietPhieuDat_Service I_ChiTietPhieuDat_Service = new ChiTietPhieuDat_Service();
+//    private I_PhieuDat_Service I_PhieuDat_Service = new com.antam.app.service.impl.PhieuDat_Service();
+//    private I_ChiTietPhieuDat_Service I_ChiTietPhieuDat_Service = new ChiTietPhieuDat_Service();
 
-    private List<PhieuDatThuocDTO> listPDT = I_PhieuDat_Service.getAllPhieuDatThuocFromDBS();
-    private List<NhanVienDTO> listNV = nhanVien_service.getAllNhanVien();
+    private List<PhieuDatThuocDTO> listPDT;
+    private List<NhanVienDTO> listNV ;
     private ObservableList<PhieuDatThuocDTO> origin;
     private ObservableList<PhieuDatThuocDTO> filter= FXCollections.observableArrayList();
+
+    private ClientManager clientManager = ClientManager.getInstance();
 
     public CapNhatPhieuDatController() {
         this.setFitToHeight(true);
@@ -209,6 +210,42 @@ public class CapNhatPhieuDatController extends ScrollPane{
 
         /** Sự kiện **/
 
+//        private List<PhieuDatThuocDTO> listPDT = I_PhieuDat_Service.getAllPhieuDatThuocFromDBS();
+        Task<List<PhieuDatThuocDTO>> loadDataTask = new Task<>() {
+            @Override
+            protected List<PhieuDatThuocDTO> call() throws Exception {
+                return clientManager.getPhieuDatList();
+            }
+        };
+
+        loadDataTask.setOnSucceeded(event -> {
+            listPDT = loadDataTask.getValue();
+            origin = FXCollections.observableArrayList(listPDT);
+            filter = FXCollections.observableArrayList(origin);
+            tvPhieuDat.setItems(filter);
+        });
+
+        loadDataTask.setOnFailed(event -> {});
+        Thread loadThread = new Thread(loadDataTask);
+        loadThread.start();
+
+//        private List<NhanVienDTO> listNV = nhanVien_service.getAllNhanVien();
+
+        Task<List<NhanVienDTO>> loadNVTask = new Task<>() {
+            @Override
+            protected List<NhanVienDTO> call() throws Exception {
+                return clientManager.getNhanVienList();
+            }
+        };
+        loadNVTask.setOnSucceeded(event -> {
+            listNV = loadNVTask.getValue();
+
+        });
+
+        loadNVTask.setOnFailed(event -> {});
+        Thread loadNVThread = new Thread(loadNVTask);
+        loadNVThread.start();
+
         this.btnThanhToan.setOnAction((e) -> {
             if (tvPhieuDat.getSelectionModel().getSelectedItem() == null){
                 showMess("Cảnh báo","Hãy chọn một phiếu đặt thuốc");
@@ -323,36 +360,91 @@ public class CapNhatPhieuDatController extends ScrollPane{
 
             try {
                 // 1. Lấy chi tiết
-                List<ChiTietPhieuDatThuocDTO> chiTietList =
-                        I_ChiTietPhieuDat_Service.getChiTietTheoPhieu(selected.getMaPhieu());
+                AtomicReference<List<ChiTietPhieuDatThuocDTO>> chiTietList = new AtomicReference<>();
+
+                Task<List<ChiTietPhieuDatThuocDTO>> loadChiTietTask = new Task<>() {
+                    @Override
+                    protected List<ChiTietPhieuDatThuocDTO> call() throws Exception {
+                        return clientManager.getChiTietPDT(selected.getMaPhieu());
+                    }
+                };
+                loadChiTietTask.setOnSucceeded(event -> {
+                    chiTietList.set(loadChiTietTask.getValue());
+                });
+
+                Thread thread = new Thread(loadChiTietTask);
+                thread.start();
 
                 // 2. Hoàn kho
-                for (ChiTietPhieuDatThuocDTO ct : chiTietList) {
-                    LoThuocDTO ctt =
-                            ctThuoc_dao.getChiTietThuoc(ct.getMaThuoc().getMaLoThuoc());
 
-                    int soMoi = ctt.getSoLuong() + ct.getSoLuong();
+                Task<Void> task = new Task<>() {
+                    @Override
+                    protected Void call() throws Exception {
+                        for (ChiTietPhieuDatThuocDTO ct : chiTietList.get()) {
 
-                    boolean ok =
-                            ctThuoc_dao.CapNhatSoLuongChiTietThuoc(ctt.getMaLoThuoc(), soMoi);
+                            LoThuocDTO loThuocDTO = clientManager
+                                    .getLoThuocByLoThuocId(ct.getMaThuoc().getMaLoThuoc());
 
-                    if (!ok) {
-                        showMess("Lỗi", "Hoàn kho thất bại cho lô " + ctt.getMaLoThuoc());
-                        return;
+                            int soMoi = loThuocDTO.getSoLuong() + ct.getSoLuong();
+
+                            boolean ok = clientManager
+                                    .capNhatSoLuongChiTietThuoc(loThuocDTO.getMaLoThuoc(), soMoi);
+
+                            if (!ok) {
+                                throw new RuntimeException("Hoàn kho thất bại cho lô " + loThuocDTO.getMaLoThuoc());
+                            }
+                        }
+                        return null;
                     }
-                }
+                };
+
+                task.setOnSucceeded(event -> {
+                    showMess("Thành công", "Hoàn kho thành công!");
+                });
+
+                task.setOnFailed(event-> {
+                    showMess("Lỗi", task.getException().getMessage());
+                });
+
+                new Thread(task).start();
 
                 // 3. Huỷ chi tiết
-                if (!I_ChiTietPhieuDat_Service.huyChiTietPhieu(selected.getMaPhieu())) {
-                    showMess("Lỗi", "Huỷ chi tiết phiếu thất bại");
-                    return;
-                }
+
+                Task<Boolean> taskHuyChiTietPhieu   = new Task<>() {
+                    @Override
+                    protected Boolean call() throws Exception {
+                        return clientManager.huyChiTietPhieu(selected.getMaPhieu());
+                    };
+                };
+                taskHuyChiTietPhieu.setOnSucceeded(event -> {
+                    if (!taskHuyChiTietPhieu.getValue()) {
+                        showMess("Lỗi", "Huỷ chi tiết phiếu thất bại");
+                    }
+                });
+                taskHuyChiTietPhieu.setOnFailed(event -> {
+
+                });
+
+                Thread huyChiTietThread = new Thread(taskHuyChiTietPhieu);
 
                 // 4. Xoá phiếu
-                if (!I_PhieuDat_Service.xoaPhieuDatThuocTrongDBS(selected.getMaPhieu())) {
-                    showMess("Lỗi", "Xoá phiếu thất bại");
-                    return;
-                }
+                Task<Boolean> taskXoaPhieu = new Task<>() {
+                    @Override
+                    protected Boolean call() throws Exception {
+                        huyChiTietThread.join();
+                        return clientManager.xoaPhieuDat(selected.getMaPhieu());
+                    }
+                };
+                taskXoaPhieu.setOnSucceeded(event -> {
+                    if (!taskXoaPhieu.getValue()) {
+                        showMess("Lỗi", "Xoá phiếu thất bại");
+                        return;
+                    }
+                });
+
+                taskXoaPhieu.setOnFailed(event -> {});
+                Thread xoaPhieuThread = new Thread(taskXoaPhieu);
+                xoaPhieuThread.start();
 
                 showMess("Thành công", "Xoá phiếu đặt thuốc thành công");
                 loadDataVaoBang();
@@ -513,11 +605,24 @@ public class CapNhatPhieuDatController extends ScrollPane{
     }
 
     private void loadDataVaoBang() {
-        listPDT = I_PhieuDat_Service.getAllPhieuDatThuocFromDBS();
-        origin = FXCollections.observableArrayList(listPDT);
-        filter = FXCollections.observableArrayList(origin);
-        tvPhieuDat.setItems(filter);
-        tvPhieuDat.refresh();
+        Task<List<PhieuDatThuocDTO>> loadDataTask = new Task<>() {
+            @Override
+            protected List<PhieuDatThuocDTO> call() throws Exception {
+                return clientManager.getPhieuDatList();
+            }
+        };
+
+        loadDataTask.setOnSucceeded(event -> {
+            listPDT = loadDataTask.getValue();
+            origin = FXCollections.observableArrayList(listPDT);
+            filter = FXCollections.observableArrayList(origin);
+            tvPhieuDat.setItems(filter);
+            tvPhieuDat.refresh();
+        });
+
+        loadDataTask.setOnFailed(event -> {});
+        Thread loadThread = new Thread(loadDataTask);
+        loadThread.start();
     }
 
 

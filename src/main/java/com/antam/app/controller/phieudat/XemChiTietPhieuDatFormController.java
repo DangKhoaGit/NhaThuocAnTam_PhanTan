@@ -5,14 +5,14 @@
 
 package com.antam.app.controller.phieudat;
 
-import com.antam.app.service.I_ChiTietPhieuDat_Service;
+import com.antam.app.network.ClientManager;
 import com.antam.app.dto.ChiTietPhieuDatThuocDTO;
 import com.antam.app.dto.PhieuDatThuocDTO;
-import com.antam.app.service.impl.ChiTietPhieuDat_Service;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.concurrent.Task;
 import javafx.scene.control.ButtonBar.ButtonData;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.DialogPane;
@@ -21,7 +21,6 @@ import javafx.scene.control.TableView;
 import javafx.scene.text.Text;
 
 import java.text.DecimalFormat;
-import java.util.ArrayList;
 import java.util.List;
 
 import static com.antam.app.controller.phieudat.TimPhieuDatController.selectedPhieuDatThuocDTO;
@@ -45,8 +44,9 @@ public class XemChiTietPhieuDatFormController extends DialogPane{
     private TableView<ChiTietPhieuDatThuocDTO> tbThuoc;
 
     private PhieuDatThuocDTO select = selectedPhieuDatThuocDTO;
-    private I_ChiTietPhieuDat_Service I_ChiTietPhieuDat_Service = new ChiTietPhieuDat_Service();
-    private List<ChiTietPhieuDatThuocDTO> listChiTiet = I_ChiTietPhieuDat_Service.getChiTietTheoPhieu(select.getMaPhieu());
+//    private I_ChiTietPhieuDat_Service I_ChiTietPhieuDat_Service = new ChiTietPhieuDat_Service();
+    private List<ChiTietPhieuDatThuocDTO> listChiTiet ;
+    private ClientManager clientManager = ClientManager.getInstance();
 
     public XemChiTietPhieuDatFormController() {
         this.setPrefSize(800, 662);
@@ -157,8 +157,22 @@ public class XemChiTietPhieuDatFormController extends DialogPane{
         this.getButtonTypes().add(cancelButton);
 
         //gọi các phương thức xử lí
+
+        Task< List<ChiTietPhieuDatThuocDTO>> task = new Task<List<ChiTietPhieuDatThuocDTO>>() {
+            @Override
+            protected List<ChiTietPhieuDatThuocDTO> call() throws Exception {
+                return clientManager.getChiTietPDT(select.getMaPhieu());
+            }
+        };
+
+        task.setOnSucceeded(event -> {
+            listChiTiet = task.getValue();
+            loadBangChiTiet();
+        });
+        Thread thread = new Thread(task);
+        thread.start();
+
         setupTable();
-        loadBangChiTiet();
         loadContent();
     }
 
