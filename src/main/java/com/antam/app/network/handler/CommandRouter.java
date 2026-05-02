@@ -48,6 +48,8 @@ public class CommandRouter {
                     return handleGetHoaDonById(command);
                 case CREATE_HOADON:
                     return handleCreateHoaDon(command);
+                case CREATE_HOADON_WITH_DETAILS:
+                    return handleCreateHoaDonWithDetails(command);
                 case UPDATE_HOADON:
                     return handleUpdateHoaDon(command);
                 case UPDATE_HOADON_TOTAL:
@@ -118,6 +120,8 @@ public class CommandRouter {
                     return handleGetKhachHangWithStats(command);
                 case GET_KHACHHANG_BY_PHONE:
                     return handleGetKhachHangByPhone(command);
+                case SEARCH_KHACHHANG_BY_NAME:
+                    return handleSearchKhachHangByName(command);
                 case CREATE_KHACHHANG:
                     return handleCreateKhachHang(command);
                 case UPDATE_KHACHHANG:
@@ -511,7 +515,8 @@ public class CommandRouter {
     private Response handleGetKhachHangWithStats(Command command) {
         try {
             if (command.getPayload() == null || !command.getPayload().containsKey("maKH")) {
-                return Response.builder().success(false).message("Invalid payload for get KhachHang with stats").errorCode("INVALID_PAYLOAD").build();
+                List<KhachHangDTO> khachHangList = serviceLocator.getKhachHangService().loadKhachHangWithStats();
+                return Response.builder().success(true).message("KhachHang with stats list retrieved successfully").data(khachHangList).build();
             }
             String maKH = (String) command.getPayload().get("maKH");
             KhachHangDTO dto = serviceLocator.getKhachHangService().getKhachHangTheoMa(maKH);
@@ -519,6 +524,20 @@ public class CommandRouter {
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "Error getting KhachHang with stats", e);
             return Response.builder().success(false).message("Error retrieving KhachHang: " + e.getMessage()).errorCode("GET_KHACHHANG_WITH_STATS_ERROR").build();
+        }
+    }
+
+    private Response handleSearchKhachHangByName(Command command) {
+        try {
+            if (command.getPayload() == null || !command.getPayload().containsKey("tenKH")) {
+                return Response.builder().success(false).message("Invalid payload for search KhachHang by name").errorCode("INVALID_PAYLOAD").build();
+            }
+            String tenKH = (String) command.getPayload().get("tenKH");
+            List<KhachHangDTO> khachHangList = serviceLocator.getKhachHangService().searchKhachHangByName(tenKH);
+            return Response.builder().success(true).message("KhachHang search result retrieved successfully").data(khachHangList).build();
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Error searching KhachHang by name", e);
+            return Response.builder().success(false).message("Error searching KhachHang: " + e.getMessage()).errorCode("SEARCH_KHACHHANG_BY_NAME_ERROR").build();
         }
     }
 
@@ -675,8 +694,8 @@ public class CommandRouter {
                 return Response.builder().success(false).message("Invalid payload for search HoaDon by Ma").errorCode("INVALID_PAYLOAD").build();
             }
             String maHD = (String) command.getPayload().get("maHD");
-            HoaDonDTO dto = serviceLocator.getHoaDonService().getHoaDonTheoMa(maHD);
-            return Response.builder().success(true).message("HoaDon retrieved successfully").data(dto).build();
+            ArrayList<HoaDonDTO> hoaDonList = serviceLocator.getHoaDonService().searchHoaDonByMaHd(maHD);
+            return Response.builder().success(true).message("HoaDon list retrieved successfully").data(hoaDonList).build();
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "Error searching HoaDon by Ma", e);
             return Response.builder().success(false).message("Error searching HoaDon: " + e.getMessage()).errorCode("SEARCH_HOADON_BY_MA_ERROR").build();
@@ -754,15 +773,12 @@ public class CommandRouter {
                         .build();
             }
 
-            // Convert payload to DTO
-            // In production, use Jackson ObjectMapper for this
-            // HoaDonDTO dto = objectMapper.convertValue(command.getPayload().get("hoaDon"), HoaDonDTO.class);
-
-            LOGGER.info("HoaDon creation command received");
-
+            HoaDonDTO dto = (HoaDonDTO) command.getPayload().get("hoaDon");
+            boolean success = serviceLocator.getHoaDonService().insertHoaDon(dto);
             return Response.builder()
-                    .success(true)
-                    .message("HoaDon created successfully")
+                    .success(success)
+                    .message(success ? "HoaDon created successfully" : "Failed to create HoaDon")
+                    .errorCode(success ? null : "CREATE_HOADON_FAILED")
                     .build();
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "Error creating HoaDon", e);
@@ -770,6 +786,37 @@ public class CommandRouter {
                     .success(false)
                     .message("Error creating HoaDon: " + e.getMessage())
                     .errorCode("CREATE_HOADON_ERROR")
+                    .build();
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private Response handleCreateHoaDonWithDetails(Command command) {
+        try {
+            if (command.getPayload() == null
+                    || !command.getPayload().containsKey("hoaDon")
+                    || !command.getPayload().containsKey("chiTietHoaDonList")) {
+                return Response.builder()
+                        .success(false)
+                        .message("Invalid payload for create HoaDon with details")
+                        .errorCode("INVALID_PAYLOAD")
+                        .build();
+            }
+
+            HoaDonDTO hoaDonDTO = (HoaDonDTO) command.getPayload().get("hoaDon");
+            List<ChiTietHoaDonDTO> chiTietHoaDonList = (List<ChiTietHoaDonDTO>) command.getPayload().get("chiTietHoaDonList");
+            boolean success = serviceLocator.getHoaDonService().insertHoaDonVaChiTiet(hoaDonDTO, chiTietHoaDonList);
+            return Response.builder()
+                    .success(success)
+                    .message(success ? "HoaDon with details created successfully" : "Failed to create HoaDon with details")
+                    .errorCode(success ? null : "CREATE_HOADON_WITH_DETAILS_FAILED")
+                    .build();
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Error creating HoaDon with details", e);
+            return Response.builder()
+                    .success(false)
+                    .message("Error creating HoaDon with details: " + e.getMessage())
+                    .errorCode("CREATE_HOADON_WITH_DETAILS_ERROR")
                     .build();
         }
     }
@@ -983,7 +1030,7 @@ public class CommandRouter {
                 return Response.builder().success(false).message("Invalid payload for create ChiTietHoaDon").errorCode("INVALID_PAYLOAD").build();
             }
             ChiTietHoaDonDTO dto = (ChiTietHoaDonDTO) command.getPayload().get("chiTietHoaDon");
-            boolean success = serviceLocator.getChiTietHoaDonService().themChiTietHoaDon(dto);
+            boolean success = serviceLocator.getChiTietHoaDonService().themHoacCapNhatChiTietHoaDon(dto);
             return Response.builder().success(success).message(success ? "ChiTietHoaDon created successfully" : "Failed to create ChiTietHoaDon").errorCode(success ? null : "CREATE_CHITIETHOADON_FAILED").build();
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "Error creating ChiTietHoaDon", e);
@@ -2131,13 +2178,13 @@ public class CommandRouter {
 
     private Response handleGetDoanhThuTheoThang(Command command) {
         try {
-            if (command.getPayload() == null || !command.getPayload().containsKey("thang")) {
+            if (command.getPayload() == null || !command.getPayload().containsKey("startDate") || !command.getPayload().containsKey("endDate")) {
                 return Response.builder().success(false).message("Invalid payload for get DoanhThu theo thang").errorCode("INVALID_PAYLOAD").build();
             }
-            LocalDate tu = (LocalDate) LocalDate.parse( (String) command.getPayload().get("tungay"));
-            LocalDate den = (LocalDate) LocalDate.parse((String)  command.getPayload().get("denngay"));
-            String nv = (String) command.getPayload().get("nhanvien");
-            Map<String, Object> doanhThuTheoThang = (Map<String, Object>) serviceLocator.getThongKeDoanhThuService().getDoanhThuTheoThang(tu,den,nv);
+            LocalDate tu = LocalDate.parse((String) command.getPayload().get("startDate"));
+            LocalDate den = LocalDate.parse((String) command.getPayload().get("endDate"));
+            String nv = (String) command.getPayload().get("nhanVien");
+            ArrayList<ThongKeDoanhThuDTO> doanhThuTheoThang = serviceLocator.getThongKeDoanhThuService().getDoanhThuTheoThang(tu, den, nv);
             return Response.builder().success(true).message("DoanhThuTheoThang retrieved successfully").data(doanhThuTheoThang).build();
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "Error getting DoanhThuTheoThang", e);
@@ -2153,7 +2200,7 @@ public class CommandRouter {
             LocalDate startDate =LocalDate.parse( (String) command.getPayload().get("startDate"));
             LocalDate endDate = LocalDate.parse((String) command.getPayload().get("endDate"));
             String nv = (String) command.getPayload().get("nhanVien");
-            Map<String, Object> doanhThuTheoThoiGian = (Map<String, Object>) serviceLocator.getThongKeDoanhThuService().getDoanhThuTheoThoiGian(startDate, endDate, nv);
+            ArrayList<ThongKeDoanhThuDTO> doanhThuTheoThoiGian = serviceLocator.getThongKeDoanhThuService().getDoanhThuTheoThoiGian(startDate, endDate, nv);
             return Response.builder().success(true).message("DoanhThuTheoThoiGian retrieved successfully").data(doanhThuTheoThoiGian).build();
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "Error getting DoanhThuTheoThoiGian", e);

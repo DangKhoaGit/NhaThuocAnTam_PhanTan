@@ -5,9 +5,8 @@
  */
 package com.antam.app.controller.khachhang;
 
-import com.antam.app.service.impl.ChiTietHoaDon_Service;
-import com.antam.app.service.impl.HoaDon_Service;
 import com.antam.app.dto.*;
+import com.antam.app.network.ClientManager;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
@@ -16,12 +15,9 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
 
-import java.net.URL;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.ResourceBundle;
-import java.util.stream.Collectors;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
@@ -55,8 +51,8 @@ public class XemChiTietKhachHangController extends DialogPane {
     private FlowPane flowPaneThuocDaMua;
 
     private KhachHangDTO khachHangDTO;
-    private HoaDon_Service hoaDonDAO;
-    private ChiTietHoaDon_Service chiTietHoaDonDAO;
+    private final ClientManager clientManager = ClientManager.getInstance();
+    private final java.util.Map<String, List<ChiTietHoaDonDTO>> chiTietHoaDonCache = new java.util.HashMap<>();
     private DateTimeFormatter formatter;
     private DateTimeFormatter dateFormatter;
 
@@ -157,8 +153,6 @@ public class XemChiTietKhachHangController extends DialogPane {
         this.setContent(anchorPane);
         this.getStylesheets().add(getClass().getResource("/com/antam/app/styles/dashboard_style.css").toExternalForm());
         /** Sự kiện **/
-        hoaDonDAO = new HoaDon_Service();
-        chiTietHoaDonDAO = new ChiTietHoaDon_Service();
         formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
         dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
@@ -192,7 +186,7 @@ public class XemChiTietKhachHangController extends DialogPane {
         colSoThuoc.setCellValueFactory(cellData -> {
             HoaDonDTO hd = cellData.getValue();
             // Lấy số lượng chi tiết hóa đơn
-            ArrayList<ChiTietHoaDonDTO> chiTietList = chiTietHoaDonDAO.getAllChiTietHoaDonTheoMaHD(hd.getMaHD());
+            List<ChiTietHoaDonDTO> chiTietList = getChiTietHoaDon(hd.getMaHD());
             return new javafx.beans.property.SimpleObjectProperty<>(chiTietList.size());
         });
         colTongTien.setCellValueFactory(new PropertyValueFactory<>("tongTien"));
@@ -209,7 +203,7 @@ public class XemChiTietKhachHangController extends DialogPane {
         });
         colNhanVien.setCellValueFactory(cellData -> {
             HoaDonDTO hd = cellData.getValue();
-            String tenNV = hd.getMaNV().getHoTen() != null ? hd.getMaNV().getHoTen() : "N/A";
+            String tenNV = hd.getMaNV() != null && hd.getMaNV().getHoTen() != null ? hd.getMaNV().getHoTen() : "N/A";
             return new javafx.beans.property.SimpleStringProperty(tenNV);
         });
     }
@@ -239,13 +233,7 @@ public class XemChiTietKhachHangController extends DialogPane {
         if (khachHangDTO == null) return;
 
         try {
-            // Lấy tất cả hóa đơn từ database
-            ArrayList<HoaDonDTO> allHoaDon = hoaDonDAO.getAllHoaDon();
-
-            // Lọc các hóa đơn của khách hàng này
-            List<HoaDonDTO> hoaDonCuaKH = allHoaDon.stream()
-                .filter(hd -> hd.getMaKH().getMaKH().equals(khachHangDTO.getMaKH()))
-                .collect(Collectors.toList());
+            List<HoaDonDTO> hoaDonCuaKH = clientManager.getHoaDonByKhachHangId(khachHangDTO.getMaKH());
 
             // Chuyển đổi sang ObservableList
             ObservableList<HoaDonDTO> dsHoaDon = FXCollections.observableArrayList(hoaDonCuaKH);
@@ -278,14 +266,11 @@ public class XemChiTietKhachHangController extends DialogPane {
             flowPaneThuocDaMua.getChildren().clear();
 
             // Lấy tất cả hóa đơn của khách hàng
-            ArrayList<HoaDonDTO> allHoaDon = hoaDonDAO.getAllHoaDon();
-            List<HoaDonDTO> hoaDonCuaKH = allHoaDon.stream()
-                .filter(hd -> hd.getMaKH().getMaKH().equals(khachHangDTO.getMaKH()))
-                .collect(Collectors.toList());
+            List<HoaDonDTO> hoaDonCuaKH = clientManager.getHoaDonByKhachHangId(khachHangDTO.getMaKH());
 
             // Duyệt qua từng hóa đơn và lấy chi tiết thuốc
             for (HoaDonDTO hoaDonDTO : hoaDonCuaKH) {
-                ArrayList<ChiTietHoaDonDTO> chiTietList = chiTietHoaDonDAO.getAllChiTietHoaDonTheoMaHD(hoaDonDTO.getMaHD());
+                List<ChiTietHoaDonDTO> chiTietList = getChiTietHoaDon(hoaDonDTO.getMaHD());
 
                 // Tạo card cho mỗi chi tiết thuốc
                 for (ChiTietHoaDonDTO chiTiet : chiTietList) {
@@ -298,6 +283,13 @@ public class XemChiTietKhachHangController extends DialogPane {
             System.err.println("Lỗi khi tải thuốc đã mua: " + e.getMessage());
             e.printStackTrace();
         }
+    }
+
+    private List<ChiTietHoaDonDTO> getChiTietHoaDon(String maHD) {
+        if (maHD == null || maHD.trim().isEmpty()) {
+            return new ArrayList<>();
+        }
+        return chiTietHoaDonCache.computeIfAbsent(maHD, clientManager::getChiTietHoaDonByHoaDonId);
     }
 
     /**

@@ -7,8 +7,10 @@ import com.antam.app.network.message.Command;
 import com.antam.app.network.message.Response;
 
 import java.io.IOException;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
@@ -162,12 +164,40 @@ public class ClientManager {
         return result != null ? result : new ArrayList<>();
     }
 
+    public List<HoaDonDTO> getAllHoaDon() {
+        return toTypedList(getHoaDonList(), HoaDonDTO.class);
+    }
+
     public Object getHoaDonById(String maHD) {
         return send(RequestBuilder.getHoaDonById(maHD));
     }
 
+    public List<HoaDonDTO> searchHoaDonByMaHd(String maHD) {
+        List<?> rs = send(RequestBuilder.searchHoaDonByMa(maHD));
+        return toTypedList(rs, HoaDonDTO.class);
+    }
+
+    public List<HoaDonDTO> searchHoaDonByStatus(String status) {
+        List<?> rs = send(RequestBuilder.searchHoaDonByStatus(status));
+        return toTypedList(rs, HoaDonDTO.class);
+    }
+
+    public List<HoaDonDTO> searchHoaDonByMaNV(String maNV) {
+        List<?> rs = send(RequestBuilder.searchHoaDonByNhanVien(maNV));
+        return toTypedList(rs, HoaDonDTO.class);
+    }
+
+    public List<HoaDonDTO> getHoaDonByKhachHangId(String maKH) {
+        List<HoaDonDTO> rs = send(RequestBuilder.getHoaDonByKhachHangId(maKH));
+        return rs != null ? rs : new ArrayList<>();
+    }
+
     public boolean createHoaDon(Object dto) {
         return sendForSuccess(RequestBuilder.createHoaDon((HoaDonDTO) dto));
+    }
+
+    public boolean createHoaDonWithDetails(HoaDonDTO dto, List<ChiTietHoaDonDTO> chiTietHoaDonList) {
+        return sendForSuccess(RequestBuilder.createHoaDonWithDetails(dto, chiTietHoaDonList));
     }
 
     public boolean updateHoaDon(Object dto) {
@@ -218,6 +248,15 @@ public class ClientManager {
 
     public KhachHangDTO getKhachHangById(String maKH) {
         return send(RequestBuilder.getKhachHangById(maKH));
+    }
+
+    public List<KhachHangDTO> loadKhachHangWithStats() {
+        List<?> rs = send(RequestBuilder.getKhachHangWithStats());
+        return toTypedList(rs, KhachHangDTO.class);
+    }
+
+    public boolean updateKhachHang(KhachHangDTO khachHangDTO) {
+        return sendForSuccess(RequestBuilder.updateKhachHang(khachHangDTO));
     }
 
     // =========================================================
@@ -284,6 +323,50 @@ public class ClientManager {
     public List<?> doanhThuTheoThoiGian(Object payload) {
         List<?> rs = send(RequestBuilder.doanhThuTheoThoiGian((java.util.Map<String, Object>) payload));
         return rs != null ? rs : new ArrayList<>();
+    }
+
+    public ArrayList<ThongKeDoanhThuDTO> getDoanhThuTheoThoiGian(LocalDate tuNgay, LocalDate denNgay, String maNV) {
+        List<?> rs = send(RequestBuilder.getDoanhThuTheoThoiGian(tuNgay, denNgay, maNV));
+        return new ArrayList<>(toTypedList(rs, ThongKeDoanhThuDTO.class));
+    }
+
+    public ArrayList<ThongKeDoanhThuDTO> getDoanhThuTheoThang(LocalDate tuNgay, LocalDate denNgay, String maNV) {
+        List<?> rs = send(RequestBuilder.getDoanhThuTheoThang(tuNgay, denNgay, maNV));
+        return new ArrayList<>(toTypedList(rs, ThongKeDoanhThuDTO.class));
+    }
+
+    public double getTongDoanhThu(LocalDate tuNgay, LocalDate denNgay, String maNV) {
+        Object rs = send(RequestBuilder.getTongDoanhThu(tuNgay, denNgay, maNV));
+        return rs instanceof Number ? ((Number) rs).doubleValue() : 0;
+    }
+
+    public int getTongDonHang(LocalDate tuNgay, LocalDate denNgay, String maNV) {
+        Object rs = send(RequestBuilder.getTongDonHang(tuNgay, denNgay, maNV));
+        return rs instanceof Number ? ((Number) rs).intValue() : 0;
+    }
+
+    public int getSoKhachHangMoi(LocalDate tuNgay, LocalDate denNgay, String maNV) {
+        Object rs = send(RequestBuilder.getSoKhachHangMoi(tuNgay, denNgay, maNV));
+        return rs instanceof Number ? ((Number) rs).intValue() : 0;
+    }
+
+    public Map<String, Integer> getTopSanPhamBanChay(LocalDate tuNgay, LocalDate denNgay, int limit) {
+        Map<?, ?> rs = send(RequestBuilder.getTopSanPhamBanChay(tuNgay, denNgay, limit));
+        Map<String, Integer> result = new LinkedHashMap<>();
+        if (rs == null) {
+            return result;
+        }
+        for (Map.Entry<?, ?> entry : rs.entrySet()) {
+            if (entry.getKey() != null && entry.getValue() instanceof Number) {
+                result.put(entry.getKey().toString(), ((Number) entry.getValue()).intValue());
+            }
+        }
+        return result;
+    }
+
+    public ArrayList<NhanVienDTO> getDanhSachNhanVienForThongKe() {
+        List<?> rs = send(RequestBuilder.getNhanVienListForFilter());
+        return new ArrayList<>(toTypedList(rs, NhanVienDTO.class));
     }
 
     // =========================================================
@@ -890,7 +973,7 @@ public class ClientManager {
     }
 
     public Boolean insertKhachHang(KhachHangDTO khach) {
-        return send(RequestBuilder.insertKhachHang(khach));
+        return sendForSuccess(RequestBuilder.insertKhachHang(khach));
     }
 
     public Boolean updateSoLuongLoThuoc(int maLoThuoc, int i) {

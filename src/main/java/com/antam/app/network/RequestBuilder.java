@@ -4,7 +4,9 @@ import com.antam.app.dto.*;
 import com.antam.app.network.command.CommandType;
 import com.antam.app.network.message.Command;
 
+import java.time.LocalDate;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class RequestBuilder {
@@ -32,6 +34,14 @@ public class RequestBuilder {
         Map<String, Object> m = new HashMap<>();
         m.put(key, value);
         return m;
+    }
+
+    private static Map<String, Object> thongKeDoanhThuPayload(LocalDate tuNgay, LocalDate denNgay, String maNV) {
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("startDate", tuNgay.toString());
+        payload.put("endDate", denNgay.toString());
+        payload.put("nhanVien", maNV);
+        return payload;
     }
 
     // =========================================================
@@ -62,8 +72,18 @@ public class RequestBuilder {
         return build(CommandType.GET_HOADON_BY_ID, map("maHD", maHD));
     }
 
+    public static Command getHoaDonByKhachHangId(String maKH) {
+        return build(CommandType.GET_HOADON_BY_KHACHHANG_ID, map("maKH", maKH));
+    }
+
     public static Command createHoaDon(HoaDonDTO dto) {
         return build(CommandType.CREATE_HOADON, map("hoaDon", dto));
+    }
+
+    public static Command createHoaDonWithDetails(HoaDonDTO dto, List<ChiTietHoaDonDTO> chiTietHoaDonList) {
+        Map<String, Object> payload = map("hoaDon", dto);
+        payload.put("chiTietHoaDonList", chiTietHoaDonList);
+        return build(CommandType.CREATE_HOADON_WITH_DETAILS, payload);
     }
 
     public static Command updateHoaDon(HoaDonDTO dto) {
@@ -75,7 +95,15 @@ public class RequestBuilder {
     }
 
     public static Command searchHoaDonByMa(String ma) {
-        return build(CommandType.SEARCH_HOADON_BY_MA, map("ma", ma));
+        return build(CommandType.SEARCH_HOADON_BY_MA, map("maHD", ma));
+    }
+
+    public static Command searchHoaDonByStatus(String status) {
+        return build(CommandType.SEARCH_HOADON_BY_STATUS, map("status", status));
+    }
+
+    public static Command searchHoaDonByNhanVien(String maNV) {
+        return build(CommandType.SEARCH_HOADON_BY_NHANVIEN, map("maNV", maNV));
     }
 
     // =========================================================
@@ -103,7 +131,7 @@ public class RequestBuilder {
     }
 
     public static Command getKhachHangByPhone(String phone) {
-        return build(CommandType.GET_KHACHHANG_BY_PHONE, map("soDienThoai", phone));
+        return build(CommandType.GET_KHACHHANG_BY_PHONE, map("phone", phone));
     }
 
     public static Command searchKhachHangByName(String name) {
@@ -112,7 +140,15 @@ public class RequestBuilder {
 
 
     public static Command getKhachHangById(String maKH) {
-        return build(CommandType.GET_KHACHHANG_BY_PHONE, map("MaKH", maKH));
+        return build(CommandType.GET_KHACHHANG_BY_ID, map("maKH", maKH));
+    }
+
+    public static Command getKhachHangWithStats() {
+        return build(CommandType.GET_KHACHHANG_WITH_STATS);
+    }
+
+    public static Command updateKhachHang(KhachHangDTO khachHangDTO) {
+        return build(CommandType.UPDATE_KHACHHANG, map("khachHang", khachHangDTO));
     }
 
     // =========================================================
@@ -163,6 +199,36 @@ public class RequestBuilder {
 
     public static Command tongDoanhThu(Map<String, Object> payload) {
         return build(CommandType.GET_TONG_DOANHTHU, payload);
+    }
+
+    public static Command getDoanhThuTheoThoiGian(LocalDate tuNgay, LocalDate denNgay, String maNV) {
+        return build(CommandType.GET_DOANHTHU_THEO_THOIGIAN, thongKeDoanhThuPayload(tuNgay, denNgay, maNV));
+    }
+
+    public static Command getDoanhThuTheoThang(LocalDate tuNgay, LocalDate denNgay, String maNV) {
+        return build(CommandType.GET_DOANHTHU_THEO_THANG, thongKeDoanhThuPayload(tuNgay, denNgay, maNV));
+    }
+
+    public static Command getTongDoanhThu(LocalDate tuNgay, LocalDate denNgay, String maNV) {
+        return build(CommandType.GET_TONG_DOANHTHU, thongKeDoanhThuPayload(tuNgay, denNgay, maNV));
+    }
+
+    public static Command getTongDonHang(LocalDate tuNgay, LocalDate denNgay, String maNV) {
+        return build(CommandType.GET_TONG_DONHANG, thongKeDoanhThuPayload(tuNgay, denNgay, maNV));
+    }
+
+    public static Command getSoKhachHangMoi(LocalDate tuNgay, LocalDate denNgay, String maNV) {
+        return build(CommandType.GET_SO_KHACHHANG_MOI, thongKeDoanhThuPayload(tuNgay, denNgay, maNV));
+    }
+
+    public static Command getTopSanPhamBanChay(LocalDate tuNgay, LocalDate denNgay, int limit) {
+        Map<String, Object> payload = thongKeDoanhThuPayload(tuNgay, denNgay, null);
+        payload.put("limit", limit);
+        return build(CommandType.GET_TOP_SANPHAM_BANCHAY_THEO_THOIGIAN, payload);
+    }
+
+    public static Command getNhanVienListForFilter() {
+        return build(CommandType.GET_NHANVIEN_LIST_FOR_FILTER);
     }
 
     // =========================================================

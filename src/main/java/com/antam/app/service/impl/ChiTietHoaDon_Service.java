@@ -177,7 +177,7 @@ public class ChiTietHoaDon_Service implements I_ChiTietHoaDon_Service {
             }
 
             // Check nếu đã tồn tại theo 3 khóa (MaHD, MaLoThuoc, TinhTrang)
-            if (tonTaiChiTietHoaDonTheoTinhTrang(maHD, maLoThuoc, tinhTrang)) {
+            if (tonTaiChiTietHoaDon(maHD, maLoThuoc)) {
                 // Đã tồn tại: UPDATE
                 return updateChiTietHoaDon(cthd);
             } else {

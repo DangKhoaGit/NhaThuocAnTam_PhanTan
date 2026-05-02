@@ -11,7 +11,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.stream.Collectors;
 
 import com.antam.app.dto.KhachHangDTO;
-import com.antam.app.service.impl.KhachHang_Service;
+import com.antam.app.network.ClientManager;
 
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcon;
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcons;
@@ -72,7 +72,7 @@ public class KhoiPhucKhachHangController extends ScrollPane {
     private ObservableList<KhachHangDTO> dsKhachHangGoc; // Để lưu danh sách gốc cho việc lọc
 
     // Service instance - manages business logic and DAO interactions
-    private KhachHang_Service khachHangService;
+    private ClientManager clientManager;
     private DateTimeFormatter formatter;
 
     // Định dạng tiền tệ kiểu Việt Nam: 1.000đ, 10.000đ
@@ -205,7 +205,7 @@ public class KhoiPhucKhachHangController extends ScrollPane {
         
         /** Sự kiện **/
         // Service instance to manage business logic and data access
-        khachHangService = new KhachHang_Service();
+        clientManager = ClientManager.getInstance();
         formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
         // Setup table columns with property binding
@@ -265,7 +265,7 @@ public class KhoiPhucKhachHangController extends ScrollPane {
     private void loadDataFromService() {
         try {
             // Service handles all data access and statistics calculation
-            java.util.List<KhachHangDTO> listKhachHang = khachHangService.loadKhachHangWithStats();
+            java.util.List<KhachHangDTO> listKhachHang = clientManager.loadKhachHangWithStats();
 
             // Convert to ObservableList for TableView binding
             dsKhachHangGoc = javafx.collections.FXCollections.observableArrayList(listKhachHang);

@@ -6,7 +6,7 @@
 package com.antam.app.controller.khachhang;
 
 import com.antam.app.dto.KhachHangDTO;
-import com.antam.app.service.impl.KhachHang_Service;
+import com.antam.app.network.ClientManager;
 
 import javafx.geometry.Insets;
 import javafx.scene.control.Alert;
@@ -39,7 +39,7 @@ public class SuaKhachHangFormController extends DialogPane {
     private Button btnHuy;
 
     private KhachHangDTO khachHangDTO;
-    private KhachHang_Service khachHangService;
+    private ClientManager clientManager;
 
     // Callback interface để thông báo khi lưu thành công
     public interface OnSaveListener {
@@ -130,7 +130,7 @@ public class SuaKhachHangFormController extends DialogPane {
 
         // Sự kiện
         // Initialize Service instance for business logic
-        khachHangService = new KhachHang_Service();
+        clientManager = ClientManager.getInstance();
 
         // Thiết lập sự kiện cho nút Lưu
         btnLuu.setOnAction(event -> handleLuu());
@@ -185,7 +185,7 @@ public class SuaKhachHangFormController extends DialogPane {
             khachHangDTO.setSoDienThoai(txtSoDienThoai.getText().trim());
 
             // Call Service to update customer information
-            boolean success = khachHangService.updateKhachHang(khachHangDTO);
+            boolean success = clientManager.updateKhachHang(khachHangDTO);
 
             if (success) {
                 showInfo("Thành công", "Cập nhật thông tin khách hàng thành công");

@@ -12,8 +12,7 @@ import java.util.Map;
 
 import com.antam.app.dto.NhanVienDTO;
 import com.antam.app.dto.ThongKeDoanhThuDTO;
-import com.antam.app.service.impl.ThongKeDoanhThu_Service;
-import com.antam.app.service.impl.ThongKeTrangChinh_Service;
+import com.antam.app.network.ClientManager;
 
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcon;
 import javafx.collections.FXCollections;
@@ -80,8 +79,7 @@ public class ThongKeDoanhThuController extends ScrollPane {
 
     private Button btnRefresh;
 
-    private ThongKeDoanhThu_Service thongKe_service;
-    private ThongKeTrangChinh_Service thongKeTrangChinh_service;
+    private ClientManager clientManager;
     private LocalDate tuNgay;
     private LocalDate denNgay;
     private String selectedNhanVien = null;
@@ -265,8 +263,7 @@ public class ThongKeDoanhThuController extends ScrollPane {
         this.getChildren().add(root);
 
         /** Sự kiện **/
-        thongKe_service = new ThongKeDoanhThu_Service();
-        thongKeTrangChinh_service = new ThongKeTrangChinh_Service();
+        clientManager = ClientManager.getInstance();
 
         // Khởi tạo ComboBox thời gian
         cmbThoiGian.setItems(FXCollections.observableArrayList(
@@ -403,7 +400,7 @@ public class ThongKeDoanhThuController extends ScrollPane {
     }
 
     private void loadDanhSachNhanVien() {
-        ArrayList<NhanVienDTO> dsNhanVien = thongKe_service.getDanhSachNhanVien();
+        ArrayList<NhanVienDTO> dsNhanVien = clientManager.getDanhSachNhanVienForThongKe();
         ObservableList<String> items = FXCollections.observableArrayList("Tất cả");
         for (NhanVienDTO nv : dsNhanVien) {
             items.add(nv.getMaNV() + " - " + nv.getHoTen());
@@ -477,9 +474,9 @@ public class ThongKeDoanhThuController extends ScrollPane {
 
     private void loadTongQuan() {
         try {
-            double tongDoanhThu = thongKe_service.getTongDoanhThu(tuNgay, denNgay, selectedNhanVien);
-            int tongDonHang = thongKe_service.getTongDonHang(tuNgay, denNgay, selectedNhanVien);
-            int soKhachHang = thongKe_service.getSoKhachHangMoi(tuNgay, denNgay, selectedNhanVien);
+            double tongDoanhThu = clientManager.getTongDoanhThu(tuNgay, denNgay, selectedNhanVien);
+            int tongDonHang = clientManager.getTongDonHang(tuNgay, denNgay, selectedNhanVien);
+            int soKhachHang = clientManager.getSoKhachHangMoi(tuNgay, denNgay, selectedNhanVien);
             double donHangTB = tongDonHang > 0 ? tongDoanhThu / tongDonHang : 0;
 
             // Cập nhật text
@@ -512,14 +509,14 @@ public class ThongKeDoanhThuController extends ScrollPane {
         LocalDate tuNgayTruoc = tuNgay.minusDays(days);
         LocalDate denNgayTruoc = denNgay.minusDays(days);
 
-        double doanhThuHienTai = thongKe_service.getTongDoanhThu(tuNgay, denNgay, selectedNhanVien);
-        double doanhThuTruoc = thongKe_service.getTongDoanhThu(tuNgayTruoc, denNgayTruoc, selectedNhanVien);
+        double doanhThuHienTai = clientManager.getTongDoanhThu(tuNgay, denNgay, selectedNhanVien);
+        double doanhThuTruoc = clientManager.getTongDoanhThu(tuNgayTruoc, denNgayTruoc, selectedNhanVien);
 
-        int donHangHienTai = thongKe_service.getTongDonHang(tuNgay, denNgay, selectedNhanVien);
-        int donHangTruoc = thongKe_service.getTongDonHang(tuNgayTruoc, denNgayTruoc, selectedNhanVien);
+        int donHangHienTai = clientManager.getTongDonHang(tuNgay, denNgay, selectedNhanVien);
+        int donHangTruoc = clientManager.getTongDonHang(tuNgayTruoc, denNgayTruoc, selectedNhanVien);
 
-        int khachHangHienTai = thongKe_service.getSoKhachHangMoi(tuNgay, denNgay, selectedNhanVien);
-        int khachHangTruoc = thongKe_service.getSoKhachHangMoi(tuNgayTruoc, denNgayTruoc, selectedNhanVien);
+        int khachHangHienTai = clientManager.getSoKhachHangMoi(tuNgay, denNgay, selectedNhanVien);
+        int khachHangTruoc = clientManager.getSoKhachHangMoi(tuNgayTruoc, denNgayTruoc, selectedNhanVien);
 
         updateChangeButton(btnDoanhThuChange, doanhThuHienTai, doanhThuTruoc);
         updateChangeButton(btnDonHangChange, donHangHienTai, donHangTruoc);
@@ -560,10 +557,10 @@ public class ThongKeDoanhThuController extends ScrollPane {
             ArrayList<ThongKeDoanhThuDTO> dsThongKe;
             if (hienThiTheoThang) {
                 // Lấy dữ liệu theo tháng
-                dsThongKe = thongKe_service.getDoanhThuTheoThang(tuNgay, denNgay, selectedNhanVien);
+                dsThongKe = clientManager.getDoanhThuTheoThang(tuNgay, denNgay, selectedNhanVien);
             } else {
                 // Lấy dữ liệu theo ngày
-                dsThongKe = thongKe_service.getDoanhThuTheoThoiGian(tuNgay, denNgay, selectedNhanVien);
+                dsThongKe = clientManager.getDoanhThuTheoThoiGian(tuNgay, denNgay, selectedNhanVien);
             }
 
             if (dsThongKe == null || dsThongKe.isEmpty()) {
@@ -750,7 +747,7 @@ public class ThongKeDoanhThuController extends ScrollPane {
         try {
             // *** CHỈNH SỐ SẢN PHẨM: Thay đổi số 5 để hiển thị nhiều/ít sản phẩm hơn ***
             // Sử dụng dữ liệu lọc theo khoảng thời gian người dùng chọn
-            Map<String, Integer> topProducts = thongKe_service.getTopSanPhamBanChay(tuNgay, denNgay, 5);
+            Map<String, Integer> topProducts = clientManager.getTopSanPhamBanChay(tuNgay, denNgay, 5);
 
             XYChart.Series<String, Number> series = new XYChart.Series<>();
             series.setName("Số lượng bán");
@@ -830,7 +827,7 @@ public class ThongKeDoanhThuController extends ScrollPane {
 
     private void loadTableData() {
         try {
-            ArrayList<ThongKeDoanhThuDTO> dsThongKe = thongKe_service.getDoanhThuTheoThoiGian(tuNgay, denNgay, selectedNhanVien);
+            ArrayList<ThongKeDoanhThuDTO> dsThongKe = clientManager.getDoanhThuTheoThoiGian(tuNgay, denNgay, selectedNhanVien);
             if (dsThongKe == null || dsThongKe.isEmpty()) {
                 System.out.println("Không có dữ liệu chi tiết doanh thu");
                 tableChiTiet.setItems(FXCollections.observableArrayList());
@@ -902,9 +899,9 @@ public class ThongKeDoanhThuController extends ScrollPane {
         // Lấy dữ liệu
         ArrayList<ThongKeDoanhThuDTO> dsThongKe;
         if (hienThiTheoThang) {
-            dsThongKe = thongKe_service.getDoanhThuTheoThang(tuNgay, denNgay, selectedNhanVien);
+            dsThongKe = clientManager.getDoanhThuTheoThang(tuNgay, denNgay, selectedNhanVien);
         } else {
-            dsThongKe = thongKe_service.getDoanhThuTheoThoiGian(tuNgay, denNgay, selectedNhanVien);
+            dsThongKe = clientManager.getDoanhThuTheoThoiGian(tuNgay, denNgay, selectedNhanVien);
         }
 
         // Tạo FileWriter với UTF-8 BOM để Excel hiển thị đúng tiếng Việt
@@ -924,9 +921,9 @@ public class ThongKeDoanhThuController extends ScrollPane {
 
             // Ghi thông tin tổng quan
             writer.append("THONG TIN TONG QUAN\n");
-            double tongDoanhThu = thongKe_service.getTongDoanhThu(tuNgay, denNgay, selectedNhanVien);
-            int tongDonHang = thongKe_service.getTongDonHang(tuNgay, denNgay, selectedNhanVien);
-            int soKhachHang = thongKe_service.getSoKhachHangMoi(tuNgay, denNgay, selectedNhanVien);
+            double tongDoanhThu = clientManager.getTongDoanhThu(tuNgay, denNgay, selectedNhanVien);
+            int tongDonHang = clientManager.getTongDonHang(tuNgay, denNgay, selectedNhanVien);
+            int soKhachHang = clientManager.getSoKhachHangMoi(tuNgay, denNgay, selectedNhanVien);
             double donHangTB = tongDonHang > 0 ? tongDoanhThu / tongDonHang : 0;
 
             writer.append("Tong doanh thu,").append(String.format("%.2f", tongDoanhThu)).append(" VND\n");
@@ -963,7 +960,7 @@ public class ThongKeDoanhThuController extends ScrollPane {
             writer.append("TOP SAN PHAM BAN CHAY\n");
             writer.append("Ten thuoc,So luong ban\n");
 
-            Map<String, Integer> topSanPham = thongKe_service.getTopSanPhamBanChay(tuNgay, denNgay, 5);
+            Map<String, Integer> topSanPham = clientManager.getTopSanPhamBanChay(tuNgay, denNgay, 5);
             for (Map.Entry<String, Integer> entry : topSanPham.entrySet()) {
                 writer.append(entry.getKey()).append(",");
                 writer.append(String.valueOf(entry.getValue())).append("\n");
@@ -985,4 +982,3 @@ public class ThongKeDoanhThuController extends ScrollPane {
         return formatter.format(amount);
     }
 }
-

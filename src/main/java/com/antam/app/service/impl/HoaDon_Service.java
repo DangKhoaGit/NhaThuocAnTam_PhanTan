@@ -6,12 +6,15 @@
 
 package com.antam.app.service.impl;
 
+import com.antam.app.connect.ConnectDB;
 import com.antam.app.dao.impl.*;
 import com.antam.app.service.I_HoaDon_Service;
 import com.antam.app.dto.*;
 import com.antam.app.entity.*;
 
+import java.sql.Connection;
 import java.util.ArrayList;
+import java.util.List;
 
 /*
  * @description: Implementation của I_HoaDon_Service
@@ -27,6 +30,8 @@ public class HoaDon_Service implements I_HoaDon_Service {
     private final NhanVien_DAO nhanVienDAO = new NhanVien_DAO();
     private final KhachHang_DAO khachHangDAO = new KhachHang_DAO();
     private final KhuyenMai_DAO khuyenMaiDAO = new KhuyenMai_DAO();
+    private final ChiTietHoaDon_Service chiTietHoaDonService = new ChiTietHoaDon_Service();
+    private final LoThuoc_DAO loThuocDAO = new LoThuoc_DAO();
 
     /**
      * Lấy tất cả hóa đơn
@@ -138,6 +143,65 @@ public class HoaDon_Service implements I_HoaDon_Service {
             return hoaDonDAO.insertHoaDon(hd);
         } catch (Exception e) {
             throw new RuntimeException("Lỗi khi thêm hóa đơn", e);
+        }
+    }
+
+    public boolean insertHoaDonVaChiTiet(HoaDonDTO hoaDonDTO, List<ChiTietHoaDonDTO> chiTietHoaDonList) {
+        Connection con = null;
+        boolean oldAutoCommit = true;
+        try {
+            if (hoaDonDTO == null || hoaDonDTO.getMaHD() == null || hoaDonDTO.getMaHD().trim().isEmpty()) {
+                return false;
+            }
+            if (chiTietHoaDonList == null || chiTietHoaDonList.isEmpty()) {
+                return false;
+            }
+
+            con = ConnectDB.getConnection();
+            if (con == null || con.isClosed()) {
+                ConnectDB.getInstance().connect();
+                con = ConnectDB.getConnection();
+            }
+            oldAutoCommit = con.getAutoCommit();
+            con.setAutoCommit(false);
+
+            if (!insertHoaDon(hoaDonDTO)) {
+                con.rollback();
+                return false;
+            }
+
+            for (ChiTietHoaDonDTO chiTiet : chiTietHoaDonList) {
+                if (chiTiet == null || chiTiet.getMaLoThuocDTO() == null || chiTiet.getSoLuong() <= 0 || chiTiet.getThanhTien() <= 0) {
+                    con.rollback();
+                    return false;
+                }
+                if (chiTiet.getMaHD() == null || chiTiet.getMaHD().getMaHD() == null || chiTiet.getMaHD().getMaHD().trim().isEmpty()) {
+                    chiTiet.setMaHD(new HoaDonDTO(hoaDonDTO.getMaHD()));
+                }
+                if (!chiTietHoaDonService.themHoacCapNhatChiTietHoaDon(chiTiet)) {
+                    con.rollback();
+                    return false;
+                }
+                if (!loThuocDAO.CapNhatSoLuongChiTietThuoc(chiTiet.getMaLoThuocDTO().getMaLoThuoc(), -chiTiet.getSoLuong())) {
+                    con.rollback();
+                    return false;
+                }
+            }
+
+            con.commit();
+            return true;
+        } catch (Exception e) {
+            try {
+                if (con != null) con.rollback();
+            } catch (Exception rollbackException) {
+                e.addSuppressed(rollbackException);
+            }
+            throw new RuntimeException("Lỗi khi thêm hóa đơn và chi tiết hóa đơn", e);
+        } finally {
+            try {
+                if (con != null) con.setAutoCommit(oldAutoCommit);
+            } catch (Exception ignored) {
+            }
         }
     }
 

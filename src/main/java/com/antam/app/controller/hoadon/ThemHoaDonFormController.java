@@ -25,21 +25,15 @@ import com.antam.app.dto.NhanVienDTO;
 import com.antam.app.dto.PhienNguoiDungDTO;
 import com.antam.app.dto.ThuocDTO;
 import com.antam.app.helper.XuatHoaDonPDF;
-import com.antam.app.service.I_KhuyenMai_Service;
-import com.antam.app.service.impl.ChiTietHoaDon_Service;
-import com.antam.app.service.impl.DonViTinh_Service;
-import com.antam.app.service.impl.HoaDon_Service;
-import com.antam.app.service.impl.KhachHang_Service;
-import com.antam.app.service.impl.KhuyenMai_Service;
-import com.antam.app.service.impl.LoThuoc_Service;
-import com.antam.app.service.impl.NhanVien_Service;
-import com.antam.app.service.impl.Thuoc_Service;
+import com.antam.app.network.ClientManager;
 
 import javafx.application.Platform;
+import javafx.concurrent.Task;
 import javafx.collections.FXCollections;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Alert;
+import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonBar.ButtonData;
 import javafx.scene.control.ButtonType;
@@ -77,6 +71,7 @@ public class ThemHoaDonFormController extends DialogPane {
     private ComboBox<KhuyenMaiDTO> cb_promotion;
     private Text txtThongTinKhuyenMai;
     private Text txtWarning;
+    private Runnable onHoaDonCreated;
 
     // Thêm biến lưu tổng tiền thực tế để tránh phải parse từ text
     private double tongTienThucTe = 0;
@@ -259,20 +254,35 @@ public class ThemHoaDonFormController extends DialogPane {
             if (newVal != null && !newVal.trim().isEmpty()) {
                 // Chỉ tìm khi đủ 10 số
                 if (newVal.trim().matches("\\d{10}")) {
-                    KhachHang_Service khachHang_service = new KhachHang_Service();
-                    KhachHangDTO kh = khachHang_service.getKhachHangTheoSoDienThoai(newVal.trim());
-                    if (kh != null) {
-                        // Tìm thấy khách hàng, tự động điền tên
-                        txtTenKhachHang.setText(kh.getTenKH());
-                        txtTenKhachHang.setEditable(false); // Khóa không cho sửa tên
-                        txtTenKhachHang.setStyle("-fx-background-color: #e0f2fe;");
-                    } else {
+                    Task<KhachHangDTO> task = new Task<KhachHangDTO>() {
+                        @Override
+                        protected KhachHangDTO call() throws Exception {
+                            return (KhachHangDTO) ClientManager.getInstance().getKhachHangByPhone(newVal.trim());
+                        }
+                    };
+                    task.setOnSucceeded(event -> {
+                        KhachHangDTO kh = task.getValue();
+                        if (kh != null) {
+                            // Tìm thấy khách hàng, tự động điền tên
+                            txtTenKhachHang.setText(kh.getTenKH());
+                            txtTenKhachHang.setEditable(false); // Khóa không cho sửa tên
+                            txtTenKhachHang.setStyle("-fx-background-color: #e0f2fe;");
+                        } else {
+                            // Không tìm thấy, cho phép nhập tên mới
+                            txtTenKhachHang.clear();
+                            txtTenKhachHang.setEditable(true);
+                            txtTenKhachHang.setStyle("");
+                            txtTenKhachHang.setPromptText("Nhập tên khách hàng mới");
+                        }
+                    });
+                    task.setOnFailed(event -> {
                         // Không tìm thấy, cho phép nhập tên mới
                         txtTenKhachHang.clear();
                         txtTenKhachHang.setEditable(true);
                         txtTenKhachHang.setStyle("");
                         txtTenKhachHang.setPromptText("Nhập tên khách hàng mới");
-                    }
+                    });
+                    new Thread(task).start();
                 } else {
                     // Chưa đủ 10 số, reset
                     txtTenKhachHang.clear();
@@ -289,21 +299,30 @@ public class ThemHoaDonFormController extends DialogPane {
             }
         });
 
-        // Load thuốc vào cbMedicine
-        Thuoc_Service thuoc_service = new Thuoc_Service();
-        var thuocList = FXCollections.observableArrayList(thuoc_service.getAllThuoc());
-        cbMedicine.setItems(thuocList);
-        cbMedicine.setConverter(new javafx.util.StringConverter<>() {
+        // Load thuốc vào cbMedicine (Network call)
+        Task<List<ThuocDTO>> loadThuocTask = new Task<List<ThuocDTO>>() {
             @Override
-            public String toString(ThuocDTO thuocDTO) {
-                return thuocDTO == null ? "" : thuocDTO.getTenThuoc();
+            protected List<ThuocDTO> call() throws Exception {
+                var result = ClientManager.getInstance().getThuocList();
+                return result != null ? result : new ArrayList<>();
             }
+        };
+        loadThuocTask.setOnSucceeded(event -> {
+            List<ThuocDTO> thuocList = loadThuocTask.getValue();
+            cbMedicine.setItems(FXCollections.observableArrayList(thuocList));
+            cbMedicine.setConverter(new javafx.util.StringConverter<>() {
+                @Override
+                public String toString(ThuocDTO thuocDTO) {
+                    return thuocDTO == null ? "" : thuocDTO.getTenThuoc();
+                }
 
-            @Override
-            public ThuocDTO fromString(String s) {
-                return thuocList.stream().filter(t -> t.getTenThuoc().equals(s)).findFirst().orElse(null);
-            }
+                @Override
+                public ThuocDTO fromString(String s) {
+                    return thuocList.stream().filter(t -> t.getTenThuoc().equals(s)).findFirst().orElse(null);
+                }
+            });
         });
+        new Thread(loadThuocTask).start();
 
 //        cbMedicine.valueProperty().addListener((obs, oldVal, newVal) -> {
 //            if (newVal != null) {
@@ -346,21 +365,30 @@ public class ThemHoaDonFormController extends DialogPane {
             setupMedicineRow(hbox);
         }
 
-        // Load khuyến mãi vào cb_promotion
-        KhuyenMai_Service khuyenMai_service = new KhuyenMai_Service();
-        List<KhuyenMaiDTO> dsKhuyenMai = khuyenMai_service.getAllKhuyenMaiConHieuLuc();
-        cb_promotion.setItems(FXCollections.observableArrayList(dsKhuyenMai));
-        cb_promotion.setConverter(new javafx.util.StringConverter<>() {
+        // Load khuyến mãi vào cb_promotion (Network call)
+        Task<ArrayList<KhuyenMaiDTO>> loadKMTask = new Task<ArrayList<KhuyenMaiDTO>>() {
             @Override
-            public String toString(KhuyenMaiDTO km) {
-                return km == null ? "" : km.getTenKM();
+            protected ArrayList<KhuyenMaiDTO> call() throws Exception {
+                var result = ClientManager.getInstance().getKhuyenMaiConHieuLuc();
+                return result != null ? result : new ArrayList<>();
             }
+        };
+        loadKMTask.setOnSucceeded(event -> {
+            List<KhuyenMaiDTO> dsKhuyenMai = loadKMTask.getValue();
+            cb_promotion.setItems(FXCollections.observableArrayList(dsKhuyenMai));
+            cb_promotion.setConverter(new javafx.util.StringConverter<>() {
+                @Override
+                public String toString(KhuyenMaiDTO km) {
+                    return km == null ? "" : km.getTenKM();
+                }
 
-            @Override
-            public KhuyenMaiDTO fromString(String s) {
-                return dsKhuyenMai.stream().filter(km -> km.getTenKM().equals(s)).findFirst().orElse(null);
-            }
+                @Override
+                public KhuyenMaiDTO fromString(String s) {
+                    return dsKhuyenMai.stream().filter(km -> km.getTenKM().equals(s)).findFirst().orElse(null);
+                }
+            });
         });
+        new Thread(loadKMTask).start();
 
         // Hiển thị thông tin khuyến mãi khi chọn
         cb_promotion.valueProperty().addListener((obs, oldVal, newVal) -> {
@@ -466,8 +494,7 @@ public class ThemHoaDonFormController extends DialogPane {
                 }
             }
 
-            // Kiểm tra tồn kho cho từng thuốc
-            LoThuoc_Service loThuoc_service = new LoThuoc_Service();
+            // Kiểm tra tồn kho cho từng thuốc (Network call)
             boolean enoughStock = true;
             String outOfStockMedicine = null;
             for (var node : medicineRowsVBox.getChildren()) {
@@ -481,7 +508,12 @@ public class ThemHoaDonFormController extends DialogPane {
                     } catch (Exception ex) {
                     }
                     if (thuocDTO != null && soLuong > 0) {
-                        int tongTonKho = loThuoc_service.getTongTonKhoTheoMaThuoc(thuocDTO.getMaThuoc());
+                        // Lấy danh sách lô từ server để check tồn kho
+                        List<LoThuocDTO> allLots = ClientManager.getInstance().getLoThuocList();
+                        int tongTonKho = allLots.stream()
+                            .filter(lot -> lot.getMaThuocDTO() != null && lot.getMaThuocDTO().getMaThuoc().equals(thuocDTO.getMaThuoc()))
+                            .mapToInt(LoThuocDTO::getSoLuong)
+                            .sum();
                         if (tongTonKho < soLuong) {
                             enoughStock = false;
                             outOfStockMedicine = thuocDTO.getTenThuoc();
@@ -499,14 +531,23 @@ public class ThemHoaDonFormController extends DialogPane {
             // Tiến hành tạo hoá đơn
             txtWarning.setVisible(false);
             txtWarning.setText("");
+            e.consume();
 
             // 1. Lấy mã khách hàng (tự động thêm nếu chưa có)
             String maKH = getOrCreateMaKhachHang();
-            KhachHang_Service khachHang_service = new KhachHang_Service();
-            KhachHangDTO kh = khachHang_service.getKhachHangTheoMa(maKH);
+            if (maKH == null || maKH.isEmpty()) {
+                txtWarning.setText("Không tìm thấy hoặc không thể tạo khách hàng! Vui lòng kiểm tra thông tin.");
+                txtWarning.setVisible(true);
+                e.consume();
+                return;
+            }
+            KhachHangDTO kh = ClientManager.getInstance().getKhachHangById(maKH);
+            if (kh == null) {
+                // Nếu khách hàng không được tìm thấy, tạo KhachHangDTO tạm từ thông tin nhập vào
+                kh = new KhachHangDTO(maKH, txtTenKhachHang.getText().trim(), txtSoDienThoai.getText().trim(), false);
+            }
 
-            // 2. Lấy nhân viên (nếu có ComboBox chọn nhân viên, ví dụ cbEmployee)
-            NhanVien_Service nhanVien_service = new NhanVien_Service();
+            // 2. Lấy nhân viên (từ PhienNguoiDung)
             NhanVienDTO nhanVienDTO = PhienNguoiDungDTO.getMaNV(); // Hardcode mã nhân viên
             if (nhanVienDTO == null || nhanVienDTO.getMaNV() == null) {
                 txtWarning.setText("Không tìm thấy nhân viên hợp lệ! Không thể tạo hóa đơn.");
@@ -522,21 +563,8 @@ public class ThemHoaDonFormController extends DialogPane {
             // 5. Sử dụng biến tongTienThucTe đã tính toán thay vì parse từ text
             double tongTien = tongTienThucTe;
 
-            // 6. Tạo hoá đơn đúng kiểu constructor
-            HoaDon_Service hoaDon_service = new HoaDon_Service();
+            // 6. Tạo hoá đơn qua ClientManager
             HoaDonDTO hoaDonDTO = new HoaDonDTO(maHD, LocalDate.now(), nhanVienDTO, kh, km, tongTien, false);
-            boolean hoaDonInserted = hoaDon_service.insertHoaDon(hoaDonDTO);
-            if (!hoaDonInserted) {
-                txtWarning.setText("Tạo hóa đơn thất bại! Vui lòng kiểm tra lại thông tin.");
-                txtWarning.setVisible(true);
-                e.consume();
-                return;
-            }
-            // 5. Thêm chi tiết hoá đơn cho từng thuốc và trừ kho
-            ChiTietHoaDon_Service chiTietHoaDon_service = new ChiTietHoaDon_Service();
-            ArrayList<ChiTietHoaDonDTO> listCTHD = new ArrayList<>(); // Danh sách chi tiết hóa đơn để truyền vào hàm xuất
-
-            // Gộp các dòng cùng loại thuốc lại trước khi xử lý
             java.util.Map<String, Integer> thuocSoLuongMap = new java.util.HashMap<>();
             java.util.Map<String, Double> thuocDonGiaMap = new java.util.HashMap<>();
             java.util.Map<String, DonViTinhDTO> thuocDVTMap = new java.util.HashMap<>();
@@ -572,42 +600,82 @@ public class ThemHoaDonFormController extends DialogPane {
                 }
             }
 
-            // Xử lý từng loại thuốc đã gộp
-            for (String maThuoc : thuocSoLuongMap.keySet()) {
-                int tongSoLuong = thuocSoLuongMap.get(maThuoc);
-                double donGia = thuocDonGiaMap.get(maThuoc);
-                DonViTinhDTO dvt = thuocDVTMap.get(maThuoc);
-                ThuocDTO thuocDTODayDu = thuocObjMap.get(maThuoc); // Lấy đối tượng Thuoc đầy đủ
+            Task<ArrayList<ChiTietHoaDonDTO>> insertHDTask = new Task<ArrayList<ChiTietHoaDonDTO>>() {
+                @Override
+                protected ArrayList<ChiTietHoaDonDTO> call() throws Exception {
+                ArrayList<ChiTietHoaDonDTO> listCTHD = new ArrayList<>(); // Danh sách chi tiết hóa đơn để truyền vào hàm xuất
+                List<LoThuocDTO> allLots = ClientManager.getInstance().getLoThuocList();
 
-                // Lấy danh sách các lô ChiTietThuoc còn tồn kho cho thuốc này
-                List<LoThuocDTO> listCTT = loThuoc_service.getAllChiTietThuoc().stream()
-                        .filter(ctt -> ctt.getMaThuocDTO().getMaThuoc().equals(maThuoc) && ctt.getSoLuong() > 0)
+                // Xử lý từng loại thuốc đã gộp
+                for (String maThuoc : thuocSoLuongMap.keySet()) {
+                    int tongSoLuong = thuocSoLuongMap.get(maThuoc);
+                    double donGia = thuocDonGiaMap.get(maThuoc);
+                    DonViTinhDTO dvt = thuocDVTMap.get(maThuoc);
+                    ThuocDTO thuocDTODayDu = thuocObjMap.get(maThuoc); // Lấy đối tượng Thuoc đầy đủ
+
+                    // Lấy danh sách các lô ChiTietThuoc còn tồn kho cho thuốc này (Network call)
+                    List<LoThuocDTO> listCTT = allLots.stream()
+                        .filter(lot -> lot.getMaThuocDTO() != null && lot.getMaThuocDTO().getMaThuoc().equals(maThuoc) && lot.getSoLuong() > 0)
                         .sorted(java.util.Comparator.comparing(LoThuocDTO::getHanSuDung)) // Ưu tiên lô hết hạn trước
                         .collect(Collectors.toList());
 
-                int soLuongConLai = tongSoLuong;
-                for (LoThuocDTO ctt : listCTT) {
-                    if (soLuongConLai <= 0) break;
-                    int soLuongXuat = Math.min(ctt.getSoLuong(), soLuongConLai);
-                    if (soLuongXuat <= 0) continue;
+                    int soLuongConLai = tongSoLuong;
+                    for (LoThuocDTO ctt : listCTT) {
+                        if (soLuongConLai <= 0) break;
+                        int soLuongXuat = Math.min(ctt.getSoLuong(), soLuongConLai);
+                        if (soLuongXuat <= 0) continue;
 
-                    // Đảm bảo ChiTietThuoc có đầy đủ thông tin Thuoc
-                    ctt.setMaThuocDTO(thuocDTODayDu);
+                        // Đảm bảo ChiTietThuoc có đầy đủ thông tin Thuoc
+                        ctt.setMaThuocDTO(thuocDTODayDu);
 
-                    ChiTietHoaDonDTO cthd = new ChiTietHoaDonDTO(new HoaDonDTO(maHD), ctt, soLuongXuat, dvt, "Bán", soLuongXuat * donGia);
-                    chiTietHoaDon_service.themChiTietHoaDon(cthd);
-                    listCTHD.add(cthd); // Thêm vào danh sách để xuất PDF
-                    // Trừ kho lô này
-                    loThuoc_service.CapNhatSoLuongChiTietThuoc(ctt.getMaLoThuoc(), -soLuongXuat);
-                    soLuongConLai -= soLuongXuat;
+                        ChiTietHoaDonDTO cthd = new ChiTietHoaDonDTO(new HoaDonDTO(maHD), ctt, soLuongXuat, dvt, "Bán", soLuongXuat * donGia);
+                        listCTHD.add(cthd); // Thêm vào danh sách để xuất PDF
+                        soLuongConLai -= soLuongXuat;
+                    }
+                    if (soLuongConLai > 0) {
+                        throw new IllegalStateException("Số lượng tồn không đủ cho thuốc: " + thuocDTODayDu.getTenThuoc());
+                    }
                 }
-            }
 
-            // Đóng dialog và hiển thị thông báo + xuất hóa đơn với đầy đủ tham số
-            this.getScene().getWindow().hide();
-            thongBaoVaXuatHoaDon(hoaDonDTO, listCTHD, tongTienThucTe, thueThucTe);
+                    if (listCTHD.isEmpty() || !ClientManager.getInstance().createHoaDonWithDetails(hoaDonDTO, listCTHD)) {
+                        return null;
+                    }
+                    return listCTHD;
+                }
+            };
+            
+            insertHDTask.setOnSucceeded(hdEvent -> {
+                ArrayList<ChiTietHoaDonDTO> listCTHD = insertHDTask.getValue();
+                if (listCTHD == null) {
+                    txtWarning.setText("Tạo hóa đơn thất bại! Vui lòng kiểm tra lại thông tin.");
+                    txtWarning.setVisible(true);
+                    e.consume();
+                    return;
+                }
+                // Đóng dialog và hiển thị thông báo + xuất hóa đơn với đầy đủ tham số
+                Platform.runLater(() -> {
+                    Scene scene = txtMaHoaDon.getScene();
+                    if (scene != null && scene.getWindow() != null) {
+                        scene.getWindow().hide();
+                    }
+                    if (onHoaDonCreated != null) {
+                        onHoaDonCreated.run();
+                    }
+                    thongBaoVaXuatHoaDon(hoaDonDTO, listCTHD, tongTienThucTe, thueThucTe);
+                });
+            });
+            insertHDTask.setOnFailed(hdEvent -> {
+                txtWarning.setText("Tạo hóa đơn thất bại! Vui lòng kiểm tra lại thông tin.");
+                txtWarning.setVisible(true);
+                e.consume();
+            });
+            new Thread(insertHDTask).start();
         });
 
+    }
+
+    public void setOnHoaDonCreated(Runnable onHoaDonCreated) {
+        this.onHoaDonCreated = onHoaDonCreated;
     }
 
     private Text createHeaderText(String text, double rightMargin) {
@@ -687,35 +755,54 @@ public class ThemHoaDonFormController extends DialogPane {
         TextField txtQuantity = (TextField) hbox.getChildren().get(2);
         TextField txt_price = (TextField) hbox.getChildren().get(3);
         txt_price.setEditable(false); // Khóa không cho sửa giá
-        Thuoc_Service thuoc_service = new Thuoc_Service();
-        var thuocList = FXCollections.observableArrayList(thuoc_service.getAllThuoc());
-        cbMedicine.setItems(thuocList);
-        cbMedicine.setConverter(new javafx.util.StringConverter<>() {
+        
+        // Load thuốc từ server (Network call)
+        Task<ArrayList<ThuocDTO>> loadThuocTask = new Task<ArrayList<ThuocDTO>>() {
             @Override
-            public String toString(ThuocDTO thuocDTO) {
-                return thuocDTO == null ? "" : thuocDTO.getTenThuoc();
+            protected ArrayList<ThuocDTO> call() throws Exception {
+                var result = ClientManager.getInstance().getThuocList();
+                return result != null ? result : new ArrayList<>();
             }
+        };
+        loadThuocTask.setOnSucceeded(event -> {
+            ArrayList<ThuocDTO> thuocList = loadThuocTask.getValue();
+            cbMedicine.setItems(FXCollections.observableArrayList(thuocList));
+            cbMedicine.setConverter(new javafx.util.StringConverter<>() {
+                @Override
+                public String toString(ThuocDTO thuocDTO) {
+                    return thuocDTO == null ? "" : thuocDTO.getTenThuoc();
+                }
 
-            @Override
-            public ThuocDTO fromString(String s) {
-                return thuocList.stream().filter(t -> t.getTenThuoc().equals(s)).findFirst().orElse(null);
-            }
+                @Override
+                public ThuocDTO fromString(String s) {
+                    return thuocList.stream().filter(t -> t.getTenThuoc().equals(s)).findFirst().orElse(null);
+                }
+            });
         });
+        new Thread(loadThuocTask).start();
 
         // Khi chọn thuốc, tự động set đơn vị cơ sở và không cho chọn đơn vị khác
         cbMedicine.valueProperty().addListener((obs, oldVal, newVal) -> {
             if (newVal != null) {
-                DonViTinh_Service donViTinh_service = new DonViTinh_Service();
                 // Chỉ lấy đơn vị cơ sở của thuốc
                 DonViTinhDTO dvtCoSo = newVal.getMaDVTCoSo();
                 if (dvtCoSo != null) {
-                    // Lấy thông tin đầy đủ của đơn vị tính từ database
-                    DonViTinhDTO dvtFull = donViTinh_service.getDVTTheoMa(dvtCoSo.getMaDVT());
-                    if (dvtFull != null) {
-                        cb_unit.setItems(FXCollections.observableArrayList(dvtFull));
-                        cb_unit.getSelectionModel().selectFirst();
-                        cb_unit.setDisable(true); // Không cho chọn đơn vị khác
-                    }
+                    // Lấy thông tin đầy đủ của đơn vị tính từ server (Network call)
+                    Task<DonViTinhDTO> task = new Task<DonViTinhDTO>() {
+                        @Override
+                        protected DonViTinhDTO call() throws Exception {
+                            return ClientManager.getInstance().getDonViTinhById(dvtCoSo.getMaDVT());
+                        }
+                    };
+                    task.setOnSucceeded(event -> {
+                        DonViTinhDTO dvtFull = task.getValue();
+                        if (dvtFull != null) {
+                            cb_unit.setItems(FXCollections.observableArrayList(dvtFull));
+                            cb_unit.getSelectionModel().selectFirst();
+                            cb_unit.setDisable(true); // Không cho chọn đơn vị khác
+                        }
+                    });
+                    new Thread(task).start();
                 }
                 // Hiển thị giá bán
                 txt_price.setText(VND_FORMAT.format(newVal.getGiaBan()) + "đ");
@@ -798,8 +885,8 @@ public class ThemHoaDonFormController extends DialogPane {
      * Sinh mã hoá đơn mới chưa tồn tại trong CSDL dạng HDxxx
      */
     private String generateNewMaHoaDon() {
-        HoaDon_Service hoaDon_service = new HoaDon_Service();
-        List<String> allMaHD = hoaDon_service.getAllHoaDon().stream().map(hd -> hd.getMaHD()).collect(Collectors.toList());
+        List<?> allHD = ClientManager.getInstance().getHoaDonList();
+        List<String> allMaHD = ((List<HoaDonDTO>) allHD).stream().map(hd -> hd.getMaHD()).collect(Collectors.toList());
         int max = 0;
         for (String ma : allMaHD) {
             if (ma != null && ma.matches("HD\\d+")) {
@@ -817,22 +904,19 @@ public class ThemHoaDonFormController extends DialogPane {
 
         if (tenKH.isEmpty() || soDienThoai.isEmpty()) return null;
 
-        KhachHang_Service khachHang_service = new KhachHang_Service();
-
-        // Tìm khách hàng theo số điện thoại trước
-        KhachHangDTO existingKH = khachHang_service.getKhachHangTheoSoDienThoai(soDienThoai);
+        // Tìm khách hàng theo số điện thoại trước (Network call)
+        KhachHangDTO existingKH = (KhachHangDTO) ClientManager.getInstance().getKhachHangByPhone(soDienThoai);
         if (existingKH != null) {
             return existingKH.getMaKH();
         }
 
         // Nếu không tìm thấy, tạo khách hàng mới với số điện thoại đã nhập
-        List<KhachHangDTO> allKH = khachHang_service.getAllKhachHang();
-        String newMaKH = generateNewMaKhachHang(allKH);
+        ArrayList<KhachHangDTO> allKH = ClientManager.getInstance().getKhachHangList();
+        String newMaKH = generateNewMaKhachHang(new ArrayList<>(allKH));
         KhachHangDTO newKH = new KhachHangDTO(
                 newMaKH, tenKH, soDienThoai, false
-
         );
-        khachHang_service.insertKhachHang(newKH);
+        ClientManager.getInstance().insertKhachHang(newKH);
         return newMaKH;
     }
 
