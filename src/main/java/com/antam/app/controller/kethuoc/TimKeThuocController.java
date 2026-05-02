@@ -6,19 +6,21 @@
 package com.antam.app.controller.kethuoc;
 
 import com.antam.app.connect.ConnectDB;
-import com.antam.app.service.impl.Ke_Service;
+import com.antam.app.network.ClientManager;
 import com.antam.app.dto.KeDTO;
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcon;
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcons;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.concurrent.Task;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Date;
+
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.effect.DropShadow;
@@ -33,7 +35,7 @@ public class TimKeThuocController extends ScrollPane{
     private ComboBox<String> cbLuaChon;
     private Button btnTimKiem, btnXoaRong;
     private TextField tfTimKiem;
-    private Ke_Service ke_DAO = new Ke_Service();
+    private ClientManager clientManager = ClientManager.getInstance();
 
     /* Lấy dữ liệu từ DAO */
     private ArrayList<KeDTO> dsKeThuoc;
@@ -170,9 +172,25 @@ public class TimKeThuocController extends ScrollPane{
             throw new RuntimeException(e);
         }
 
-        dsKeThuoc =  ke_DAO.getTatCaKeThuoc();
-        data.setAll(dsKeThuoc);
-        tbKeThuoc.setItems(data);
+        Task<ArrayList<KeDTO>> loadData =  new Task<ArrayList<KeDTO>>() {
+            @Override
+            protected ArrayList<KeDTO> call() throws Exception {
+                return clientManager.getKeList();
+            }
+        };
+
+        loadData.setOnSucceeded(e -> {
+            dsKeThuoc =  loadData.getValue();
+            data.setAll(dsKeThuoc);
+            tbKeThuoc.setItems(data);
+        });
+
+        loadData.setOnFailed(e -> {
+
+        });
+
+        Thread thread = new Thread(loadData);
+        thread.start();
 
         loadDanhSachKeThuoc();
         //ComboBox lựa chọn

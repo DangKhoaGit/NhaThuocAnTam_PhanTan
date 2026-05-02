@@ -25,12 +25,9 @@ import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
 
 import java.sql.Connection;
-import java.sql.SQLException;
 import java.text.DecimalFormat;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
@@ -57,14 +54,14 @@ public class ThemPhieuDatFormController extends DialogPane {
     private TableColumn<ChiTietPhieuDatThuocDTO, String> colSoLuong;
     private TableColumn<ChiTietPhieuDatThuocDTO, String> colDonGia;
     private TableColumn<ChiTietPhieuDatThuocDTO, String> colThanhTien;
-    private Text txtTotal;
-    private Text txtCanhBaoSDT = new Text();
-    private Text txtCanhBaoKM = new Text();
+    private Text txtTotal = new Text();
+    private final Text txtCanhBaoSDT = new Text();
+    private final Text txtCanhBaoKM = new Text();
     private Text txtThue = new Text();
 
     private ArrayList<ThuocDTO> dsThuoc;
     private ArrayList<DonViTinhDTO> dsDonViTinh;
-    private ArrayList<ChiTietPhieuDatThuocDTO> list = new ArrayList<>();
+//    private ArrayList<ChiTietPhieuDatThuocDTO> list = new ArrayList<>();
     private ObservableList<ChiTietPhieuDatThuocDTO> obsThuoc = FXCollections.observableArrayList();
 
     private ArrayList<KhachHangDTO> dsKhach = new ArrayList<>();
@@ -192,8 +189,10 @@ public class ThemPhieuDatFormController extends DialogPane {
 
         btnThem = new Button("Thêm thuốc");
         btnThem.getStyleClass().add("btn-gray");
-        btnThem.getStylesheets()
-                .add(getClass().getResource("/com/antam/app/styles/dashboard_style.css").toExternalForm());
+        var cssResource = getClass().getResource("/com/antam/app/styles/dashboard_style.css");
+        if (cssResource != null) {
+            btnThem.getStylesheets().add(cssResource.toExternalForm());
+        }
 
         HBox hbCanhBaoKM = new HBox();
         txtCanhBaoKM.setFill(Color.RED);
@@ -275,13 +274,16 @@ public class ThemPhieuDatFormController extends DialogPane {
 
         content.getChildren().add(root);
 
-        this.getStylesheets().add(getClass().getResource("/com/antam/app/styles/dashboard_style.css").toExternalForm());
+        var cssResource2 = getClass().getResource("/com/antam/app/styles/dashboard_style.css");
+        if (cssResource2 != null) {
+            this.getStylesheets().add(cssResource2.toExternalForm());
+        }
         this.setHeader(header);
         this.setContent(content);
 
         Task<ArrayList<KhachHangDTO>> loadKhachTask = new Task<>() {
             @Override
-            protected ArrayList<KhachHangDTO> call() throws Exception {
+            protected ArrayList<KhachHangDTO> call() {
                 return clientManager.getKhachHangList();
             }
         };
@@ -305,35 +307,37 @@ public class ThemPhieuDatFormController extends DialogPane {
         // load ds đơn vị tính.
         Task<ArrayList<DonViTinhDTO>> loadDVTTask = new Task<>() {
             @Override
-            protected ArrayList<DonViTinhDTO> call() throws Exception {
+            protected ArrayList<DonViTinhDTO> call() {
                 return clientManager.getDonViTinhList();
             }
         };
 
         loadDVTTask.setOnSucceeded(event -> {
             dsDonViTinh = loadDVTTask.getValue();
+            cbDonVi.getItems().addAll(FXCollections.observableArrayList(dsDonViTinh));
+            cbDonVi.getSelectionModel().selectFirst();
         });
         Thread loadDVTThread = new Thread(loadDVTTask);
         loadDVTThread.start();
 
         Task<ArrayList<ThuocDTO>> loadThuocTask = new Task<>() {
             @Override
-            protected ArrayList<ThuocDTO> call() throws Exception {
+            protected ArrayList<ThuocDTO> call() {
                 return clientManager.getThuocList();
             }
         };
         loadThuocTask.setOnSucceeded(event -> {
             dsThuoc = loadThuocTask.getValue();
+            cbTenThuoc.getItems().addAll(FXCollections.observableArrayList(dsThuoc));
         });
 
         Thread loadThuocThread = new Thread(loadThuocTask);
         loadThuocThread.start();
 
-        cbDonVi.getItems().addAll(FXCollections.observableArrayList(dsDonViTinh));
-        cbDonVi.getSelectionModel().selectFirst();
-        // load comboBox thuốc
-        cbTenThuoc.getItems().addAll(FXCollections.observableArrayList(dsThuoc));
-        cbTenThuoc.setConverter(new javafx.util.StringConverter<ThuocDTO>() {
+        // Removed: cbDonVi.getItems().addAll(FXCollections.observableArrayList(dsDonViTinh));
+        // Removed: cbDonVi.getSelectionModel().selectFirst();
+        // Removed: cbTenThuoc.getItems().addAll(FXCollections.observableArrayList(dsThuoc));
+        cbTenThuoc.setConverter(new javafx.util.StringConverter<>() {
             @Override
             public String toString(ThuocDTO thuoc) {
                 return thuoc == null ? "" : thuoc.getTenThuoc();
@@ -349,7 +353,7 @@ public class ThemPhieuDatFormController extends DialogPane {
                         .orElse(null);
             }
         });
-        cbTenThuoc.setCellFactory(lv -> new ListCell<ThuocDTO>() {
+        cbTenThuoc.setCellFactory(lv -> new ListCell<>() {
             @Override
             protected void updateItem(ThuocDTO item, boolean empty) {
                 super.updateItem(item, empty);
@@ -364,15 +368,13 @@ public class ThemPhieuDatFormController extends DialogPane {
         // Load khuyen mai after services are ready.
         Task<ArrayList<KhuyenMaiDTO>> loadKMTask = new Task<>() {
             @Override
-            protected ArrayList<KhuyenMaiDTO> call() throws Exception {
+            protected ArrayList<KhuyenMaiDTO> call() {
                 return clientManager.getKhuyenMaiConHieuLuc();
             }
         };
 
         dsKhuyenMai = new ArrayList<>();
-        loadKMTask.setOnSucceeded(event -> {
-            dsKhuyenMai = loadKMTask.getValue();
-        });
+        loadKMTask.setOnSucceeded(event -> dsKhuyenMai = loadKMTask.getValue());
         Thread  loadKMThread = new Thread(loadKMTask);
         loadKMThread.start();
 
@@ -427,9 +429,10 @@ public class ThemPhieuDatFormController extends DialogPane {
 
         // thêm thuốc vào table
         btnThem.setOnAction(e -> {
+            // approveThuoc dùng để kiểm tra dữ liệu nhập nhanh (ko check DB)
             if (approveThuoc()) {
+                // Gọi hàm thêm, việc Refresh UI sẽ nằm TRONG hàm này
                 addThuocVaoTable();
-                loadTongTien();
             }
         });
 
@@ -446,16 +449,13 @@ public class ThemPhieuDatFormController extends DialogPane {
 
             Task<Integer> task = new Task<>() {
                 @Override
-                protected Integer call() throws Exception {
+                protected Integer call() {
                     return clientManager.countHoaDonByKhuyenMai(km.getMaKM());
                 }
             };
 
-
             AtomicInteger soDaSuDung = new AtomicInteger();
-            task.setOnSucceeded(event -> {
-                soDaSuDung.set(task.getValue());
-            });
+            task.setOnSucceeded(event -> soDaSuDung.set(task.getValue()));
 
             Thread th = new Thread(task);
             th.start();
@@ -524,8 +524,7 @@ public class ThemPhieuDatFormController extends DialogPane {
             MenuItem deleteItem = new MenuItem("Xóa thuốc khỏi bảng");
             deleteItem.setOnAction(event -> {
                 ChiTietPhieuDatThuocDTO selectedItem = row.getItem();
-                list.remove(selectedItem);
-                loadTable();
+                obsThuoc.remove(selectedItem); // Xóa trực tiếp từ ObservableList
                 loadTongTien();
             });
             contextMenu.getItems().add(deleteItem);
@@ -544,63 +543,44 @@ public class ThemPhieuDatFormController extends DialogPane {
      * @return true - hợp lệ, false - không hợp lệ
      */
     private boolean approveThuoc() {
+        ThuocDTO selected = cbTenThuoc.getSelectionModel().getSelectedItem();
+        Integer nhap = spSoLuong.getValue();
 
-        ThuocDTO selectedThuocDTO = cbTenThuoc.getSelectionModel().getSelectedItem();
-        // gọi integer để có thể sử dụng null trong điều kiện
-        Integer soLuongNhap = spSoLuong.getValue();
+        if (selected == null || nhap == null) return false;
 
-        // Nếu người dùng chưa chọn thuốc hoặc chọn rỗng
-        if (selectedThuocDTO == null) {
-            showMess("Thiếu thông tin", "Vui lòng chọn thuốc.");
-            return false;
-        }
-        // Số lượng không hợp lệ
-        if (soLuongNhap == null || soLuongNhap <= 0) {
-            showMess("Số lượng sai", "Số lượng thuốc phải lớn hơn 0.");
-            return false;
-        }
-
-        // Lấy chi tiết thuốc trong kho
-        Task<ArrayList<LoThuocDTO>> loadChiTietTask = new Task<>() {
-            @Override
-            protected ArrayList<LoThuocDTO> call() throws Exception {
-                return clientManager.getLoThuocFefoByThuocId(selectedThuocDTO.getMaThuoc());
-            }
-        };
-
-        AtomicReference<ArrayList<LoThuocDTO>> dsChiTiet = new AtomicReference<>();
-
-        loadChiTietTask.setOnSucceeded(e -> {
-            dsChiTiet.set(loadChiTietTask.getValue());
-        });
-
-        Thread thread = new Thread(loadChiTietTask);
-        thread.start();
-
-        if (dsChiTiet.get().isEmpty()) {
-            showMess("Hết hàng", "Thuốc \"" + selectedThuocDTO.getTenThuoc() + "\" hiện không có trong kho.");
-            return false;
-        }
-
-        int tongSoLuongTrongKho = dsChiTiet.get().stream()
-                .filter(ctt -> ctt.getHanSuDung().isAfter(LocalDate.now()))
+        // 1. Tính tổng tồn kho - Đảm bảo biến này là biến CỤC BỘ (local)
+        final int tongTonKhoThucTe = clientManager.getLoThuocList().stream()
+                .filter(lot -> lot.getMaThuocDTO() != null &&
+                        selected.getMaThuoc().equals(lot.getMaThuocDTO().getMaThuoc()))
+                .filter(lot -> lot.getHanSuDung() != null &&
+                        lot.getHanSuDung().isAfter(LocalDate.now()))
                 .mapToInt(LoThuocDTO::getSoLuong)
                 .sum();
-        // So sánh tồn kho với số lượng nhập
 
-        int soLuongdaChon = 0;
-        for (ChiTietPhieuDatThuocDTO ct : tbChonThuoc.getItems()) {
-            if (ct.getMaThuoc().getMaThuocDTO().getMaThuoc().equals(selectedThuocDTO.getMaThuoc())) {
-                soLuongdaChon += ct.getSoLuong();
-            }
-        }
+        // 2. Tính số lượng đã có trong bảng
+        final int daThemTrongBang = tbChonThuoc.getItems().stream()
+                .filter(item -> item.getMaThuoc() != null &&
+                        item.getMaThuoc().getMaThuocDTO() != null &&
+                        selected.getMaThuoc().equals(item.getMaThuoc().getMaThuocDTO().getMaThuoc()))
+                .mapToInt(ChiTietPhieuDatThuocDTO::getSoLuong)
+                .sum();
 
-        if ((soLuongNhap + soLuongdaChon) > tongSoLuongTrongKho) {
-            showMess("Không đủ số lượng",
-                    "đơn vị của thuốc " + selectedThuocDTO.getTenThuoc() +
-                            " Kho chỉ còn \"" + (tongSoLuongTrongKho) + "\".");
+        // DEBUG kiểm tra giá trị ngay trước khi IF
+        System.out.println("DEBUG CHECK: Kho=" + tongTonKhoThucTe + ", DaThem=" + daThemTrongBang + ", Nhap=" + nhap);
+
+        // 3. Logic so sánh - Sử dụng đúng tên biến cục bộ ở trên
+        if (tongTonKhoThucTe <= 0) {
+            showMess("Hết hàng", "Thuốc hiện không còn lô nào khả dụng trong kho.");
             return false;
         }
+
+        if ((nhap + daThemTrongBang) > tongTonKhoThucTe) {
+            int conLai = tongTonKhoThucTe - daThemTrongBang;
+            showMess("Không đủ số lượng", "Kho chỉ còn " + conLai + " sản phẩm.");
+            return false;
+        }
+
+        System.out.println("DEBUG CHECK: Thuốc hợp lệ để thêm vào bảng.");
         return true;
     }
 
@@ -608,7 +588,7 @@ public class ThemPhieuDatFormController extends DialogPane {
      * Load lại bảng thuốc
      */
     private void loadTable() {
-        obsThuoc.setAll(list);
+        // Không cần làm gì nếu đã dùng chung obsThuoc
     }
 
     /**
@@ -616,67 +596,48 @@ public class ThemPhieuDatFormController extends DialogPane {
      * thì tạo thêm 1 dòng mới
      */
     private void addThuocVaoTable() {
-
         ThuocDTO thuocDTO = cbTenThuoc.getSelectionModel().getSelectedItem();
-        int soLuongCan = spSoLuong.getValue();
+        int soLuongYeuCau = spSoLuong.getValue();
         DonViTinhDTO dvt = cbDonVi.getSelectionModel().getSelectedItem();
 
-        if (thuocDTO == null || soLuongCan <= 0)
-            return;
-
-        // 1. Lấy các lô còn hạn, sắp theo hạn tăng dần
-        Task<ArrayList<LoThuocDTO>> loadChiTietTask = new Task<>() {
+        Task<List<LoThuocDTO>> task = new Task<>() {
             @Override
-            protected ArrayList<LoThuocDTO> call() throws Exception {
-                return clientManager.getLoThuocFefoByThuocId(thuocDTO.getMaThuoc());
+            protected List<LoThuocDTO> call() {
+                return clientManager.getLoThuocFefoByThuocId(thuocDTO.getMaThuoc()).stream()
+                        .filter(lot -> lot.getHanSuDung().isAfter(LocalDate.now()) && lot.getSoLuong() > 0)
+                        .sorted(Comparator.comparing(LoThuocDTO::getHanSuDung))
+                        .collect(Collectors.toList());
             }
         };
 
-        AtomicReference<ArrayList<LoThuocDTO>> dsChiTiet = new AtomicReference<>(new ArrayList<>());
-        loadChiTietTask.setOnSucceeded(e -> {
-            dsChiTiet.set(loadChiTietTask.getValue().stream()
-                    .filter(ct -> ct.getHanSuDung().isAfter(LocalDate.now()))
-                    .sorted(Comparator.comparing(LoThuocDTO::getHanSuDung))
-                    .collect(Collectors.toCollection(ArrayList::new)));
+        task.setOnSucceeded(event -> {
+            List<LoThuocDTO> dsLo = task.getValue();
+            int conLai = soLuongYeuCau;
+
+            for (LoThuocDTO lo : dsLo) {
+                if (conLai <= 0) break;
+                int lay = Math.min(lo.getSoLuong(), conLai);
+                conLai -= lay;
+
+                // Thay 'list' bằng 'obsThuoc'
+                Optional<ChiTietPhieuDatThuocDTO> trungLo = obsThuoc.stream()
+                        .filter(x -> x.getMaThuoc().getMaLoThuoc() == lo.getMaLoThuoc())
+                        .findFirst();
+
+                if (trungLo.isPresent()) {
+                    trungLo.get().setSoLuong(trungLo.get().getSoLuong() + lay);
+                } else {
+                    // Thêm trực tiếp vào ObservableList
+                    obsThuoc.add(new ChiTietPhieuDatThuocDTO(lo, lay, dvt));
+                }
+            }
+
+            // Cập nhật UI
+            tbChonThuoc.refresh();
+            loadTongTien();
         });
 
-        Thread thread = new Thread(loadChiTietTask);
-        thread.start();
-
-        int tongTon = dsChiTiet.get().stream().mapToInt(LoThuocDTO::getSoLuong).sum();
-        if (tongTon < soLuongCan) {
-            showMess("Không đủ tồn", "Kho chỉ còn " + tongTon);
-            return;
-        }
-
-        // 2. Chia số lượng cho từng lô
-        for (LoThuocDTO lo : dsChiTiet.get()) {
-            if (soLuongCan <= 0)
-                break;
-
-            int lay = Math.min(lo.getSoLuong(), soLuongCan);
-            soLuongCan -= lay;
-
-            ChiTietPhieuDatThuocDTO ct = new ChiTietPhieuDatThuocDTO(lo, lay, dvt);
-
-            // 3. Nếu đã tồn tại cùng lô → cộng dồn
-            Optional<ChiTietPhieuDatThuocDTO> existing = list.stream()
-                    .filter(x -> x.getMaThuoc().getMaLoThuoc() == lo.getMaLoThuoc())
-                    .findFirst();
-
-            if (existing.isPresent()) {
-                ChiTietPhieuDatThuocDTO old = existing.get();
-                old.setSoLuong(old.getSoLuong() + lay);
-            } else {
-                list.add(ct);
-            }
-        }
-
-        // 4. Update UI
-        loadTable();
-        loadTongTien();
-
-        txtDonGia.setText(dinhDangTien(thuocDTO.getGiaBan()));
+        new Thread(task).start();
     }
 
     private void themPhieuDat() {

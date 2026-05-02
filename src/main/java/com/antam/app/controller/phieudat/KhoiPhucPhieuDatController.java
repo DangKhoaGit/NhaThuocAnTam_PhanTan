@@ -7,13 +7,12 @@ package com.antam.app.controller.phieudat;
 
 import com.antam.app.connect.ConnectDB;
 import com.antam.app.network.ClientManager;
-import com.antam.app.service.I_PhieuDat_Service;
-import com.antam.app.service.impl.ChiTietPhieuDat_Service;
-import com.antam.app.service.impl.LoThuoc_Service;
 import com.antam.app.dto.ChiTietPhieuDatThuocDTO;
 import com.antam.app.dto.LoThuocDTO;
 import com.antam.app.dto.NhanVienDTO;
 import com.antam.app.dto.PhieuDatThuocDTO;
+import com.antam.app.service.impl.ChiTietPhieuDat_Service;
+import com.antam.app.service.impl.LoThuoc_Service;
 import com.antam.app.service.impl.PhieuDat_Service;
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcon;
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcons;
@@ -30,6 +29,8 @@ import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
+import javafx.stage.Modality;
+import javafx.util.StringConverter;
 
 import java.sql.Connection;
 import java.text.DecimalFormat;
@@ -222,6 +223,7 @@ public class KhoiPhucPhieuDatController extends ScrollPane{
         };
         loadDataTask2.setOnSucceeded(e -> {
             listNV = loadDataTask2.getValue();
+            loadDataComboBox();
         });
         loadDataTask2.setOnFailed(e -> {});
         Thread thread2 = new Thread(loadDataTask2);
@@ -230,7 +232,6 @@ public class KhoiPhucPhieuDatController extends ScrollPane{
 
         setupBang();
         loadDataVaoBang();
-        loadDataComboBox();
         setupListenerComboBox();
         setupListenerFind();
         btnXoaRong.setOnAction( e->{
@@ -497,16 +498,16 @@ public class KhoiPhucPhieuDatController extends ScrollPane{
 
         loadDataTask.setOnSucceeded(e -> {
             listPDT = loadDataTask.getValue();
+            origin = FXCollections.observableArrayList(listPDT);
+            filter = FXCollections.observableArrayList(origin);
+            tvPhieuDat.setItems(filter);
+            tvPhieuDat.refresh();
         });
         loadDataTask.setOnFailed(e -> {
 
         });
         Thread thread = new Thread(loadDataTask);
         thread.start();
-        origin = FXCollections.observableArrayList(listPDT);
-        filter = FXCollections.observableArrayList(origin);
-        tvPhieuDat.setItems(filter);
-        tvPhieuDat.refresh();
     }
 
 
@@ -527,5 +528,18 @@ public class KhoiPhucPhieuDatController extends ScrollPane{
         cbGia.getSelectionModel().selectFirst();
         cbNhanVien.getSelectionModel().selectFirst();
         cbTrangThai.getSelectionModel().selectFirst();
+
+        // Set converter to display only the name
+        cbNhanVien.setConverter(new StringConverter<NhanVienDTO>() {
+            @Override
+            public String toString(NhanVienDTO nv) {
+                return nv == null ? "" : nv.getHoTen();
+            }
+
+            @Override
+            public NhanVienDTO fromString(String string) {
+                return null; // Not needed
+            }
+        });
     }
 }

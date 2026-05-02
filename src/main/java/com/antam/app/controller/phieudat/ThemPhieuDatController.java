@@ -6,12 +6,8 @@
 package com.antam.app.controller.phieudat;
 
 import com.antam.app.network.ClientManager;
-import com.antam.app.service.I_NhanVien_Service;
-import com.antam.app.service.I_PhieuDat_Service;
 import com.antam.app.dto.NhanVienDTO;
 import com.antam.app.dto.PhieuDatThuocDTO;
-import com.antam.app.service.impl.NhanVien_Service;
-import com.antam.app.service.impl.PhieuDat_Service;
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcon;
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcons;
 import javafx.beans.property.SimpleStringProperty;
@@ -28,11 +24,11 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.stage.Modality;
+import javafx.util.StringConverter;
 
 import java.text.DecimalFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 import java.util.List;
 
 
@@ -191,24 +187,6 @@ public class ThemPhieuDatController extends ScrollPane{
         tvPhieuDat.setPlaceholder(new Label("Không tìm thấy phiếu đặt thuốc"));
         /** Sự kiện **/
 
-        //Task load data từ server để tránh đơ UI
-        Task<List<PhieuDatThuocDTO>> taskLoadData = new Task<>() {
-            @Override
-            protected List<PhieuDatThuocDTO> call() throws Exception {
-                return clientManager.getPhieuDatList();
-            }
-        };
-
-        taskLoadData.setOnSucceeded(e -> {
-            listPDT = taskLoadData.getValue();
-        });
-        taskLoadData.setOnFailed(e -> {
-
-        });
-
-        Thread thread = new Thread(taskLoadData);
-        thread.start();
-
 //        private List<NhanVienDTO> listNV = nhanVienService.getAllNhanVien();
         //Task lay data nhan vien
         Task<List<NhanVienDTO>> taskLoadNV = new Task<>() {
@@ -220,11 +198,12 @@ public class ThemPhieuDatController extends ScrollPane{
 
         taskLoadNV.setOnSucceeded(e -> {
             listNV = taskLoadNV.getValue();
+            loadDataComboBox();
         });
         taskLoadNV.setOnFailed(e -> {
 
         });
-        thread = new Thread(taskLoadNV);
+        Thread thread = new Thread(taskLoadNV);
         thread.start();
 
         // tạo phiếu đặt mới
@@ -244,7 +223,6 @@ public class ThemPhieuDatController extends ScrollPane{
         });
 
         //cài đặt và load data vào giao diện
-        loadDataComboBox();
         setupBang();
         loadDataVaoBang();
 
@@ -280,9 +258,6 @@ public class ThemPhieuDatController extends ScrollPane{
         cbNhanVien.setOnAction(e -> setupListenerComboBox());
         dpstart.setOnAction(e-> setupListenerComboBox());
         dpend.setOnAction(e->setupListenerComboBox());
-
-        //set phiếu đặt được chọn cho xem chi tiết
-        TimPhieuDatController.selectedPhieuDatThuocDTO = tvPhieuDat.getItems().getFirst();
 
         tvPhieuDat.setOnMouseClicked(e -> {
             PhieuDatThuocDTO selected = tvPhieuDat.getSelectionModel().getSelectedItem();
@@ -442,8 +417,10 @@ public class ThemPhieuDatController extends ScrollPane{
         };
 
         taskLoadData.setOnSucceeded(e -> {
-//            listPDT = taskLoadData.getValue();
             listPDT = taskLoadData.getValue();
+            origin = FXCollections.observableArrayList(listPDT);
+            filter = FXCollections.observableArrayList(origin);
+            tvPhieuDat.setItems(filter);
         });
         taskLoadData.setOnFailed(e -> {
 
@@ -451,10 +428,6 @@ public class ThemPhieuDatController extends ScrollPane{
 
         Thread thread = new Thread(taskLoadData);
         thread.start();
-
-        origin = FXCollections.observableArrayList(listPDT);
-        filter = FXCollections.observableArrayList(origin);
-        tvPhieuDat.setItems(filter);
     }
 
 
@@ -475,6 +448,19 @@ public class ThemPhieuDatController extends ScrollPane{
         cbGia.getSelectionModel().selectFirst();
         cbNhanVien.getSelectionModel().selectFirst();
         cbTrangThai.getSelectionModel().selectFirst();
+
+        // Set converter to display only the name
+        cbNhanVien.setConverter(new StringConverter<NhanVienDTO>() {
+            @Override
+            public String toString(NhanVienDTO nv) {
+                return nv == null ? "" : nv.getHoTen();
+            }
+
+            @Override
+            public NhanVienDTO fromString(String string) {
+                return null; // Not needed
+            }
+        });
     }
 
     /**

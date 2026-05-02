@@ -30,6 +30,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.stage.Modality;
+import javafx.util.StringConverter;
 
 public class TimPhieuDatController extends ScrollPane{
     
@@ -193,29 +194,11 @@ public class TimPhieuDatController extends ScrollPane{
         });
         new Thread(taskNV).start();
 
-        Task<List<PhieuDatThuocDTO>> taskPDT = new Task<>() {
-            @Override
-            protected List<PhieuDatThuocDTO> call() throws Exception {
-                return (List<PhieuDatThuocDTO>) clientManager.getPhieuDatList();
-            }
-        };
-
-        taskPDT.setOnSucceeded(e -> {
-            listPDT = taskPDT.getValue();
-        });
-        taskPDT.setOnFailed(e -> {
-
-        });
-
-        new Thread(taskPDT).start();
 
         //cài đặt và load data vào giao diện
-        loadDataComboBox();
         setupBang();
         loadDataVaoBang();
 
-        //set phiếu đặt được chọn cho xem chi tiết
-        selectedPhieuDatThuocDTO = tvPhieuDat.getItems().getFirst();
 
         //sự kiện double click vào bảng phiếu đặt
         tvPhieuDat.setOnMouseClicked(e -> {
@@ -434,6 +417,19 @@ public class TimPhieuDatController extends ScrollPane{
         cbGia.getSelectionModel().selectFirst();
         cbNhanVien.getSelectionModel().selectFirst();
         cbTrangThai.getSelectionModel().selectFirst();
+
+        // Set converter to display only the name
+        cbNhanVien.setConverter(new javafx.util.StringConverter<NhanVienDTO>() {
+            @Override
+            public String toString(NhanVienDTO nv) {
+                return nv == null ? "" : nv.getHoTen();
+            }
+
+            @Override
+            public NhanVienDTO fromString(String string) {
+                return null; // Not needed
+            }
+        });
     }
 
 

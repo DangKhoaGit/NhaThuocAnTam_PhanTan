@@ -66,15 +66,15 @@ public class ChiTietPhieuNhapDTO implements Serializable {
         float thue = loThuocDTO.getMaThuocDTO().getThue();
         return soLuong * giaNhap * (1 + thue);
     }
-    @Override
-    public String toString() {
-        return "ChiTietPhieuNhap{" +
-                "MaPN=" + MaPN +
-                ", MaThuoc=" + loThuocDTO.getMaThuocDTO() +
-                ", maDVT=" + maDVT +
-                ", soLuong=" + soLuong +
-                ", giaNhap=" + giaNhap +
-                '}';
-    }
+//    @Override
+//    public String toString() {
+//        return "ChiTietPhieuNhap{" +
+//                "MaPN=" + MaPN +
+////                ", MaThuoc=" + loThuocDTO.getMaThuocDTO() +
+//                ", maDVT=" + maDVT +
+//                ", soLuong=" + soLuong +
+//                ", giaNhap=" + giaNhap +
+//                '}';
+//    }
 
 }

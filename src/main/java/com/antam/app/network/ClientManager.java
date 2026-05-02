@@ -433,6 +433,10 @@ public class ClientManager {
         }
     }
 
+    public ArrayList<LoThuocDTO> getLoThuocFefoByThuocId1(String maThuoc) {
+        return send(RequestBuilder.getLoThuocByMaThuoc(maThuoc));
+    }
+
     public boolean tonTaiChiTietHoaDon(String maHD, int maLoThuoc) {
         Boolean rs = send(RequestBuilder.tonTaiCTHD(maHD , maLoThuoc));
         return rs != null && rs;
@@ -928,7 +932,7 @@ public class ClientManager {
     }
 
     public DangDieuCheDTO getDDCTheoName(String tenDDC) {
-        return send(RequestBuilder.getDDCTheoName(tenDDC));
+        return send(RequestBuilder.getDDCTheoName(tenDDC ));
 
     }
 
@@ -990,5 +994,13 @@ public class ClientManager {
 
     public Integer getMaxHashHoaDon() {
         return send(RequestBuilder.getMaxHashHoaDon());
+    }
+
+    public ArrayList<KeDTO> getKeList() {
+        return send(RequestBuilder.getKeList());
+    }
+
+    public Boolean updateTrangThaiPhieuDat(String maPhieu, boolean b) {
+        return send(RequestBuilder.updateTrangThaiPhieuDat(maPhieu, b));
     }
 }

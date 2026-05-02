@@ -6,8 +6,6 @@
 package com.antam.app.controller.phieudat;
 
 import com.antam.app.network.ClientManager;
-import com.antam.app.service.I_ChiTietPhieuDat_Service;
-import com.antam.app.service.I_PhieuDat_Service;
 import com.antam.app.dto.ChiTietPhieuDatThuocDTO;
 import com.antam.app.dto.LoThuocDTO;
 import com.antam.app.dto.NhanVienDTO;
@@ -29,6 +27,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.stage.Modality;
+import javafx.util.StringConverter;
 
 import java.text.DecimalFormat;
 import java.time.LocalDate;
@@ -210,25 +209,6 @@ public class CapNhatPhieuDatController extends ScrollPane{
 
         /** Sự kiện **/
 
-//        private List<PhieuDatThuocDTO> listPDT = I_PhieuDat_Service.getAllPhieuDatThuocFromDBS();
-        Task<List<PhieuDatThuocDTO>> loadDataTask = new Task<>() {
-            @Override
-            protected List<PhieuDatThuocDTO> call() throws Exception {
-                return clientManager.getPhieuDatList();
-            }
-        };
-
-        loadDataTask.setOnSucceeded(event -> {
-            listPDT = loadDataTask.getValue();
-            origin = FXCollections.observableArrayList(listPDT);
-            filter = FXCollections.observableArrayList(origin);
-            tvPhieuDat.setItems(filter);
-        });
-
-        loadDataTask.setOnFailed(event -> {});
-        Thread loadThread = new Thread(loadDataTask);
-        loadThread.start();
-
 //        private List<NhanVienDTO> listNV = nhanVien_service.getAllNhanVien();
 
         Task<List<NhanVienDTO>> loadNVTask = new Task<>() {
@@ -239,12 +219,16 @@ public class CapNhatPhieuDatController extends ScrollPane{
         };
         loadNVTask.setOnSucceeded(event -> {
             listNV = loadNVTask.getValue();
-
+            loadDataComboBox();
         });
 
         loadNVTask.setOnFailed(event -> {});
         Thread loadNVThread = new Thread(loadNVTask);
         loadNVThread.start();
+
+        //cài đặt và load data vào giao diện
+        setupBang();
+        loadDataVaoBang();
 
         this.btnThanhToan.setOnAction((e) -> {
             if (tvPhieuDat.getSelectionModel().getSelectedItem() == null){
@@ -261,11 +245,6 @@ public class CapNhatPhieuDatController extends ScrollPane{
                 loadDataVaoBang();
             }
         });
-
-        //cài đặt và load data vào giao diện
-        loadDataComboBox();
-        setupBang();
-        loadDataVaoBang();
 
         //set phiếu đặt được chọn cho xem chi tiết
 
@@ -436,7 +415,8 @@ public class CapNhatPhieuDatController extends ScrollPane{
                     }
                 };
                 taskXoaPhieu.setOnSucceeded(event -> {
-                    if (!taskXoaPhieu.getValue()) {
+                    Boolean result = taskXoaPhieu.getValue();
+                    if (result == null || !result) {
                         showMess("Lỗi", "Xoá phiếu thất bại");
                         return;
                     }
@@ -643,5 +623,18 @@ public class CapNhatPhieuDatController extends ScrollPane{
         cbGia.getSelectionModel().selectFirst();
         cbNhanVien.getSelectionModel().selectFirst();
         cbTrangThai.getSelectionModel().selectFirst();
+
+        // Set converter to display only the name
+        cbNhanVien.setConverter(new StringConverter<NhanVienDTO>() {
+            @Override
+            public String toString(NhanVienDTO nv) {
+                return nv == null ? "" : nv.getHoTen();
+            }
+
+            @Override
+            public NhanVienDTO fromString(String string) {
+                return null; // Not needed
+            }
+        });
     }
 }

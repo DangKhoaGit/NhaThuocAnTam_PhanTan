@@ -389,7 +389,7 @@ public class RequestBuilder {
     }
 
     public static Command getChiTietPDT(String maPhieu) {
-        return build(CommandType.GET_CHITIETPHIEUDAT_BY_PHIEUDAT_ID, map("maPhieu", maPhieu));
+        return build(CommandType.GET_CHITIETPHIEUDAT_BY_PHIEUDAT_ID, map("maPD", maPhieu));
     }
 
     public static Command getPhieuDatThuocDaXoa() {
@@ -397,22 +397,22 @@ public class RequestBuilder {
     }
 
     public static Command khoiPhucChiTietPhieu(String maPhieu) {
-        return build(CommandType.RESTORE_CHITIETPHIEUDAT, map("maPhieu", maPhieu));
+        return build(CommandType.RESTORE_CHITIETPHIEUDAT, map("maCTPD", maPhieu));
     }
 
     public static Command capNhatSoLuongChiTietThuoc(int maLoThuoc, int soMoi) {
         return build(CommandType.UPDATE_LOTHUOC_QUANTITY, map(
                 "maLoThuoc", maLoThuoc,
-                "soLuongMoi", soMoi
+                "deltaSoLuong", soMoi
         ));
     }
 
     public static Command huyChiTietPhieu(String maPhieu) {
-        return build(CommandType.CANCEL_CHITIETPHIEUDAT, map("maPhieu", maPhieu));
+        return build(CommandType.CANCEL_CHITIETPHIEUDAT, map("maCTPD", maPhieu));
     }
 
     public static Command xoaPhieuDat(String maPhieu) {
-        return build(CommandType.DELETE_PHIEUDAT, map("maPhieu", maPhieu));
+        return build(CommandType.DELETE_PHIEUDAT, map("maPD", maPhieu));
     }
 
     public static Command countHoaDonByKhuyenMai(String maKM) {
@@ -440,5 +440,20 @@ public class RequestBuilder {
 
     public static Command getMaxHashHoaDon() {
         return build(CommandType.GET_MAX_HASH_HOADON);
+    }
+
+    public static Command getKeList() {
+        return build(CommandType.GET_KE_LIST);
+    }
+
+    public static Command getLoThuocByMaThuoc(String maThuoc) {
+        return build(CommandType.GET_LOTHUOC_FEFO_BY_THUOC_ID, map("maThuoc", maThuoc));
+    }
+
+    public static Command updateTrangThaiPhieuDat(String maPhieu, boolean b) {
+        return  build(CommandType.UPDATE_PHIEUNHAP_STATUS, map(
+                "maPD", maPhieu,
+                "status", b
+        ));
     }
 }

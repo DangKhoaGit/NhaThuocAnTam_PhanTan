@@ -23,7 +23,9 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 import javafx.geometry.Pos;
 import javafx.scene.layout.VBox;
@@ -200,7 +202,11 @@ public class CapNhatPhieuDatFormController extends DialogPane{
                 return clientManager.getChiTietPDT(select.getMaPhieu());
             }
         };
-        loadChiTietTask.setOnSucceeded(e -> listChiTiet = loadChiTietTask.getValue());
+        loadChiTietTask.setOnSucceeded(e -> {
+            listChiTiet = loadChiTietTask.getValue();
+            setupTable();
+            loadBangChiTiet();
+        });
 
         Thread thread = new Thread(loadChiTietTask);
         thread.start();
@@ -210,8 +216,6 @@ public class CapNhatPhieuDatFormController extends DialogPane{
         this.getButtonTypes().add(cancelButton);
         this.getButtonTypes().add(applyButton);
         loadContent();
-        setupTable();
-        loadBangChiTiet();
         loadTien();
 
         Button btnThanhToan = (Button) this.lookupButton(applyButton);
@@ -237,63 +241,85 @@ public class CapNhatPhieuDatFormController extends DialogPane{
     }
 
     private void thanhToanPhieuDat() {
-        // Cập nhật trạng thái thanh toán
-        select.setThanhToan(true);
-            HoaDonDTO hoaDonDTO = new HoaDonDTO(getMaxHashHoaDon(),
-                    LocalDate.now()
-                    , PhienNguoiDungDTO.getMaNV()
-                    , select.getKhachHang()
-                    , select.getKhuyenMaiDTO()
-                    ,select.getTongTien()
-                    , false);
-            Task<Boolean> insertHoaDonTask = new Task<>() {
-                @Override
-                protected Boolean call() {
-                    return clientManager.createHoaDon(hoaDonDTO);
+        // 1. Khóa nút thanh toán để tránh click trùng lặp
+        Button applyButton = (Button) this.lookupButton(this.getButtonTypes().stream()
+                .filter(b -> b.getButtonData() == ButtonBar.ButtonData.APPLY)
+                .findFirst().orElse(null));
+        if (applyButton != null) applyButton.setDisable(true);
+
+        // 2. Chạy logic thanh toán bất đồng bộ
+        CompletableFuture.runAsync(() -> {
+            // Lấy mã hóa đơn mới bằng hàm bạn đã viết
+            String newMaHD = generateNewMaHoaDon();
+
+            HoaDonDTO hoaDonDTO = new HoaDonDTO(
+                    newMaHD,
+                    LocalDate.now(),
+                    PhienNguoiDungDTO.getMaNV(),
+                    select.getKhachHang(),
+                    select.getKhuyenMaiDTO(),
+                    select.getTongTien(),
+                    false
+            );
+
+            // 3. Thực hiện lưu Hóa đơn chính
+            boolean isHdCreated = clientManager.createHoaDon(hoaDonDTO);
+            if (!isHdCreated) {
+                throw new RuntimeException("Lỗi: Không thể tạo hóa đơn trên Server.");
+            }
+
+            // 4. Lưu danh sách Chi tiết hóa đơn
+            ArrayList<ChiTietHoaDonDTO> listCTHD = new ArrayList<>();
+            for (ChiTietPhieuDatThuocDTO item : tbThuoc.getItems()) {
+                ChiTietHoaDonDTO cthd = new ChiTietHoaDonDTO();
+                cthd.setMaHD(hoaDonDTO);
+                cthd.setMaLoThuocDTO(item.getMaThuoc());
+                cthd.setThanhTien(item.getThanhTien());
+                cthd.setMaDVT(item.getDonViTinhDTO());
+                cthd.setSoLuong(item.getSoLuong());
+                cthd.setTinhTrang("Bán");
+
+                // Lưu từng chi tiết lên server
+                boolean isDetailCreated = clientManager.createChiTietHoaDon(cthd);
+                if (!isDetailCreated) {
+                    System.err.println("Cảnh báo: Lỗi lưu chi tiết cho thuốc " + item.getMaThuoc().getMaThuocDTO().getTenThuoc());
                 }
-            };
+                listCTHD.add(cthd);
+            }
 
-            insertHoaDonTask.setOnSucceeded(event -> {
-                boolean success = insertHoaDonTask.getValue();
-                if (success) {
-                    ArrayList<ChiTietHoaDonDTO> list = new ArrayList<>();
-                    for (ChiTietPhieuDatThuocDTO item : tbThuoc.getItems()){
+            // 5. Cập nhật trạng thái phiếu đặt (Ví dụ gọi API update trạng thái)
+             clientManager.updateTrangThaiPhieuDat(select.getMaPhieu(), true);
 
-                        Task<Boolean> taskThemCTTHD = new Task<>() {
-                            @Override
-                            protected Boolean call() {
-                                return clientManager.createChiTietHoaDon(item);
-                            }
-                        };
-
-                        taskThemCTTHD.setOnSucceeded(ev -> {
-                            boolean ctSuccess = taskThemCTTHD.getValue();
-                            if (!ctSuccess) {
-                                showMess("Lỗi", "Không thể thêm chi tiết hóa đơn cho thuốc: " + item.getMaThuoc().getMaThuocDTO().getTenThuoc());
-                            }
-                        });
-
-                        ChiTietHoaDonDTO i = new ChiTietHoaDonDTO();
-                        i.setMaHD(hoaDonDTO);
-                        i.setMaLoThuocDTO(item.getMaThuoc());
-                        i.setThanhTien(item.getThanhTien());
-                        i.setMaDVT(item.getDonViTinhDTO());
-                        i.setSoLuong(item.getSoLuong());
-                        i.setTinhTrang("Bán");
-                        list.add(i);
-
-                        Thread thread = new Thread(taskThemCTTHD);
-                        thread.start();
-                    }
-                    //xuất pdf phiếu dặt
-                    thongBaoVaXuatHoaDon(hoaDonDTO,list);
-                }
+            // 6. Quay lại UI Thread để thông báo và in PDF
+            Platform.runLater(() -> {
+                if (applyButton != null) applyButton.setDisable(false);
+                select.setThanhToan(true);
+                loadContent(); // Cập nhật lại giao diện hiển thị "Đã thanh toán"
+                thongBaoVaXuatHoaDon(hoaDonDTO, listCTHD);
             });
 
-            insertHoaDonTask.setOnFailed(ex -> showMess("Lỗi", "Không thể tạo hóa đơn"));
+        }).exceptionally(ex -> {
+            // Xử lý lỗi tập trung
+            Platform.runLater(() -> {
+                if (applyButton != null) applyButton.setDisable(false);
+                showMess("Lỗi Hệ Thống", "Quá trình thanh toán gặp sự cố: " + ex.getMessage());
+            });
+            ex.printStackTrace();
+            return null;
+        });
+    }
 
-            Thread thread = new Thread(insertHoaDonTask);
-            thread.start();
+    private String generateNewMaHoaDon() {
+        List<?> allHD = ClientManager.getInstance().getHoaDonList();
+        List<String> allMaHD = ((List<HoaDonDTO>) allHD).stream().map(hd -> hd.getMaHD()).collect(Collectors.toList());
+        int max = 0;
+        for (String ma : allMaHD) {
+            if (ma != null && ma.matches("HD\\d+")) {
+                int num = Integer.parseInt(ma.substring(2));
+                if (num > max) max = num;
+            }
+        }
+        return String.format("HD%03d", max + 1);
     }
 
     private String getMaxHashHoaDon(){
