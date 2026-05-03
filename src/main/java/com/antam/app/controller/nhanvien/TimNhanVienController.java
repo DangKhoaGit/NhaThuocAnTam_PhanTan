@@ -185,6 +185,15 @@ public class TimNhanVienController extends ScrollPane{
             try {
                 List<NhanVienDTO> listNV = task.getValue();
                 if (listNV != null && !listNV.isEmpty()) {
+                    // Log thử 1 nhân viên để xem giá trị thực tế từ server trả về
+                    NhanVienDTO test = listNV.get(0);
+                    System.out.println("DEBUG: NV=" + test.getHoTen() +
+                            " | isQuanLi=" + test.isQuanLi() +
+                            " | isDelete=" + test.isDeleteAt());
+
+                    TVNhanVien.setAll(listNV.stream().filter(nv -> !nv.isDeleteAt()).toList());
+                }
+                if (listNV != null && !listNV.isEmpty()) {
                     TVNhanVien.setAll(
                         listNV.stream()
                                 .filter(nv -> !nv.isDeleteAt())

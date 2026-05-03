@@ -132,22 +132,11 @@ public class ClientManager {
     // =========================================================
     // 🔐 AUTH
     // =========================================================
-    public boolean login(String username, String password) {
+    public Response login(String username, String password) {
         try {
-            Response response = sendCommandWithAutoConnect(
-                    RequestBuilder.login(username, password)
-            );
-
-            if (response.isSuccess()) {
-                this.sessionId = (String) response.getData();
-                return true;
-            }
-
-            return false;
-
-        } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, "Login error", e);
-            return false;
+            return sendCommandWithAutoConnect(RequestBuilder.login(username, password));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
     }
 

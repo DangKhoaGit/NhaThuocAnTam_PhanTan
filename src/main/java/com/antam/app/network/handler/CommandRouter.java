@@ -1,10 +1,12 @@
 package com.antam.app.network.handler;
 
 import com.antam.app.entity.PhieuDatThuoc;
+import com.antam.app.helper.MaKhoaMatKhau;
 import com.antam.app.network.message.Command;
 import com.antam.app.network.message.Response;
 import com.antam.app.network.command.CommandType;
 import com.antam.app.dto.*;
+import com.antam.app.service.impl.NhanVien_Service;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -1366,26 +1368,37 @@ public class CommandRouter {
 
     private Response handleLogin(Command command) {
         try {
-            if (command.getPayload() == null ||
-                    !command.getPayload().containsKey("username") ||
-                    !command.getPayload().containsKey("password")) {
+            Map<String, Object> payload = command.getPayload();
+            String username = (String) payload.get("username");
+            String password = (String) payload.get("password");
+
+            // 1. Tìm nhân viên trong Database theo username
+            // Giả sử bạn có một lớp DAO hoặc Service để truy vấn
+            NhanVienDTO nv = serviceLocator.getNhanVienService().getNhanVienTaiKhoan(username);
+
+            // 2. Kiểm tra tồn tại và so khớp mật khẩu bằng BCrypt
+            if (nv != null && MaKhoaMatKhau.verifyPassword(password, nv.getMatKhau())) {
+
+                // (Tùy chọn) Tạo Session ID hoặc trả về thông tin nhân viên
+                return Response.builder()
+                        .success(true)
+                        .message("Login successful")
+                        .data(nv) // Trả về DTO để Client sử dụng luôn
+                        .build();
+            } else {
                 return Response.builder()
                         .success(false)
-                        .message("Invalid login credentials")
-                        .errorCode("INVALID_CREDENTIALS")
+                        .message("Tên đăng nhập hoặc mật khẩu không chính xác")
+                        .errorCode("AUTH_FAILED")
                         .build();
             }
 
-            return Response.builder()
-                    .success(true)
-                    .message("Login successful")
-                    .build();
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "Error during login", e);
             return Response.builder()
                     .success(false)
-                    .message("Login failed: " + e.getMessage())
-                    .errorCode("LOGIN_ERROR")
+                    .message("Lỗi hệ thống: " + e.getMessage())
+                    .errorCode("SERVER_ERROR")
                     .build();
         }
     }

@@ -43,9 +43,12 @@ public class NhanVien {
     private String taiKhoan;
     @Column(name = "MatKhau")
     private String matKhau;
+
     @Column(name = "IsQuanLi")
     private boolean quanLi;
-    @Column(columnDefinition = "BOOLEAN DEFAULT FALSE")
+
+    // Bắt buộc phải có tên cột cụ thể để tránh mapping nhầm theo thứ tự
+    @Column(name = "DeleteAt", columnDefinition = "BOOLEAN DEFAULT FALSE")
     private boolean deleteAt;
 
 

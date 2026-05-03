@@ -6,6 +6,7 @@
 
 package com.antam.app.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -23,6 +24,8 @@ import java.io.Serializable;
 @Builder
 
 public class NhanVienDTO implements Serializable {
+    private static final long serialVersionUID = 1L;
+
     private String MaNV;
     private String hoTen;
     private String soDienThoai;
@@ -31,7 +34,10 @@ public class NhanVienDTO implements Serializable {
     private double luongCoBan;
     private String taiKhoan;
     private String matKhau;
+    @JsonProperty("quanLi") // Đảm bảo luôn map đúng tên
     private boolean quanLi;
+
+    @JsonProperty("deleteAt") // Đảm bảo luôn map đúng tên
     private boolean deleteAt;
 
 
