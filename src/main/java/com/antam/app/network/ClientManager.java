@@ -977,6 +977,7 @@ public class ClientManager {
         return sendForSuccess(RequestBuilder.updateSoLuongLoThuoc(maLoThuoc, i));
     }
 
+
     public Integer getMaxHashKhachHang() {
         return send(RequestBuilder.getMaxHashKhachHang());
     }

@@ -705,12 +705,23 @@ public class ThemPhieuDatFormController extends DialogPane {
                 for (ChiTietPhieuDatThuocDTO ct : chiTietList) {
                     LoThuocDTO lo = ct.getMaThuoc();
                     int soLuongDat = ct.getSoLuong();
+
+                    // Kiểm tra lại số lượng lô hiện tại trước khi tạo chi tiết (chống race condition)
+                    LoThuocDTO currentLo = clientManager.getLoThuocByLoThuocId(lo.getMaLoThuoc());
+                    if (currentLo == null || currentLo.getSoLuong() < soLuongDat) {
+                        int soHienTai = currentLo != null ? currentLo.getSoLuong() : 0;
+                        throw new RuntimeException("Không đủ số lượng cho lô thuốc ID " + lo.getMaLoThuoc() +
+                                ". Yêu cầu: " + soLuongDat + ", Hiện có: " + soHienTai);
+                    }
+
                     ChiTietPhieuDatThuocDTO ctNew = new ChiTietPhieuDatThuocDTO(
                             phieu, lo, soLuongDat, ct.getDonViTinhDTO());
                     if (!clientManager.createChiTietPhieuDat(ctNew)) {
                         throw new RuntimeException("Không thể thêm chi tiết phiếu.");
                     }
-                    clientManager.updateSoLuongLoThuoc(lo.getMaLoThuoc(), -soLuongDat);
+                    if (!clientManager.updateSoLuongLoThuoc(lo.getMaLoThuoc(), -soLuongDat)) {
+                        throw new RuntimeException("Không thể cập nhật số lượng lô thuốc ID " + lo.getMaLoThuoc());
+                    }
                 }
                 return true;
             }

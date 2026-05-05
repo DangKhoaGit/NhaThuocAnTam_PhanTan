@@ -77,18 +77,20 @@ public class NhanVien_DAO extends AbstractGenericDao<NhanVien,String> implements
      */
     @Override
     public String getMaxHashNhanVien() {
-        String query = "select nv.id " +
-                "from NhanVien nv  " +
-                "order by nv.id desc " +
-                "limit 1";
-        return doInTransaction(em ->{
+        // Sắp xếp giảm dần theo ID để lấy mã lớn nhất
+        String query = "SELECT nv.id FROM NhanVien nv ORDER BY nv.id DESC";
+
+        return doInTransaction(em -> {
             List<String> result = em.createQuery(query, String.class)
                     .setMaxResults(1)
                     .getResultList();
-            if (result.isEmpty()) return null;
-            String maNV = result.get(0);
-            int num = Integer.parseInt(maNV.substring(2));
-            return String.format("%s", num);
+
+            if (result.isEmpty()) {
+                return null; // Hoặc trả về "NV00000" tùy bạn
+            }
+
+            // Trả về thẳng chuỗi "NV00014"
+            return result.get(0);
         });
     }
 

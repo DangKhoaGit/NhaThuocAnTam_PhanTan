@@ -378,7 +378,7 @@ public class KhoiPhucPhieuNhapController extends ScrollPane{
                 if (empty || isDeleted == null) {
                     setText(null);
                 } else {
-                    setText(isDeleted ? "Đã huỷ" : "Hoạt động");
+                    setText(isDeleted ? "Đã huỷ" : "Đã huỷ");
                 }
             }
         });

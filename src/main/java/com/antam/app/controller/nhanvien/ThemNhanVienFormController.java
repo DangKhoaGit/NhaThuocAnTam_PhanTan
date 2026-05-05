@@ -172,7 +172,7 @@ public class ThemNhanVienFormController extends DialogPane{
             e.consume();
             NhanVienDTO nhanVien = setupThemNhanVien();
             if (nhanVien != null){
-                themNhanVienAsync(nhanVien);
+                themNhanVienAsync(nhanVien , btnThem);
             }
         });
         //sự kiện khi người dùng nhập sai thông tin
@@ -203,43 +203,45 @@ public class ThemNhanVienFormController extends DialogPane{
     /**
      * Thêm nhân viên mới đến server một cách bất đồng bộ
      */
-    private void themNhanVienAsync(NhanVienDTO nhanVien) {
+    private void themNhanVienAsync(NhanVienDTO nhanVien, Button btnLuu) {
+        // 1. Khóa UI để tránh gửi trùng (ví dụ btnLuu là nút bấm)
+        btnLuu.setDisable(true);
+
         Task<Boolean> task = new Task<Boolean>() {
             @Override
             protected Boolean call() throws Exception {
-                try {
-                    return clientManager.createNhanVien(nhanVien);
-                } catch (Exception e) {
-                    LOGGER.log(Level.SEVERE, "Error adding NhanVien to server", e);
-                    throw new Exception("Lỗi kết nối server: " + e.getMessage());
-                }
+                // Giả lập delay nếu muốn test loading
+                // Thread.sleep(1000);
+                return clientManager.createNhanVien(nhanVien);
             }
         };
 
         task.setOnSucceeded(e -> {
-            try {
-                Boolean success = task.getValue();
-                if (success != null && success) {
-                    LOGGER.info("Successfully added new nhân viên");
-                    showAlert("Thêm nhân viên thành công!");
-                    javafx.stage.Window window = this.getScene() != null ? this.getScene().getWindow() : null;
-                    if (window != null) window.hide();
-                } else {
-                    showAlert("Lỗi khi thêm nhân viên");
+            btnLuu.setDisable(false); // Mở lại nút
+            if (Boolean.TRUE.equals(task.getValue())) {
+                LOGGER.info("Successfully added new nhân viên");
+                showAlert("Thành công", "Thêm nhân viên thành công!");
+
+                // Đóng cửa sổ an toàn
+                if (getScene() != null && getScene().getWindow() != null) {
+                    getScene().getWindow().hide();
                 }
-            } catch (Exception ex) {
-                LOGGER.log(Level.SEVERE, "Error processing add result", ex);
-                showAlert("Lỗi xử lý: " + ex.getMessage());
+            } else {
+                showAlert("Thất bại", "Server từ chối thêm nhân viên (có thể trùng mã).");
             }
         });
 
         task.setOnFailed(e -> {
-            Throwable exception = task.getException();
-            LOGGER.log(Level.SEVERE, "Add NhanVien failed", exception);
-            showAlert("Không thể thêm nhân viên: " + exception.getMessage());
+            btnLuu.setDisable(false); // Mở lại nút để người dùng sửa và thử lại
+            Throwable ex = task.getException();
+            LOGGER.log(Level.SEVERE, "Add NhanVien failed", ex);
+            showAlert("Lỗi hệ thống", "Không thể kết nối: " + ex.getMessage());
         });
 
-        new Thread(task).start();
+        // 2. Sử dụng Thread Pool (hoặc giữ nguyên new Thread nếu ứng dụng nhỏ)
+        Thread t = new Thread(task);
+        t.setDaemon(true); // Đảm bảo thread tắt khi ứng dụng đóng
+        t.start();
     }
 
     /**
@@ -325,9 +327,9 @@ public class ThemNhanVienFormController extends DialogPane{
      * Hiện thông báo cho một sự kiện với lời nhắn cho trước
      * @param message(Tin nhắn cần thông báo)
      */
-    private void showAlert(String message) {
+    private void showAlert(String title, String message) {
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
-        alert.setTitle("Thông báo");
+        alert.setTitle(title);
         alert.setHeaderText(null);
         alert.setContentText(message);
         alert.showAndWait();

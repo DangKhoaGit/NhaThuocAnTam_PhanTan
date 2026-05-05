@@ -19,9 +19,10 @@ import javafx.scene.text.Font;
 
 public class CaiDatTaiKhoanController extends ScrollPane{
 
-    private TextField txtMKnow, txtMKnew;
+    private PasswordField txtMKnow, txtMKnew, txtMKnewConfirm;
     private Button btnDoiMK;
     private Text txtTK, txtVaiTro;
+    private Text txtThongBaoMK;
 
     private ClientManager clientManager = ClientManager.getInstance();
 
@@ -79,13 +80,23 @@ public class CaiDatTaiKhoanController extends ScrollPane{
 
         // Mật khẩu hiện tại
         Text txtLblCurrent = new Text("Mật khẩu hiện tại:");
-        txtMKnow = new TextField();
+        txtMKnow = new PasswordField();
         txtMKnow.setPrefHeight(40);
 
-        // Xác nhận mật khẩu mới
-        Text txtLblNew = new Text("Xác nhận mật khẩu mới:");
-        txtMKnew = new TextField();
+        // Mật khẩu mới
+        Text txtLblNew = new Text("Mật khẩu mới:");
+        txtMKnew = new PasswordField();
         txtMKnew.setPrefHeight(40);
+
+        // Xác nhận mật khẩu mới
+        Text txtLblNewConfirm = new Text("Xác nhận mật khẩu mới:");
+        txtMKnewConfirm = new PasswordField();
+        txtMKnewConfirm.setPrefHeight(40);
+
+        // Thông báo kiểm tra
+        txtThongBaoMK = new Text("");
+        txtThongBaoMK.setFill(Color.RED);
+        txtThongBaoMK.setFont(Font.font(12));
 
         // Button đổi mật khẩu
         FontAwesomeIcon iconDoiMK = new FontAwesomeIcon();
@@ -100,7 +111,10 @@ public class CaiDatTaiKhoanController extends ScrollPane{
         gridDoiMK.add(txtMKnow, 0, 1);
         gridDoiMK.add(txtLblNew, 0, 2);
         gridDoiMK.add(txtMKnew, 0, 3);
-        gridDoiMK.add(btnDoiMK, 0, 4);
+        gridDoiMK.add(txtLblNewConfirm, 0, 4);
+        gridDoiMK.add(txtMKnewConfirm, 0, 5);
+        gridDoiMK.add(txtThongBaoMK, 0, 6);
+        gridDoiMK.add(btnDoiMK, 0, 7);
 
         vboxDoiMK.getChildren().addAll(lblDoiMK, gridDoiMK);
 
@@ -149,9 +163,15 @@ public class CaiDatTaiKhoanController extends ScrollPane{
         /** Sự kiện **/
         loadThongTin();
 
-        // Sự kiện kiểm tra mật khẩu cũ ngay khi nhập
+        // Sự kiện kiểm tra mật khẩu ngay khi nhập
         txtMKnow.textProperty().addListener((obs, oldText, newText) -> {
-            checkPassword();
+            validatePassword();
+        });
+        txtMKnew.textProperty().addListener((obs, oldText, newText) -> {
+            validatePassword();
+        });
+        txtMKnewConfirm.textProperty().addListener((obs, oldText, newText) -> {
+            validatePassword();
         });
 
         // Sự kiện đổi mật khẩu
@@ -161,20 +181,49 @@ public class CaiDatTaiKhoanController extends ScrollPane{
     }
 
 
-    private void checkPassword() {
-        if (PhienNguoiDungDTO.getMaNV() == null) return;
+    private void validatePassword() {
+        if (PhienNguoiDungDTO.getMaNV() == null) {
+            txtThongBaoMK.setText("");
+            return;
+        }
 
         String mkNow = txtMKnow.getText();
-        boolean isCorrect = MaKhoaMatKhau.verifyPassword(
-                mkNow,
-                PhienNguoiDungDTO.getMaNV().getMatKhau()
-        );
+        String mkNew = txtMKnew.getText();
+        String mkNewConfirm = txtMKnewConfirm.getText();
 
-        if (isCorrect) {
-            txtMKnow.setStyle("-fx-border-color: green; -fx-border-width: 2px;");
-        } else {
-            txtMKnow.setStyle("-fx-border-color: red; -fx-border-width: 2px;");
+        // Kiểm tra mật khẩu cũ
+        if (!mkNow.isEmpty() && !MaKhoaMatKhau.verifyPassword(mkNow, PhienNguoiDungDTO.getMaNV().getMatKhau())) {
+            txtThongBaoMK.setText("❌ Mật khẩu hiện tại không chính xác");
+            txtThongBaoMK.setFill(Color.RED);
+            return;
         }
+
+        // Kiểm tra mật khẩu mới và xác nhận
+        if (!mkNew.isEmpty() || !mkNewConfirm.isEmpty()) {
+            if (mkNew.length() < 6) {
+                txtThongBaoMK.setText("❌ Mật khẩu mới phải có ít nhất 6 ký tự");
+                txtThongBaoMK.setFill(Color.RED);
+                return;
+            }
+
+            if (!mkNew.equals(mkNewConfirm)) {
+                txtThongBaoMK.setText("❌ Mật khẩu xác nhận không khớp");
+                txtThongBaoMK.setFill(Color.RED);
+                return;
+            }
+
+            if (mkNow.equals(mkNew)) {
+                txtThongBaoMK.setText("❌ Mật khẩu mới phải khác mật khẩu cũ");
+                txtThongBaoMK.setFill(Color.RED);
+                return;
+            }
+
+            txtThongBaoMK.setText("✓ Các trường hợp lệ");
+            txtThongBaoMK.setFill(Color.GREEN);
+            return;
+        }
+
+        txtThongBaoMK.setText("");
     }
 
     private void doiMKButtonClick() {
@@ -185,15 +234,52 @@ public class CaiDatTaiKhoanController extends ScrollPane{
 
         String mkNow = txtMKnow.getText();
         String mkNew = txtMKnew.getText();
+        String mkNewConfirm = txtMKnewConfirm.getText();
 
-        // Kiểm tra mật khẩu cũ
-        if (!MaKhoaMatKhau.verifyPassword(mkNow, PhienNguoiDungDTO.getMaNV().getMatKhau())) {
-            showAlert("Lỗi", "Mật khẩu hiện tại không đúng!");
+        // Kiểm tra các trường bắt buộc
+        if (mkNow.isEmpty()) {
+            showAlert("Cảnh báo", "Vui lòng nhập mật khẩu hiện tại!");
+            txtMKnow.requestFocus();
             return;
         }
 
-        if (mkNew.isEmpty() || mkNew.length() < 6) {
+        if (mkNew.isEmpty()) {
+            showAlert("Cảnh báo", "Vui lòng nhập mật khẩu mới!");
+            txtMKnew.requestFocus();
+            return;
+        }
+
+        if (mkNewConfirm.isEmpty()) {
+            showAlert("Cảnh báo", "Vui lòng xác nhận mật khẩu mới!");
+            txtMKnewConfirm.requestFocus();
+            return;
+        }
+
+        // Kiểm tra mật khẩu cũ
+        if (!MaKhoaMatKhau.verifyPassword(mkNow, PhienNguoiDungDTO.getMaNV().getMatKhau())) {
+            showAlert("Lỗi", "Mật khẩu hiện tại không chính xác!");
+            txtMKnow.requestFocus();
+            return;
+        }
+
+        // Kiểm tra độ dài mật khẩu mới
+        if (mkNew.length() < 6) {
             showAlert("Cảnh báo", "Mật khẩu mới phải có ít nhất 6 ký tự!");
+            txtMKnew.requestFocus();
+            return;
+        }
+
+        // Kiểm tra xác nhận match
+        if (!mkNew.equals(mkNewConfirm)) {
+            showAlert("Lỗi", "Mật khẩu xác nhận không khớp!");
+            txtMKnewConfirm.requestFocus();
+            return;
+        }
+
+        // Kiểm tra mật khẩu mới khác mật khẩu cũ
+        if (mkNow.equals(mkNew)) {
+            showAlert("Cảnh báo", "Mật khẩu mới phải khác mật khẩu cũ!");
+            txtMKnew.requestFocus();
             return;
         }
 
@@ -201,25 +287,37 @@ public class CaiDatTaiKhoanController extends ScrollPane{
         String hashCode = MaKhoaMatKhau.hashPassword(mkNew, 10);
         PhienNguoiDungDTO.getMaNV().setMatKhau(hashCode);
 
+        // Vô hiệu hóa nút khi đang xử lý
+        btnDoiMK.setDisable(true);
+
         Task<Boolean> task = new Task<>() {
             @Override
             protected Boolean call() throws Exception {
                 return ClientManager.getInstance().updateNhanVien(PhienNguoiDungDTO.getMaNV());
             }
         };
+        
         task.setOnSucceeded(evt -> {
+            btnDoiMK.setDisable(false);
             boolean result = task.getValue();
             if (result) {
-                showAlert("Thành công", "Đổi mật khẩu thành công!");
+                showAlert("Thành công", "Đổi mật khẩu thành công!\n\nVui lòng đăng nhập lại khi lần tới.");
                 txtMKnow.clear();
                 txtMKnew.clear();
+                txtMKnewConfirm.clear();
+                txtThongBaoMK.setText("");
             } else {
-                showAlert("Thất bại", "Đổi mật khẩu thất bại!");
+                showAlert("Thất bại", "Đổi mật khẩu thất bại! Vui lòng thử lại.");
             }
         });
+        
         task.setOnFailed(evt -> {
-            showAlert("Thất bại", "Đổi mật khẩu thất bại!");
+            btnDoiMK.setDisable(false);
+            Throwable ex = task.getException();
+            showAlert("Thất bại", "Đổi mật khẩu thất bại!\n" + 
+                    (ex != null ? ex.getMessage() : "Vui lòng thử lại."));
         });
+        
         new Thread(task).start();
     }
 

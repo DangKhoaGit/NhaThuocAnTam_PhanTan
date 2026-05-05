@@ -112,7 +112,7 @@ public class RequestBuilder {
     public static Command getNhanVienList() { return build(CommandType.GET_NHANVIEN_LIST); }
 
     public static Command createNhanVien(NhanVienDTO dto) {
-        return build(CommandType.CREATE_NHANVIEN, map("nv", dto));
+        return build(CommandType.CREATE_NHANVIEN, map("nhanVien", dto));
     }
 
     public static Command updateNhanVien(NhanVienDTO dto) {
