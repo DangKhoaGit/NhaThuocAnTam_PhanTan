@@ -33,11 +33,7 @@ public class ThemPhieuNhapFormController extends DialogPane{
     private VBox vbDanhSachThuocNhap;
     private Text txtTongTien;
 
-    private ClientManager thuoc_DAO = ClientManager.getInstance();
-    private ClientManager donViTinh_DAO = ClientManager.getInstance();
-    private ClientManager phieuNhap_DAO = ClientManager.getInstance();
-    private ClientManager chiTietPhieuNhap_DAO = ClientManager.getInstance();
-    private ClientManager chiTietThuoc_DAO = ClientManager.getInstance();
+    private ClientManager clientManager = ClientManager.getInstance();
 
     private ArrayList<ThuocDTO> dsThuoc;
     private ArrayList<DonViTinhDTO> dsDonViTinh;
@@ -193,13 +189,13 @@ public class ThemPhieuNhapFormController extends DialogPane{
         container.getChildren().add(boxTongTien);
 
         this.getStylesheets().add(getClass().getResource("/com/antam/app/styles/dashboard_style.css").toExternalForm());
-        /** Su kiện **/
 
-        dsThuoc = thuoc_DAO.getThuocList();
-        dsDonViTinh = donViTinh_DAO.getDonViTinhList();
+        // Load dữ liệu từ server qua ClientManager
+        dsThuoc = clientManager.getThuocList();
+        dsDonViTinh = clientManager.getDonViTinhList();
 
-        //Tạo mã phiếu nhập tự động
-        tfMaPhieuNhap.setText(phieuNhap_DAO.taoMaPhieuNhapTuDong());
+        // Tạo mã phiếu nhập tự động từ server
+        tfMaPhieuNhap.setText(clientManager.taoMaPhieuNhapTuDong());
         tfMaPhieuNhap.setEditable(false);
 
         ButtonType cancelButton = new ButtonType("Huỷ", ButtonData.CANCEL_CLOSE);
@@ -212,16 +208,25 @@ public class ThemPhieuNhapFormController extends DialogPane{
             if (!checkTruongDuLieu() || !checkChiTietPhieuNhap()){
                 event.consume();
             }else{
-                boolean kiemTraThanhCong = true;
+                boolean kiemTraThanhCong = false;
                 PhieuNhapDTO pn = new PhieuNhapDTO(tfMaPhieuNhap.getText(), tfNhaCungCap.getText(), LocalDate.now(), tfDiaChi.getText(), tfLyDo.getText(), PhienNguoiDungDTO.getMaNV(), tinhTongTien(), false);
-                if (phieuNhap_DAO.tonTaiMaPhieuNhap(tfMaPhieuNhap.getText())) {
+
+                // Kiểm tra trùng mã phiếu nhập từ server
+                if (clientManager.tonTaiMaPhieuNhap(tfMaPhieuNhap.getText())) {
                     showCanhBao("Trùng mã phiếu nhập", "Mã phiếu nhập này đã tồn tại. Vui lòng nhập mã khác!");
                     event.consume();
-                    kiemTraThanhCong = false;
-                }else{
-                    phieuNhap_DAO.themPhieuNhap(pn);
-                    kiemTraThanhCong = true;
+                } else {
+                    // Thêm phiếu nhập qua ClientManager
+                    if (clientManager.themPhieuNhap(pn)) {
+                        kiemTraThanhCong = true;
+                    } else {
+                        showCanhBao("Lỗi", "Không thể thêm phiếu nhập!");
+                        event.consume();
+                        return;
+                    }
                 }
+
+                // Thêm chi tiết phiếu nhập cho mỗi dòng thuốc
                 for (Node node : vbDanhSachThuocNhap.getChildren()) {
                     if (node instanceof HBox hBox) {
 
@@ -241,22 +246,34 @@ public class ThemPhieuNhapFormController extends DialogPane{
                         Spinner<Integer> spSoLuong = (Spinner<Integer>) vboxSoLuong.getChildren().get(1);
                         Spinner<Double> spGiaNhap = (Spinner<Double>) vboxGiaNhap.getChildren().get(1);
 
-                        // Nếu tất cả các trường đều hợp lệ
+                        // Tạo LoThuocDTO với đúng thứ tự tham số
                         LoThuocDTO ctt = new LoThuocDTO(
-                                -1, pn, cbDanhSachThuocNhap.getValue(), spSoLuong.getValue(), dpHanSuDung.getValue(), dpNgaySanXuat.getValue()
+                                -1, pn, cbDanhSachThuocNhap.getValue(), spSoLuong.getValue(),
+                                dpNgaySanXuat.getValue(), dpHanSuDung.getValue()
                         );
 
+                        // Tạo ChiTietPhieuNhapDTO
                         ChiTietPhieuNhapDTO ctpt = new ChiTietPhieuNhapDTO(
                                 pn, ctt, cbDonViTinh.getValue(), spSoLuong.getValue(), spGiaNhap.getValue()
                         );
 
+                        // Gọi ClientManager để thêm chi tiết phiếu nhập qua server
                         if (kiemTraThanhCong) {
-                            boolean result = chiTietPhieuNhap_DAO.themChiTietPhieuNhap(ctpt);
+                            if (!clientManager.themChiTietPhieuNhap(ctpt)) {
+                                showCanhBao("Lỗi", "Không thể thêm chi tiết phiếu nhập!");
+                                kiemTraThanhCong = false;
+                                break;
+                            }
                         }
                     }
                 }
+
                 if(kiemTraThanhCong){
                     showCanhBao("Thành công", "Lưu phiếu nhập thành công!");
+                    // Đóng dialog
+                    event.consume();
+                    javafx.stage.Window w = getScene() != null ? getScene().getWindow() : null;
+                    if (w != null) w.hide();
                 }
             }
         });
@@ -306,7 +323,7 @@ public class ThemPhieuNhapFormController extends DialogPane{
         //Sự kiện chọn thuốc để load đơn vị tính tương ứng
         cbDanhSachThuocNhap.setOnAction(e -> {
             cbDonViTinh.getItems().clear();
-            cbDonViTinh.getItems().add(donViTinh_DAO.getDonViTinhById(cbDanhSachThuocNhap.getValue().getMaDVTCoSo().getMaDVT()));
+            cbDonViTinh.getItems().add(clientManager.getDonViTinhById(cbDanhSachThuocNhap.getValue().getMaDVTCoSo().getMaDVT()));
             cbDonViTinh.getSelectionModel().selectFirst();
         });
         cbDonViTinh.setConverter(new StringConverter<DonViTinhDTO>() {

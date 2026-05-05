@@ -66,22 +66,25 @@ public class LoThuocDTO implements Serializable {
     }
 
     /**
-     * Constructor for LoThuoc Chưa chuẩn cần được sửa lại
-     * được sử dụng trong ThemPhieuNhapFormController
+     * Constructor for LoThuoc - được sử dụng trong ThemPhieuNhapFormController
      * @param i
      * @param pn
-     * @param value
-     * @param value1
-     * @param value2
-     * @param value3
+     * @param value - ThuocDTO
+     * @param value1 - số lượng
+     * @param value2 - ngày sản xuất
+     * @param value3 - hạn sử dụng
      */
     public LoThuocDTO(int i, PhieuNhapDTO pn, ThuocDTO value, Integer value1, LocalDate value2, LocalDate value3) {
         this.maThuocDTO = value;
         MaLoThuoc = i;
         setSoLuong(value1);
-        setNgaySanXuat(value3);
-        setHanSuDung(value2);
-
+        // Khởi tạo ngày sản xuất trước để tránh null check lỗi
+        if (value2 != null) {
+            this.ngaySanXuat = value2;
+        }
+        if (value3 != null) {
+            setHanSuDung(value3);
+        }
     }
 
 
@@ -98,7 +101,10 @@ public class LoThuocDTO implements Serializable {
         return hanSuDung;
     }
     public void setHanSuDung(LocalDate hanSuDung) {
-        if (hanSuDung.isBefore(ngaySanXuat)) {
+        if (hanSuDung == null) {
+            throw new IllegalArgumentException("Hạn sử dụng không được null");
+        }
+        if (ngaySanXuat != null && hanSuDung.isBefore(ngaySanXuat)) {
             throw new IllegalArgumentException("Hạn sử dụng không được trước ngày sản xuất");
         }
         this.hanSuDung = hanSuDung;
