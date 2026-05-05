@@ -704,7 +704,25 @@ public class ThemPhieuDatFormController extends DialogPane {
                 // Thêm chi tiết + trừ kho
                 for (ChiTietPhieuDatThuocDTO ct : chiTietList) {
                     LoThuocDTO lo = ct.getMaThuoc();
+
+// Tạo object sạch (chỉ giữ ID)
+
+// clean LoThuoc
+                    LoThuocDTO loClean = new LoThuocDTO();
+                    loClean.setMaLoThuoc(lo.getMaLoThuoc());
+
+// clean DonViTinh (PHẢI dùng ID)
+                    DonViTinhDTO dvtClean = new DonViTinhDTO(ct.getDonViTinhDTO().getMaDVT());
+
+                    ChiTietPhieuDatThuocDTO ctNew = new ChiTietPhieuDatThuocDTO(
+                            phieu,
+                            loClean,
+                            ct.getSoLuong(),
+                            dvtClean
+                    );
                     int soLuongDat = ct.getSoLuong();
+
+                    System.out.println("Đang gửi: " + ctNew);
 
                     // Kiểm tra lại số lượng lô hiện tại trước khi tạo chi tiết (chống race condition)
                     LoThuocDTO currentLo = clientManager.getLoThuocByLoThuocId(lo.getMaLoThuoc());
@@ -713,11 +731,10 @@ public class ThemPhieuDatFormController extends DialogPane {
                         throw new RuntimeException("Không đủ số lượng cho lô thuốc ID " + lo.getMaLoThuoc() +
                                 ". Yêu cầu: " + soLuongDat + ", Hiện có: " + soHienTai);
                     }
-
-                    ChiTietPhieuDatThuocDTO ctNew = new ChiTietPhieuDatThuocDTO(
-                            phieu, lo, soLuongDat, ct.getDonViTinhDTO());
                     if (!clientManager.createChiTietPhieuDat(ctNew)) {
-                        throw new RuntimeException("Không thể thêm chi tiết phiếu.");
+                        throw new RuntimeException(
+                                "Không thể thêm chi tiết phiếu - Lô: " + lo.getMaLoThuoc()
+                        );
                     }
                     if (!clientManager.updateSoLuongLoThuoc(lo.getMaLoThuoc(), -soLuongDat)) {
                         throw new RuntimeException("Không thể cập nhật số lượng lô thuốc ID " + lo.getMaLoThuoc());
