@@ -48,6 +48,13 @@ public class ConnectDB {
             }
     }
     public static Connection getConnection() {
+        try {
+            if (con == null || con.isClosed()) {
+                getInstance().connect();
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Cannot reconnect to database", e);
+        }
         return con;
     }
 }

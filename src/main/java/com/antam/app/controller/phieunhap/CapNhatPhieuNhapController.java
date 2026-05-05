@@ -236,9 +236,9 @@ public class CapNhatPhieuNhapController extends ScrollPane{
                 dialog.initModality(Modality.APPLICATION_MODAL);
                 dialog.showAndWait();
 
-                tbPhieuNhap.refresh();
-                ObservableList<PhieuNhapDTO> phieuNhapList = FXCollections.observableArrayList(phieuNhap_DAO.getDanhSachPhieuNhapTheoTrangThai(false));
-                tbPhieuNhap.setItems(phieuNhapList);
+                dsPhieuNhap = phieuNhap_DAO.getDanhSachPhieuNhap();
+                data.setAll(dsPhieuNhap);
+                tbPhieuNhap.setItems(data);
             }
         });
 
@@ -246,7 +246,7 @@ public class CapNhatPhieuNhapController extends ScrollPane{
         loadDanhSachNhanVien();
         loadKhoangGia();
 
-        dsPhieuNhap = phieuNhap_DAO.getDanhSachPhieuNhapTheoTrangThai(false);
+        dsPhieuNhap = phieuNhap_DAO.getDanhSachPhieuNhap();
         data.setAll(dsPhieuNhap);
         tbPhieuNhap.setItems(data);
 

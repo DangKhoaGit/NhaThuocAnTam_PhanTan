@@ -55,5 +55,6 @@ public class PhieuNhapDTO implements Serializable {
         this.lyDo = lyDo;
         this.maNV = maNV;
         this.tongTien = tongTien;
+        this.deleteAt = deleteAt;
     }
 }

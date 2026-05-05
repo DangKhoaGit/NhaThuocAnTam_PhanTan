@@ -25,8 +25,8 @@ public class NhanVien_Service implements I_NhanVien_Service {
                 .luongCoBan(entity.getLuongCoBan())
                 .taiKhoan(entity.getTaiKhoan())
                 .matKhau(entity.getMatKhau())
-                .quanLi(entity.isDeleteAt())
-                .deleteAt(entity.isQuanLi())
+                .quanLi(entity.isQuanLi())
+                .deleteAt(entity.isDeleteAt())
                 .build();
     }
 
@@ -42,8 +42,8 @@ public class NhanVien_Service implements I_NhanVien_Service {
                 .luongCoBan(dto.getLuongCoBan())
                 .taiKhoan(dto.getTaiKhoan())
                 .matKhau(dto.getMatKhau())
-                .quanLi(dto.isDeleteAt())
-                .deleteAt(dto.isQuanLi())
+                .quanLi(dto.isQuanLi())
+                .deleteAt(dto.isDeleteAt())
                 .build();
     }
 
