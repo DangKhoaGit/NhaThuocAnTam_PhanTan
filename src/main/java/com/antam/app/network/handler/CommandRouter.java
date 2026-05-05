@@ -310,6 +310,8 @@ public class CommandRouter {
                     return handleRestorePhieuDat(command);
                 case UPDATE_PHIEUNHAP_STATUS:
                     return handleUpdatePhieuNhapStatus(command);
+                case UPDATE_PHIEUDAT_PAYMENT_STATUS:
+                    return handleUpdatePhieuDatPaymentStatus(command);
                 case GET_MAX_HASH_PHIEUDAT:
                     return handleGetMaxHashPhieuDat(command);
 
@@ -1792,7 +1794,7 @@ public class CommandRouter {
                 return Response.builder().success(false).message("Invalid payload for get PhieuNhap by status").errorCode("INVALID_PAYLOAD").build();
             }
             String status = (String) command.getPayload().get("status");
-            Boolean a =( status == "true") ? true : false;
+            Boolean a = "true".equals(status);
             ArrayList<PhieuNhapDTO> phieuNhapList = serviceLocator.getPhieuNhapService().getDanhSachPhieuNhapTheoTrangThai(a);
             return Response.builder().success(true).message("PhieuNhap list retrieved successfully").data(phieuNhapList).build();
         } catch (Exception e) {
@@ -2007,12 +2009,25 @@ public class CommandRouter {
                 return Response.builder().success(false).message("Invalid payload for update PhieuNhap status").errorCode("INVALID_PAYLOAD").build();
             }
             String maPD = (String) command.getPayload().get("maPD");
-            String status = (String) command.getPayload().get("status");
             boolean success = serviceLocator.getPhieuNhapService().suaTrangThaiPhieuNhap(maPD);
-            return Response.builder().success(success).message(success ? "PhieuDat status updated successfully" : "Failed to update PhieuDat status").errorCode(success ? null : "UPDATE_PHIEUDAT_STATUS_FAILED").build();
+            return Response.builder().success(success).message(success ? "PhieuNhap status updated successfully" : "Failed to update PhieuNhap status").errorCode(success ? null : "UPDATE_PHIEUNHAP_STATUS_FAILED").build();
         } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, "Error updating PhieuDat status", e);
-            return Response.builder().success(false).message("Error updating PhieuDat status: " + e.getMessage()).errorCode("UPDATE_PHIEUDAT_STATUS_ERROR").build();
+            LOGGER.log(Level.SEVERE, "Error updating PhieuNhap status", e);
+            return Response.builder().success(false).message("Error updating PhieuNhap status: " + e.getMessage()).errorCode("UPDATE_PHIEUNHAP_STATUS_ERROR").build();
+        }
+    }
+
+    private Response handleUpdatePhieuDatPaymentStatus(Command command) {
+        try {
+            if (command.getPayload() == null || !command.getPayload().containsKey("maPD")) {
+                return Response.builder().success(false).message("Invalid payload for update PhieuDat payment status").errorCode("INVALID_PAYLOAD").build();
+            }
+            String maPD = (String) command.getPayload().get("maPD");
+            boolean success = serviceLocator.getPhieuDatService().capNhatThanhToanPhieuDat(maPD);
+            return Response.builder().success(success).message(success ? "PhieuDat payment status updated successfully" : "Failed to update PhieuDat payment status").errorCode(success ? null : "UPDATE_PHIEUDAT_PAYMENT_STATUS_FAILED").build();
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Error updating PhieuDat payment status", e);
+            return Response.builder().success(false).message("Error updating PhieuDat payment status: " + e.getMessage()).errorCode("UPDATE_PHIEUDAT_PAYMENT_STATUS_ERROR").build();
         }
     }
 

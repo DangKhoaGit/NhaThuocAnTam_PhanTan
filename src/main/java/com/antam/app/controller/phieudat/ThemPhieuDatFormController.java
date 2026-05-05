@@ -5,9 +5,7 @@
 
 package com.antam.app.controller.phieudat;
 
-import com.antam.app.connect.ConnectDB;
 import com.antam.app.network.ClientManager;
-import com.antam.app.service.impl.*;
 import com.antam.app.dto.*;
 import com.antam.app.helper.TuDongGoiY;
 import javafx.beans.property.SimpleStringProperty;
@@ -24,12 +22,9 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
 
-import java.sql.Connection;
 import java.text.DecimalFormat;
 import java.time.LocalDate;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 import javafx.geometry.Insets;
@@ -171,6 +166,16 @@ public class ThemPhieuDatFormController extends DialogPane {
         Text lblDV = new Text("Đơn vị:");
         cbDonVi = new ComboBox<>();
         cbDonVi.setPrefSize(161, 26);
+        cbDonVi.setConverter(new javafx.util.StringConverter<>() {
+            @Override public String toString(DonViTinhDTO dvt) { return dvt == null ? "" : dvt.getTenDVT(); }
+            @Override public DonViTinhDTO fromString(String s) { return null; }
+        });
+        cbDonVi.setCellFactory(lv -> new ListCell<>() {
+            @Override protected void updateItem(DonViTinhDTO item, boolean empty) {
+                super.updateItem(item, empty);
+                setText(empty || item == null ? null : item.getTenDVT());
+            }
+        });
         boxDonVi.getChildren().addAll(lblDV, cbDonVi);
 
         VBox boxSL = new VBox();
@@ -362,8 +367,12 @@ public class ThemPhieuDatFormController extends DialogPane {
         });
 
         // setup mã phiếu
-        txtMa.setText(getHashPD());
         txtMa.setEditable(false);
+        Task<String> loadMaTask = new Task<>() {
+            @Override protected String call() { return getHashPD(); }
+        };
+        loadMaTask.setOnSucceeded(e -> txtMa.setText(loadMaTask.getValue()));
+        new Thread(loadMaTask).start();
 
         // Load khuyen mai after services are ready.
         Task<ArrayList<KhuyenMaiDTO>> loadKMTask = new Task<>() {
@@ -374,15 +383,14 @@ public class ThemPhieuDatFormController extends DialogPane {
         };
 
         dsKhuyenMai = new ArrayList<>();
-        loadKMTask.setOnSucceeded(event -> dsKhuyenMai = loadKMTask.getValue());
-        Thread  loadKMThread = new Thread(loadKMTask);
-        loadKMThread.start();
-
-        // load ComboBox Khuyến mãi.
         KhuyenMaiDTO nothing = new KhuyenMaiDTO("None", "Không áp dụng");
-        cbKhuyenMai.getItems().clear();
         cbKhuyenMai.getItems().add(nothing);
-        cbKhuyenMai.getItems().addAll(FXCollections.observableArrayList(dsKhuyenMai));
+        loadKMTask.setOnSucceeded(event -> {
+            dsKhuyenMai = loadKMTask.getValue();
+            cbKhuyenMai.getItems().addAll(FXCollections.observableArrayList(dsKhuyenMai));
+        });
+        Thread loadKMThread = new Thread(loadKMTask);
+        loadKMThread.start();
         cbKhuyenMai.setConverter(new javafx.util.StringConverter<>() {
             @Override
             public String toString(KhuyenMaiDTO km) {
@@ -420,10 +428,9 @@ public class ThemPhieuDatFormController extends DialogPane {
 
         // sự kiện thêm phiếu đặt
         btnApply.addEventFilter(ActionEvent.ACTION, event -> {
+            event.consume(); // always prevent auto-close; dialog closes manually on success
             if (checkDuLieu()) {
                 themPhieuDat();
-            } else {
-                event.consume();
             }
         });
 
@@ -439,42 +446,43 @@ public class ThemPhieuDatFormController extends DialogPane {
         // sự kiện khi thay đổi comboBox khuyến mãi
         cbKhuyenMai.setOnAction(e -> {
             KhuyenMaiDTO km = cbKhuyenMai.getSelectionModel().getSelectedItem();
-            // Không áp dụng hoặc chọn null
             if (km == null || km.getTenKM().equals("Không áp dụng")) {
                 txtCanhBaoKM.setText("");
                 loadTongTien();
                 return;
             }
             LocalDate today = LocalDate.now();
-
+            if (km.getNgayBatDau().isAfter(today)) {
+                txtCanhBaoKM.setText("Khuyến mãi chưa bắt đầu");
+                loadTongTien();
+                return;
+            }
+            if (km.getNgayKetThuc().isBefore(today)) {
+                txtCanhBaoKM.setText("Khuyến mãi đã hết hạn");
+                loadTongTien();
+                return;
+            }
+            // Kiểm tra số lần đã sử dụng (async)
             Task<Integer> task = new Task<>() {
                 @Override
                 protected Integer call() {
                     return clientManager.countHoaDonByKhuyenMai(km.getMaKM());
                 }
             };
-
-            AtomicInteger soDaSuDung = new AtomicInteger();
-            task.setOnSucceeded(event -> soDaSuDung.set(task.getValue()));
-
-            Thread th = new Thread(task);
-            th.start();
-
-            // Chưa đến ngày bắt đầu
-            if (km.getNgayBatDau().isAfter(today)) {
-                txtCanhBaoKM.setText("Khuyến mãi chưa bắt đầu");
-            }
-            // Đã hết hạn
-            else if (km.getNgayKetThuc().isBefore(today)) {
-                txtCanhBaoKM.setText("Khuyến mãi đã hết hạn");
-            } else if (soDaSuDung.get() >= km.getSoLuongToiDa()) {
-                txtCanhBaoKM.setText("Khuyến mãi đã đạt số lượng tối đa");
-            }
-            // Hợp lệ
-            else {
+            task.setOnSucceeded(event -> {
+                int soDaSuDung = task.getValue();
+                if (soDaSuDung >= km.getSoLuongToiDa()) {
+                    txtCanhBaoKM.setText("Khuyến mãi đã đạt số lượng tối đa");
+                } else {
+                    txtCanhBaoKM.setText("");
+                }
+                loadTongTien();
+            });
+            task.setOnFailed(event -> {
                 txtCanhBaoKM.setText("");
-            }
-            loadTongTien();
+                loadTongTien();
+            });
+            new Thread(task).start();
         });
 
         // setup spinner số lượng
@@ -641,157 +649,94 @@ public class ThemPhieuDatFormController extends DialogPane {
     }
 
     private void themPhieuDat() {
-
-        // ===== 1. NHÂN VIÊN =====
         NhanVienDTO nguoiDat = PhienNguoiDungDTO.getMaNV();
         if (nguoiDat == null) {
             showMess("Lỗi", "Không xác định được nhân viên.");
             return;
         }
 
-        // ===== 2. KHÁCH HÀNG =====
-        String ten = txtTenKhach.getText().trim();
-        String sdt = txtSoDienThoai.getText().trim();
+        final String ten = txtTenKhach.getText().trim();
+        final String sdt = txtSoDienThoai.getText().trim();
+        final boolean isKhachMoi = isKhachHangMoi();
 
-        if (ten.isEmpty() || sdt.isEmpty()) {
-            showMess("Thiếu thông tin", "Vui lòng nhập tên và SĐT khách hàng.");
+        // For existing customer, resolve now on FX thread
+        final KhachHangDTO khachCu = isKhachMoi ? null : dsKhach.stream()
+                .filter(k -> k.getSoDienThoai().equals(sdt))
+                .findFirst().orElse(null);
+
+        if (!isKhachMoi && khachCu == null) {
+            showMess("Lỗi", "Không tìm thấy khách hàng.");
             return;
         }
 
-        KhachHangDTO khach;
-        if (isKhachHangMoi()) {
-            khach = new KhachHangDTO(getMaKhachMoi(), ten, sdt, false);
-            Task<Boolean> insertKhachTask = new Task<>() {
-                @Override
-                protected Boolean call() throws Exception {
-                    return clientManager.insertKhachHang(khach);
-                }
-            };
-
-            insertKhachTask.setOnSucceeded(e -> {
-                if (insertKhachTask.getValue()) {
-                    dsKhach.add(khach);
-                    autoKhach.add(khach);
-                } else {
-                    showMess("Lỗi", "Không thể thêm khách hàng mới.");
-                }
-            });
-
-            Thread thread = new Thread(insertKhachTask);
-            thread.start();
-
-        } else {
-            khach = dsKhach.stream()
-                    .filter(k -> k.getSoDienThoai().equals(sdt))
-                    .findFirst()
-                    .orElse(null);
-
-            if (khach == null) {
-                showMess("Lỗi", "Không tìm thấy khách hàng.");
-                return;
-            }
-        }
-
-        // ===== 3. KIỂM TRA THUỐC =====
-        if (tbChonThuoc.getItems().isEmpty()) {
-            showMess("Lỗi", "Chưa chọn thuốc.");
-            return;
-        }
-
-        // ===== 4. KHUYẾN MÃI =====
         KhuyenMaiDTO km = cbKhuyenMai.getSelectionModel().getSelectedItem();
-        if (km != null && "Không áp dụng".equals(km.getTenKM())) {
-            km = null;
-        }
+        if (km != null && "Không áp dụng".equals(km.getTenKM())) km = null;
 
-        // ===== 5. TẠO PHIẾU =====
-        PhieuDatThuocDTO phieu = new PhieuDatThuocDTO(
-                getHashPD(),
-                LocalDate.now(),
-                false,
-                nguoiDat,
-                khach,
-                km,
-                tinhTongTien());
+        final KhuyenMaiDTO kmFinal = km;
+        final String maPhieu = txtMa.getText();
+        final List<ChiTietPhieuDatThuocDTO> chiTietList = new ArrayList<>(tbChonThuoc.getItems());
+        final double tongTien = tinhTongTien();
 
-        // Lưu vào dbs
-        try {
-            ConnectDB.getInstance().connect();
-            Connection con = ConnectDB.getConnection();
-            con.setAutoCommit(false); // TRANSACTION
-            PhieuDat_Service phieuDatService = new PhieuDat_Service();
-            // 6.1 Thêm phiếu
-            phieuDatService.themPhieuDatThuocVaoDBS(phieu);
+        // Use AtomicReference to pass newly created KhachHangDTO from Task to setOnSucceeded
+        final java.util.concurrent.atomic.AtomicReference<KhachHangDTO> khachRef = new java.util.concurrent.atomic.AtomicReference<>(khachCu);
 
-            // 6.2 Thêm chi tiết + trừ kho
-            for (ChiTietPhieuDatThuocDTO ct : tbChonThuoc.getItems()) {
-
-                LoThuocDTO lo = ct.getMaThuoc();
-                int soLuongDat = ct.getSoLuong();
-
-                if (lo.getSoLuong() < soLuongDat) {
-                    throw new RuntimeException("Không đủ tồn kho cho lô " + lo.getMaLoThuoc());
-                }
-
-                ChiTietPhieuDat_Service chiTietPhieuDatService = new ChiTietPhieuDat_Service();
-                // Thêm chi tiết phiếu
-                chiTietPhieuDatService.themChiTietPhieuDatVaoDBS(
-                        new ChiTietPhieuDatThuocDTO(
-                                phieu,
-                                lo,
-                                soLuongDat,
-                                ct.getDonViTinhDTO()));
-
-                // Trừ kho đúng lô
-                Task<Boolean> updateKhoTask = new Task<>() {
-                    @Override
-                    protected Boolean call() throws Exception {
-                        return clientManager.updateSoLuongLoThuoc(lo.getMaLoThuoc(), lo.getSoLuong() - soLuongDat);
-                    }
-                };
-                updateKhoTask.setOnSucceeded(e -> {
-                    if (!updateKhoTask.getValue()) {
-                        showMess("Lỗi", "Không thể cập nhật kho cho lô " + lo.getMaLoThuoc());
-                    }
-                });
-                Thread thread = new Thread(updateKhoTask);
-                thread.start();
-            }
-
-            con.commit(); // OK
-            showMess("Thành công", "Tạo phiếu đặt thuốc thành công.");
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            try {
-                ConnectDB.getConnection().rollback();
-            } catch (Exception ex) {
-                ex.printStackTrace();
-            }
-            showMess("Lỗi", "Không thể tạo phiếu đặt. Dữ liệu đã được hoàn tác.");
-        }
-    }
-
-    /**
-     * Tạo mã khách hàng mới với đinh dạng KHxxxxxxxxx (x là số bất kì, có 9 số)
-     * 
-     * @return mã khách hàng mới
-     */
-    private String getMaKhachMoi() {
-        Task<Integer> loadKhachTask = new Task<>() {
+        Task<Boolean> saveTask = new Task<>() {
             @Override
-            protected Integer call() throws Exception {
-                return clientManager.getMaxHashKhachHang();
+            protected Boolean call() throws Exception {
+                KhachHangDTO khach;
+                if (isKhachMoi) {
+                    Integer maxHash = clientManager.getMaxHashKhachHang();
+                    String maKhach = String.format("KH%09d", (maxHash != null ? maxHash : 0) + 1);
+                    khach = new KhachHangDTO(maKhach, ten, sdt, false);
+                    if (!clientManager.insertKhachHang(khach)) {
+                        throw new RuntimeException("Không thể thêm khách hàng mới.");
+                    }
+                    khachRef.set(khach);
+                } else {
+                    khach = khachCu;
+                }
+                // Tạo phiếu
+                PhieuDatThuocDTO phieu = new PhieuDatThuocDTO(
+                        maPhieu, LocalDate.now(), false, nguoiDat, khach, kmFinal, tongTien);
+                if (!clientManager.createPhieuDat(phieu)) {
+                    throw new RuntimeException("Không thể tạo phiếu đặt.");
+                }
+                // Thêm chi tiết + trừ kho
+                for (ChiTietPhieuDatThuocDTO ct : chiTietList) {
+                    LoThuocDTO lo = ct.getMaThuoc();
+                    int soLuongDat = ct.getSoLuong();
+                    ChiTietPhieuDatThuocDTO ctNew = new ChiTietPhieuDatThuocDTO(
+                            phieu, lo, soLuongDat, ct.getDonViTinhDTO());
+                    if (!clientManager.createChiTietPhieuDat(ctNew)) {
+                        throw new RuntimeException("Không thể thêm chi tiết phiếu.");
+                    }
+                    clientManager.updateSoLuongLoThuoc(lo.getMaLoThuoc(), -soLuongDat);
+                }
+                return true;
             }
         };
 
-        AtomicReference<Integer> newNum = new AtomicReference<>(0);
-        loadKhachTask.setOnSucceeded(e -> {
-           newNum.set(loadKhachTask.getValue() + 1);
+        saveTask.setOnSucceeded(e -> {
+            if (isKhachMoi) {
+                KhachHangDTO newKhach = khachRef.get();
+                if (newKhach != null) {
+                    dsKhach.add(newKhach);
+                    autoKhach.add(newKhach);
+                }
+            }
+            showMess("Thành công", "Tạo phiếu đặt thuốc thành công.");
+            javafx.stage.Window window = this.getScene() != null ? this.getScene().getWindow() : null;
+            if (window != null) window.hide();
         });
 
-        return String.format("KH%09d", newNum.get());
+        saveTask.setOnFailed(e -> {
+            Throwable ex = saveTask.getException();
+            showMess("Lỗi", ex != null ? ex.getMessage() : "Không thể tạo phiếu đặt.");
+        });
+
+        new Thread(saveTask).start();
     }
+
 
     /**
      * Kiểm tra khách hàng đã tồn tại chưa
@@ -813,16 +758,14 @@ public class ThemPhieuDatFormController extends DialogPane {
 
     /**
      * Tạo mã phiếu đặt mới chưa tồn tại trong dbs
-     * 
+     *
      * @return String - mã phiếu đặt mới
      */
     private String getHashPD() {
-        PhieuDat_Service phieuDatService = new PhieuDat_Service();
-        String hash = phieuDatService.getMaxHash();
+        String hash = clientManager.getMaxHashPhieuDat();
         if (hash == null) {
             return "PDT001";
         } else {
-            // Extract số từ mã phiếu (ví dụ: "PDT013" -> "013" -> 13)
             String numberPart = hash.replaceAll("[^0-9]", "");
             int soThuTu = Integer.parseInt(numberPart) + 1;
             return String.format("PDT%03d", soThuTu);
@@ -841,38 +784,16 @@ public class ThemPhieuDatFormController extends DialogPane {
                     * e.getMaThuoc().getMaThuocDTO().getGiaBan()
                     * (1 - e.getMaThuoc().getMaThuocDTO().getThue());
         }
-        // Áp dụng khuyến mãi nếu có
-        if (cbKhuyenMai.getSelectionModel().getSelectedItem() != null &&
-                !cbKhuyenMai.getSelectionModel().getSelectedItem().getTenKM().equals("Không áp dụng")) {
-            if (!txtCanhBaoKM.getText().isEmpty()) {
-                return tongTien;
-            }
-            KhuyenMaiDTO khuyenMaiDTO = cbKhuyenMai.getSelectionModel().getSelectedItem();
-            LoaiKhuyenMaiDTO loaiKM = khuyenMaiDTO.getLoaiKhuyenMaiDTO();
-
-            Task<Integer> countUsedTask = new Task<>() {
-                @Override
-                protected Integer call() throws Exception {
-                    return clientManager.countHoaDonByKhuyenMai(khuyenMaiDTO.getMaKM());
-                }
-            };
-
-            AtomicInteger count = new AtomicInteger();
-            countUsedTask.setOnSucceeded(e -> {
-                count.set(countUsedTask.getValue());
-            });
-
-            if (count.get() >= khuyenMaiDTO.getSoLuongToiDa()) {
-                return tongTien > 0 ? tongTien : 0;
+        // Áp dụng khuyến mãi nếu hợp lệ (txtCanhBaoKM rỗng = không có lỗi)
+        KhuyenMaiDTO km = cbKhuyenMai.getSelectionModel().getSelectedItem();
+        if (km != null && !km.getTenKM().equals("Không áp dụng") && txtCanhBaoKM.getText().isEmpty()) {
+            LoaiKhuyenMaiDTO loaiKM = km.getLoaiKhuyenMaiDTO();
+            if (loaiKM.getMaLKM() == 1) {
+                tongTien = tongTien * (1 - km.getSo() / 100);
             } else {
-                if (loaiKM.getMaLKM() == 1) {
-                    tongTien = tongTien * (1 - khuyenMaiDTO.getSo() / 100);
-                } else {
-                    tongTien = tongTien - khuyenMaiDTO.getSo();
-                }
+                tongTien = tongTien - km.getSo();
             }
         }
-
         return tongTien > 0 ? tongTien : 0;
     }
 

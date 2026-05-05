@@ -6,8 +6,6 @@
 package com.antam.app.controller.donvitinh;
 
 import com.antam.app.network.ClientManager;
-import com.antam.app.service.I_DonViTinh_Service;
-import com.antam.app.service.impl.DonViTinh_Service;
 import com.antam.app.dto.DonViTinhDTO;
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcon;
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcons;
@@ -237,13 +235,6 @@ public class CapNhatDonViTinhController extends ScrollPane {
             }
         });
         txtMa.setEditable(false);
-        try {
-            DonViTinh_Service donViTinhService = new DonViTinh_Service();
-            int maxMa = donViTinhService.getMaxMaDVT();
-            txtMa.setText(String.valueOf(++maxMa));
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
 
         loadTable();
         setupTable();

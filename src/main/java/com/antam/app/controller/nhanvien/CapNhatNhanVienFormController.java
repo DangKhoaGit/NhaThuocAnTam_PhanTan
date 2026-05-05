@@ -154,8 +154,8 @@ public class CapNhatNhanVienFormController extends DialogPane{
 
 
         // Cập nhật nhân viên
-        btnSua.setOnAction(e -> {
-//            try {
+        btnSua.addEventFilter(javafx.event.ActionEvent.ACTION, e -> {
+            e.consume(); // prevent auto-close; close manually on success
             if (txtHoTen.getText().isBlank() || txtSDT.getText().isBlank() || txtEmail.getText().isBlank()) {
                 showMess("Vui lòng nhập đầy đủ thông tin!");
                 return;
@@ -173,7 +173,6 @@ public class CapNhatNhanVienFormController extends DialogPane{
                     select.getMaNV(), hoTen, soDienThoai, email,
                     diaChi, luongCoBan, taiKhoan, select.getMatKhau(), quanLy
             );
-            System.out.println(nvUpdate);
             Task<Boolean> task = new Task<>() {
                 @Override
                 protected Boolean call() throws Exception {
@@ -182,15 +181,18 @@ public class CapNhatNhanVienFormController extends DialogPane{
             };
             task.setOnSucceeded(evt -> {
                 boolean result = task.getValue();
-                showMess(result ? "Cập nhật nhân viên thành công!" : "Cập nhật nhân viên thất bại!");
+                if (result) {
+                    showMess("Cập nhật nhân viên thành công!");
+                    javafx.stage.Window window = btnSua.getScene() != null ? btnSua.getScene().getWindow() : null;
+                    if (window != null) window.hide();
+                } else {
+                    showMess("Cập nhật nhân viên thất bại!");
+                }
             });
             task.setOnFailed(evt -> {
                 showMess("Lỗi: " + task.getException().getMessage());
             });
             new Thread(task).start();
-//            } catch (Exception ex) {
-//                showMess("Lỗi: " + ex.getMessage());
-//            }
         });
 
         // Xóa nhân viên

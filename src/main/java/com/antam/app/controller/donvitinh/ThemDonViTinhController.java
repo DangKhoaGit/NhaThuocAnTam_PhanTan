@@ -6,8 +6,6 @@
 package com.antam.app.controller.donvitinh;
 
 import com.antam.app.network.ClientManager;
-import com.antam.app.service.I_DonViTinh_Service;
-import com.antam.app.service.impl.DonViTinh_Service;
 import com.antam.app.dto.DonViTinhDTO;
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcon;
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcons;
@@ -132,55 +130,71 @@ public class ThemDonViTinhController extends ScrollPane {
 
         /** Sự kiện **/
 
-        btnThem.setOnAction( e-> {
+        btnThem.setOnAction(e -> {
             try {
                 String ma = txtMa.getText();
                 int maInt = Integer.parseInt(ma);
-                String ten = txtTen.getText();
+                String ten = txtTen.getText().trim();
+                if (ten.isEmpty()) {
+                    showAlert("Lỗi", "Vui lòng nhập tên đơn vị tính!");
+                    return;
+                }
                 DonViTinhDTO donViTinhDTO = new DonViTinhDTO(maInt, ten, false);
 
-                Task<Void> task = new Task<>() {
+                Task<Boolean> task = new Task<>() {
                     @Override
-                    protected Void call() throws Exception {
-                        I_DonViTinh_Service service = new DonViTinh_Service();
-                        service.themDonViTinh(donViTinhDTO);
-                        return null;
+                    protected Boolean call() throws Exception {
+                        return clientManager.createDonViTinh(donViTinhDTO);
                     }
                 };
 
                 task.setOnSucceeded(event -> {
-                    Alert alert = new Alert(Alert.AlertType.INFORMATION);
-                    alert.setTitle("Thành công");
-                    alert.setHeaderText(null);
-                    alert.setContentText("Đã thêm đơn vị tính thành công!");
-                    alert.showAndWait();
+                    boolean result = task.getValue();
+                    if (result) {
+                        showAlert("Thành công", "Đã thêm đơn vị tính thành công!");
+                        loadNextMa();
+                    } else {
+                        showAlert("Thất bại", "Thêm đơn vị tính thất bại!");
+                    }
+                    loadTable();
                 });
 
-                task.setOnFailed(event -> {
-                    Alert alert = new Alert(Alert.AlertType.ERROR);
-                });
+                task.setOnFailed(event -> showAlert("Lỗi", "Không thể thêm đơn vị tính!"));
 
-                Thread thread = new Thread(task);
-                thread.start();
-
-                loadTable();
-            }catch (Exception ex) {
-                // Hiển thị thông báo lỗi nếu có
+                new Thread(task).start();
+            } catch (Exception ex) {
+                showAlert("Lỗi", "Dữ liệu không hợp lệ!");
             }
-            loadTable();
         });
 
         txtMa.setEditable(false);
-        try {
-            I_DonViTinh_Service service = new DonViTinh_Service();
-            int maxMa = service.getMaxMaDVT();
-            txtMa.setText(String.valueOf(++maxMa));
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        loadNextMa();
 
         loadTable();
         setupTable();
+    }
+
+    private void loadNextMa() {
+        Task<Integer> task = new Task<>() {
+            @Override
+            protected Integer call() throws Exception {
+                return clientManager.getMaxHashDonViTinh();
+            }
+        };
+        task.setOnSucceeded(e -> {
+            Integer max = task.getValue();
+            int next = (max != null ? max : 0) + 1;
+            txtMa.setText(String.valueOf(next));
+        });
+        new Thread(task).start();
+    }
+
+    private void showAlert(String title, String message) {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle(title);
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+        alert.showAndWait();
     }
 
     private void setupTable() {

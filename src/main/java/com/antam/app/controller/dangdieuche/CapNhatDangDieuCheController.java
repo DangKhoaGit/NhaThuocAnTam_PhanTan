@@ -5,10 +5,7 @@
 
 package com.antam.app.controller.dangdieuche;
 
-import com.antam.app.connect.ConnectDB;
-
 import com.antam.app.network.ClientManager;
-import com.antam.app.service.impl.DangDieuChe_Service;
 import com.antam.app.dto.DangDieuCheDTO;
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcon;
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcons;
@@ -17,8 +14,6 @@ import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
-import java.sql.Connection;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
@@ -177,11 +172,6 @@ public class CapNhatDangDieuCheController extends ScrollPane{
         this.getStylesheets().add(getClass().getResource("/com/antam/app/styles/dashboard_style.css").toExternalForm());
         this.setContent(root);
         /** Sự kiện **/
-        try {
-            Connection con = ConnectDB.getInstance().connect();
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
 
         Task<List<DangDieuCheDTO>> taskGetAll = new Task<>() {
             @Override
@@ -391,39 +381,20 @@ public class CapNhatDangDieuCheController extends ScrollPane{
         String maDangDieuChe = tfMaDangDieuChe.getText();
         String tenDangDieuChe = tfTenDangDieuChe.getText();
 
-        if (maDangDieuChe.isEmpty()){
+        if (maDangDieuChe == null || maDangDieuChe.isBlank()){
             showCanhBao("Lỗi nhập liệu","Vui lòng nhập mã dạng điều chế");
             tfMaDangDieuChe.requestFocus();
             return false;
         }
 
-        if (tenDangDieuChe.isEmpty()){
+        if (tenDangDieuChe == null || tenDangDieuChe.isBlank()){
             showCanhBao("Lỗi nhập liệu","Vui lòng nhập tên dạng điều chế!");
             tfTenDangDieuChe.requestFocus();
             return false;
         }
-        String tenDDC = tfTenDangDieuChe.getText();
-        Task<DangDieuCheDTO> taskGetDangDieuCheTheoName = new Task<>() {
-            @Override
-            protected DangDieuCheDTO call() throws Exception {
-                return clientManager.getDDCTheoName(tenDDC);
-            }
-        };
-        AtomicReference<DangDieuCheDTO> nameDDC  = new AtomicReference<>();
-        taskGetDangDieuCheTheoName.setOnSucceeded(event -> {
-            nameDDC.set(taskGetDangDieuCheTheoName.getValue());
-        });
 
-        Thread thread = new Thread(taskGetDangDieuCheTheoName);
-        thread.start();
-        try {
-            thread.join(); // Wait for the task to complete
-        } catch (InterruptedException e) {
-            showCanhBao("Lỗi", "Không thể kiểm tra tên dạng điều chế.");
-            return false;
-        }
-
-        if (nameDDC.get() != null){
+        DangDieuCheDTO existing = clientManager.getDDCTheoName(tenDangDieuChe);
+        if (existing != null && existing.getMaDDC() != Integer.parseInt(maDangDieuChe)){
             showCanhBao("Lỗi nhập liệu","Tên dạng điều chế đã tồn tại!");
             tfTenDangDieuChe.requestFocus();
             return false;

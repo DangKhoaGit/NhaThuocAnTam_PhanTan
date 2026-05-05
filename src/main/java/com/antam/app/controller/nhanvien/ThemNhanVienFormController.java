@@ -153,8 +153,13 @@ public class ThemNhanVienFormController extends DialogPane{
         }
 
         // tắt trạng thái của mã nhân viên
-        txtMaNV.setText(getHashMaNV());
         txtMaNV.setEditable(false);
+        Task<String> loadMaTask = new Task<>() {
+            @Override protected String call() { return getHashMaNV(); }
+        };
+        loadMaTask.setOnSucceeded(e -> txtMaNV.setText(loadMaTask.getValue()));
+        loadMaTask.setOnFailed(e -> LOGGER.log(Level.WARNING, "Cannot generate employee code", loadMaTask.getException()));
+        new Thread(loadMaTask).start();
         //focus vào tên nhân viên
         txtHoTen.requestFocus();
 
@@ -163,7 +168,8 @@ public class ThemNhanVienFormController extends DialogPane{
         cbChucVu.getItems().add("Nhân viên quản lí");
         cbChucVu.getSelectionModel().selectFirst();
         //sự kiện thêm nhân viên
-        btnThem.setOnAction(e -> {
+        btnThem.addEventFilter(javafx.event.ActionEvent.ACTION, e -> {
+            e.consume();
             NhanVienDTO nhanVien = setupThemNhanVien();
             if (nhanVien != null){
                 themNhanVienAsync(nhanVien);
@@ -215,20 +221,11 @@ public class ThemNhanVienFormController extends DialogPane{
                 Boolean success = task.getValue();
                 if (success != null && success) {
                     LOGGER.info("Successfully added new nhân viên");
-                    showAlert( "Thêm nhân viên thành công!");
-                    // Close the dialog
-                    Dialog<?> dialog = null;
-//                    for (Window window : Window.getWindows()) {
-//                        if (window instanceof Dialog && window.isShowing()) {
-//                            dialog = (Dialog<?>) window;
-//                            break;
-//                        }
-//                    }
-                    if (dialog != null) {
-                        dialog.close();
-                    }
+                    showAlert("Thêm nhân viên thành công!");
+                    javafx.stage.Window window = this.getScene() != null ? this.getScene().getWindow() : null;
+                    if (window != null) window.hide();
                 } else {
-                    showAlert( "Lỗi khi thêm nhân viên");
+                    showAlert("Lỗi khi thêm nhân viên");
                 }
             } catch (Exception ex) {
                 LOGGER.log(Level.SEVERE, "Error processing add result", ex);
@@ -308,8 +305,11 @@ public class ThemNhanVienFormController extends DialogPane{
             String result = clientManager.getMaxHashNhanVien();
 
             int maxHash = 0;
-            if (result != null && result.startsWith("NV")) {
-                maxHash = Integer.parseInt(result.substring(2));
+            if (result != null && !result.isBlank()) {
+                String numStr = result.replaceAll("[^0-9]", "");
+                if (!numStr.isEmpty()) {
+                    maxHash = Integer.parseInt(numStr);
+                }
             }
 
             DecimalFormat decimalFormat = new DecimalFormat("00000");

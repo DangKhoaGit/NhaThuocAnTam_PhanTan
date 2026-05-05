@@ -473,6 +473,11 @@ public class CapNhatThuocFormController extends DialogPane{
             notification_DUThuoc.setText("Giá bán không hợp lệ!");
             return false;
         }
+        if (spDUGiaGoc.getValue() != null && spDUGiaBan.getValue() != null
+                && spDUGiaGoc.getValue() > spDUGiaBan.getValue()) {
+            notification_DUThuoc.setText("Giá bán phải lớn hơn hoặc bằng giá gốc!");
+            return false;
+        }
         try {
             Double thue = spDUThue.getValue();
             if (thue == null || thue < 0) {

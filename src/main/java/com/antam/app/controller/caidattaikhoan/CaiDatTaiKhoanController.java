@@ -3,7 +3,6 @@ package com.antam.app.controller.caidattaikhoan;
 import com.antam.app.dto.PhienNguoiDungDTO;
 import com.antam.app.helper.MaKhoaMatKhau;
 import com.antam.app.network.ClientManager;
-import com.antam.app.service.impl.NhanVien_Service;
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcon;
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcons;
 import javafx.concurrent.Task;
@@ -210,13 +209,18 @@ public class CaiDatTaiKhoanController extends ScrollPane{
         };
         task.setOnSucceeded(evt -> {
             boolean result = task.getValue();
-            showAlert("Thành công", "Đổi mật khẩu thành công!");
-            txtMKnow.clear();
-            txtMKnew.clear();
+            if (result) {
+                showAlert("Thành công", "Đổi mật khẩu thành công!");
+                txtMKnow.clear();
+                txtMKnew.clear();
+            } else {
+                showAlert("Thất bại", "Đổi mật khẩu thất bại!");
+            }
         });
         task.setOnFailed(evt -> {
             showAlert("Thất bại", "Đổi mật khẩu thất bại!");
         });
+        new Thread(task).start();
     }
 
     private void loadThongTin() {

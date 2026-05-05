@@ -472,6 +472,11 @@ public class ThemThuocFormController extends DialogPane{
             notification_addThuoc.setText("Giá bán không hợp lệ!");
             return false;
         }
+        if (spAddGiaGoc.getValue() != null && spAddGiaBan.getValue() != null
+                && spAddGiaGoc.getValue() > spAddGiaBan.getValue()) {
+            notification_addThuoc.setText("Giá bán phải lớn hơn hoặc bằng giá gốc!");
+            return false;
+        }
         try {
             Double thue = spAddThue.getValue();
             if (thue == null || thue < 0) {

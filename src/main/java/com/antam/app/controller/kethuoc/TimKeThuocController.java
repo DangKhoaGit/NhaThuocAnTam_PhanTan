@@ -5,7 +5,6 @@
 
 package com.antam.app.controller.kethuoc;
 
-import com.antam.app.connect.ConnectDB;
 import com.antam.app.network.ClientManager;
 import com.antam.app.dto.KeDTO;
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcon;
@@ -16,8 +15,6 @@ import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
-import java.sql.Connection;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Date;
 
@@ -166,12 +163,6 @@ public class TimKeThuocController extends ScrollPane{
         this.getStylesheets().add(getClass().getResource("/com/antam/app/styles/dashboard_style.css").toExternalForm());
         this.setContent(root);
         /** Sự kiện **/
-        try {
-            Connection con = ConnectDB.getInstance().connect();
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
-
         Task<ArrayList<KeDTO>> loadData =  new Task<ArrayList<KeDTO>>() {
             @Override
             protected ArrayList<KeDTO> call() throws Exception {

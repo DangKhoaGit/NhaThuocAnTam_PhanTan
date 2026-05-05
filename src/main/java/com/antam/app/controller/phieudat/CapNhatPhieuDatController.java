@@ -34,7 +34,6 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicReference;
 
 public class CapNhatPhieuDatController extends ScrollPane{
     
@@ -337,102 +336,48 @@ public class CapNhatPhieuDatController extends ScrollPane{
                 return;
             }
 
-            try {
-                // 1. Lấy chi tiết
-                AtomicReference<List<ChiTietPhieuDatThuocDTO>> chiTietList = new AtomicReference<>();
+            // Thực hiện tuần tự trong một Task duy nhất
+            Task<Void> huyPhieuTask = new Task<>() {
+                @Override
+                protected Void call() throws Exception {
+                    // 1. Lấy chi tiết phiếu
+                    List<ChiTietPhieuDatThuocDTO> chiTietList =
+                            clientManager.getChiTietPDT(selected.getMaPhieu());
 
-                Task<List<ChiTietPhieuDatThuocDTO>> loadChiTietTask = new Task<>() {
-                    @Override
-                    protected List<ChiTietPhieuDatThuocDTO> call() throws Exception {
-                        return clientManager.getChiTietPDT(selected.getMaPhieu());
-                    }
-                };
-                loadChiTietTask.setOnSucceeded(event -> {
-                    chiTietList.set(loadChiTietTask.getValue());
-                });
-
-                Thread thread = new Thread(loadChiTietTask);
-                thread.start();
-
-                // 2. Hoàn kho
-
-                Task<Void> task = new Task<>() {
-                    @Override
-                    protected Void call() throws Exception {
-                        for (ChiTietPhieuDatThuocDTO ct : chiTietList.get()) {
-
-                            LoThuocDTO loThuocDTO = clientManager
+                    if (chiTietList != null) {
+                        // 2. Hoàn kho từng lô
+                        for (ChiTietPhieuDatThuocDTO ct : chiTietList) {
+                            LoThuocDTO lo = clientManager
                                     .getLoThuocByLoThuocId(ct.getMaThuoc().getMaLoThuoc());
-
-                            int soMoi = loThuocDTO.getSoLuong() + ct.getSoLuong();
-
-                            boolean ok = clientManager
-                                    .capNhatSoLuongChiTietThuoc(loThuocDTO.getMaLoThuoc(), soMoi);
-
-                            if (!ok) {
-                                throw new RuntimeException("Hoàn kho thất bại cho lô " + loThuocDTO.getMaLoThuoc());
+                            if (lo != null) {
+                                clientManager.capNhatSoLuongChiTietThuoc(lo.getMaLoThuoc(), ct.getSoLuong());
                             }
                         }
-                        return null;
                     }
-                };
 
-                task.setOnSucceeded(event -> {
-                    showMess("Thành công", "Hoàn kho thành công!");
-                });
+                    // 3. Huỷ chi tiết phiếu
+                    clientManager.huyChiTietPhieu(selected.getMaPhieu());
 
-                task.setOnFailed(event-> {
-                    showMess("Lỗi", task.getException().getMessage());
-                });
-
-                new Thread(task).start();
-
-                // 3. Huỷ chi tiết
-
-                Task<Boolean> taskHuyChiTietPhieu   = new Task<>() {
-                    @Override
-                    protected Boolean call() throws Exception {
-                        return clientManager.huyChiTietPhieu(selected.getMaPhieu());
-                    };
-                };
-                taskHuyChiTietPhieu.setOnSucceeded(event -> {
-                    if (!taskHuyChiTietPhieu.getValue()) {
-                        showMess("Lỗi", "Huỷ chi tiết phiếu thất bại");
+                    // 4. Xoá phiếu
+                    boolean ok = clientManager.xoaPhieuDat(selected.getMaPhieu());
+                    if (!ok) {
+                        throw new RuntimeException("Xoá phiếu thất bại.");
                     }
-                });
-                taskHuyChiTietPhieu.setOnFailed(event -> {
+                    return null;
+                }
+            };
 
-                });
-
-                Thread huyChiTietThread = new Thread(taskHuyChiTietPhieu);
-
-                // 4. Xoá phiếu
-                Task<Boolean> taskXoaPhieu = new Task<>() {
-                    @Override
-                    protected Boolean call() throws Exception {
-                        huyChiTietThread.join();
-                        return clientManager.xoaPhieuDat(selected.getMaPhieu());
-                    }
-                };
-                taskXoaPhieu.setOnSucceeded(event -> {
-                    Boolean result = taskXoaPhieu.getValue();
-                    if (result == null || !result) {
-                        showMess("Lỗi", "Xoá phiếu thất bại");
-                        return;
-                    }
-                });
-
-                taskXoaPhieu.setOnFailed(event -> {});
-                Thread xoaPhieuThread = new Thread(taskXoaPhieu);
-                xoaPhieuThread.start();
-
+            huyPhieuTask.setOnSucceeded(event -> {
                 showMess("Thành công", "Xoá phiếu đặt thuốc thành công");
                 loadDataVaoBang();
+            });
 
-            } catch (Exception ex) {
-                ex.printStackTrace();
-                showMess("Lỗi", "Có lỗi xảy ra khi xoá phiếu");
-            }
+            huyPhieuTask.setOnFailed(event -> {
+                Throwable ex = huyPhieuTask.getException();
+                showMess("Lỗi", ex != null ? ex.getMessage() : "Có lỗi xảy ra khi xoá phiếu");
+            });
+
+            new Thread(huyPhieuTask).start();
         });
 
 

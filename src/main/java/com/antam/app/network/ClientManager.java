@@ -289,6 +289,14 @@ public class ClientManager {
         return sendForSuccess(RequestBuilder.createPhieuDat((PhieuDatThuocDTO) dto));
     }
 
+    public String getMaxHashPhieuDat() {
+        return send(RequestBuilder.getMaxHashPhieuDat());
+    }
+
+    public boolean createChiTietPhieuDat(ChiTietPhieuDatThuocDTO dto) {
+        return sendForSuccess(RequestBuilder.createChiTietPhieuDat(dto));
+    }
+
     // =========================================================
     // 🧾 CHITIET HOADON
     // =========================================================
@@ -846,21 +854,7 @@ public class ClientManager {
     }
 
     public String getMaxHashNhanVien() {
-        Response response = null;
-        try {
-            response = sendCommandWithAutoConnect(
-                    RequestBuilder.getMaxHashNhanVien()
-            );
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-
-        if (response.isSuccess() && response.getData() instanceof String) {
-            return (String) response.getData();
-        }
-
-        LOGGER.warning("Failed to get max hash: " + response.getMessage());
-        return null;
+        return send(RequestBuilder.getMaxHashNhanVien());
     }
 
     public boolean khoiPhucNhanVien(String maNV) {
@@ -890,14 +884,20 @@ public class ClientManager {
         }
     }
 
+    public boolean createDonViTinh(DonViTinhDTO donViTinhDTO) {
+        return sendForSuccess(RequestBuilder.createDonViTinh(donViTinhDTO));
+    }
+
+    public Integer getMaxHashDonViTinh() {
+        return send(RequestBuilder.getMaxHashDonViTinh());
+    }
+
     public boolean updateDonViTInh(DonViTinhDTO donViTinhDTO) {
-        Boolean rs = send(RequestBuilder.updateDonViTinh((DonViTinhDTO) donViTinhDTO));
-        return rs != null && rs;
+        return sendForSuccess(RequestBuilder.updateDonViTinh(donViTinhDTO));
     }
 
     public Boolean deleteDonViTInh(DonViTinhDTO dvt) {
-        boolean rs = send(RequestBuilder.deleteDonViTinh(dvt));
-        return rs;
+        return sendForSuccess(RequestBuilder.deleteDonViTinh(dvt));
     }
 
     public List<DonViTinhDTO> getTatCaDonViTinh() {
@@ -905,7 +905,7 @@ public class ClientManager {
     }
 
     public Boolean khoiPhucDonViTinh(DonViTinhDTO donViTinhDTO) {
-        return send(RequestBuilder.khoiPhucDonViTinh(donViTinhDTO));
+        return sendForSuccess(RequestBuilder.khoiPhucDonViTinh(donViTinhDTO));
     }
 
     public List<DangDieuCheDTO> getDangDieuCheList() {
@@ -917,7 +917,7 @@ public class ClientManager {
     }
 
     public Boolean createDangDieuChe(DangDieuCheDTO dangDieuCheDTO) {
-        return send(RequestBuilder.createDangDieuChe(dangDieuCheDTO));
+        return sendForSuccess(RequestBuilder.createDangDieuChe(dangDieuCheDTO));
     }
 
     public DangDieuCheDTO getDDCTheoName(String tenDDC) {
@@ -926,15 +926,15 @@ public class ClientManager {
     }
 
     public Boolean suaDangDieuChe(DangDieuCheDTO dangDieuCheDTO) {
-        return send(RequestBuilder.suaDangDieuChe(dangDieuCheDTO));
+        return sendForSuccess(RequestBuilder.suaDangDieuChe(dangDieuCheDTO));
     }
 
     public Boolean xoaDangDieuChe(int i) {
-        return send(RequestBuilder.xoaDangDieuChe(i));
+        return sendForSuccess(RequestBuilder.xoaDangDieuChe(i));
     }
 
     public Boolean khoiPhucDangDieuChe(int i) {
-        return send(RequestBuilder.khoiPhucDangDieuChe(i));
+        return sendForSuccess(RequestBuilder.khoiPhucDangDieuChe(i));
     }
 
     public List<ChiTietPhieuDatThuocDTO> getChiTietPDT(String maPhieu) {
@@ -945,20 +945,24 @@ public class ClientManager {
         return send(RequestBuilder.getPhieuDatThuocDaXoa());
     }
 
+    public boolean khoiPhucPhieuDat(String maPD) {
+        return sendForSuccess(RequestBuilder.khoiPhucPhieuDat(maPD));
+    }
+
     public Boolean khoiPhucChiTietPhieu(String maPhieu) {
-        return send(RequestBuilder.khoiPhucChiTietPhieu(maPhieu));
+        return sendForSuccess(RequestBuilder.khoiPhucChiTietPhieu(maPhieu));
     }
 
     public Boolean capNhatSoLuongChiTietThuoc(int maLoThuoc, int soMoi) {
-        return send(RequestBuilder.capNhatSoLuongChiTietThuoc(maLoThuoc, soMoi));
+        return sendForSuccess(RequestBuilder.capNhatSoLuongChiTietThuoc(maLoThuoc, soMoi));
     }
 
     public Boolean huyChiTietPhieu(String maPhieu) {
-        return send(RequestBuilder.huyChiTietPhieu(maPhieu));
+        return sendForSuccess(RequestBuilder.huyChiTietPhieu(maPhieu));
     }
 
     public Boolean xoaPhieuDat(String maPhieu) {
-        return send(RequestBuilder.xoaPhieuDat(maPhieu));
+        return sendForSuccess(RequestBuilder.xoaPhieuDat(maPhieu));
     }
 
     public Integer countHoaDonByKhuyenMai(String maKM) {
@@ -970,7 +974,7 @@ public class ClientManager {
     }
 
     public Boolean updateSoLuongLoThuoc(int maLoThuoc, int i) {
-        return send(RequestBuilder.updateSoLuongLoThuoc(maLoThuoc, i));
+        return sendForSuccess(RequestBuilder.updateSoLuongLoThuoc(maLoThuoc, i));
     }
 
     public Integer getMaxHashKhachHang() {
@@ -982,14 +986,136 @@ public class ClientManager {
     }
 
     public Integer getMaxHashHoaDon() {
-        return send(RequestBuilder.getMaxHashHoaDon());
+        Object result = send(RequestBuilder.getMaxHashHoaDon());
+        if (result == null) return null;
+        String str = result.toString();
+        String numStr = str.replaceAll("[^0-9]", "");
+        return numStr.isEmpty() ? null : Integer.parseInt(numStr);
     }
 
     public ArrayList<KeDTO> getKeList() {
         return send(RequestBuilder.getKeList());
     }
 
+    // =========================================================
+    // 🗄 KE (themKe / suaKe / xoaKe / khoiPhucKe)
+    // =========================================================
+    public boolean themKe(KeDTO keDTO) {
+        return sendForSuccess(RequestBuilder.createKe(keDTO));
+    }
+
+    public boolean suaKe(KeDTO keDTO) {
+        return sendForSuccess(RequestBuilder.updateKe(keDTO));
+    }
+
+    public boolean xoaKe(String maKe) {
+        return sendForSuccess(RequestBuilder.deleteKe(maKe));
+    }
+
+    public boolean khoiPhucKe(String maKe) {
+        return sendForSuccess(RequestBuilder.restoreKe(maKe));
+    }
+
+    public String taoMaKeTuDong() {
+        Object rs = send(RequestBuilder.generateKeCode());
+        return rs != null ? rs.toString() : "";
+    }
+
+    public KeDTO getKeTheoName(String tenKe) {
+        return send(RequestBuilder.getKeByName(tenKe));
+    }
+
+    public boolean isTenKeTrung(String tenKe, String maKeHienTai) {
+        KeDTO existing = getKeTheoName(tenKe);
+        if (existing == null) {
+            return false;
+        }
+        if (maKeHienTai == null || maKeHienTai.isEmpty()) {
+            return true;
+        }
+        return !maKeHienTai.equals(existing.getMaKe());
+    }
+
+    public ArrayList<KeDTO> getTatCaKeThuoc() {
+        return getKeList();
+    }
+
+    // =========================================================
+    // 📦 PHIEUNHAP (extended methods)
+    // =========================================================
+    public boolean themPhieuNhap(PhieuNhapDTO dto) {
+        return sendForSuccess(RequestBuilder.themPhieuNhap(dto));
+    }
+
+    public boolean suaPhieuNhap(PhieuNhapDTO dto) {
+        return sendForSuccess(RequestBuilder.updatePhieuNhap(dto));
+    }
+
+    public boolean huyPhieuNhap(String maPN) {
+        return sendForSuccess(RequestBuilder.deletePhieuNhap(maPN));
+    }
+
+    public boolean suaTrangThaiPhieuNhap(String maPN) {
+        return sendForSuccess(RequestBuilder.cancelPhieuNhap(maPN));
+    }
+
+    public String taoMaPhieuNhapTuDong() {
+        Object rs = send(RequestBuilder.generatePhieuNhapCode());
+        return rs != null ? rs.toString() : "";
+    }
+
+    public boolean tonTaiMaPhieuNhap(String maPN) {
+        Boolean rs = send(RequestBuilder.checkPhieuNhapExists(maPN));
+        return rs != null && rs;
+    }
+
+    public ArrayList<PhieuNhapDTO> getDanhSachPhieuNhap() {
+        List<?> rs = getPhieuNhapList();
+        ArrayList<PhieuNhapDTO> result = new ArrayList<>();
+        if (rs != null) {
+            for (Object o : rs) {
+                if (o instanceof PhieuNhapDTO) {
+                    result.add((PhieuNhapDTO) o);
+                }
+            }
+        }
+        return result;
+    }
+
+    public ArrayList<PhieuNhapDTO> getDanhSachPhieuNhapTheoTrangThai(Boolean isDeleted) {
+        List<?> rs = send(RequestBuilder.getPhieuNhapByStatus(isDeleted != null && isDeleted));
+        ArrayList<PhieuNhapDTO> result = new ArrayList<>();
+        if (rs != null) {
+            for (Object o : rs) {
+                if (o instanceof PhieuNhapDTO) {
+                    result.add((PhieuNhapDTO) o);
+                }
+            }
+        }
+        return result;
+    }
+
+    // =========================================================
+    // 📦 CHITIET PHIEUNHAP
+    // =========================================================
+    public ArrayList<ChiTietPhieuNhapDTO> getDanhSachChiTietPhieuNhapTheoMaPN(String maPN) {
+        List<?> rs = send(RequestBuilder.getChiTietPhieuNhapByMaPN(maPN));
+        ArrayList<ChiTietPhieuNhapDTO> result = new ArrayList<>();
+        if (rs != null) {
+            for (Object o : rs) {
+                if (o instanceof ChiTietPhieuNhapDTO) {
+                    result.add((ChiTietPhieuNhapDTO) o);
+                }
+            }
+        }
+        return result;
+    }
+
+    public boolean themChiTietPhieuNhap(ChiTietPhieuNhapDTO dto) {
+        return sendForSuccess(RequestBuilder.createChiTietPhieuNhap(dto));
+    }
+
     public Boolean updateTrangThaiPhieuDat(String maPhieu, boolean b) {
-        return send(RequestBuilder.updateTrangThaiPhieuDat(maPhieu, b));
+        return sendForSuccess(RequestBuilder.updateTrangThaiPhieuDat(maPhieu, b));
     }
 }

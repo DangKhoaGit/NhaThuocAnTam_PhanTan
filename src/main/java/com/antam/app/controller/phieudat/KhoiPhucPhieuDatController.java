@@ -5,15 +5,11 @@
 
 package com.antam.app.controller.phieudat;
 
-import com.antam.app.connect.ConnectDB;
 import com.antam.app.network.ClientManager;
 import com.antam.app.dto.ChiTietPhieuDatThuocDTO;
 import com.antam.app.dto.LoThuocDTO;
 import com.antam.app.dto.NhanVienDTO;
 import com.antam.app.dto.PhieuDatThuocDTO;
-import com.antam.app.service.impl.ChiTietPhieuDat_Service;
-import com.antam.app.service.impl.LoThuoc_Service;
-import com.antam.app.service.impl.PhieuDat_Service;
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcon;
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcons;
 import javafx.beans.property.SimpleStringProperty;
@@ -32,7 +28,6 @@ import javafx.scene.text.Text;
 import javafx.stage.Modality;
 import javafx.util.StringConverter;
 
-import java.sql.Connection;
 import java.text.DecimalFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -70,7 +65,6 @@ public class KhoiPhucPhieuDatController extends ScrollPane{
 //    private I_PhieuDat_Service I_PhieuDat_Service = new PhieuDat_Service();
 //    private ChiTietPhieuDat_Service I_ChiTietPhieuDat_Service = new ChiTietPhieuDat_Service();
     List<PhieuDatThuocDTO> listPDT;
-    public LoThuoc_Service ctThuoc_dao = new LoThuoc_Service();
 //    private NhanVien_Service nhanVien_service = new NhanVien_Service();
     List<NhanVienDTO> listNV;
     ObservableList<PhieuDatThuocDTO> origin;
@@ -260,86 +254,46 @@ public class KhoiPhucPhieuDatController extends ScrollPane{
                             + selected.getMaPhieu() + " không?"
             )) return;
 
-            try {
-                ConnectDB.getInstance().connect();
-                Connection con = ConnectDB.getConnection();
-                con.setAutoCommit(false); // TRANSACTION
-
-                PhieuDat_Service phieuDatService = new PhieuDat_Service();
-                // 1. Khôi phục phiếu
-                boolean kqPhieu =
-                        phieuDatService.khoiPhucPhieuDat(selected.getMaPhieu());
-
-                if (!kqPhieu) {
-                    throw new RuntimeException("Không thể khôi phục phiếu đặt");
+            Task<Void> khoiPhucTask = new Task<>() {
+                @Override
+                protected Void call() throws Exception {
+                    // 1. Khôi phục phiếu
+                    if (!clientManager.khoiPhucPhieuDat(selected.getMaPhieu())) {
+                        throw new RuntimeException("Không thể khôi phục phiếu đặt.");
+                    }
+                    // 2. Lấy chi tiết phiếu
+                    List<ChiTietPhieuDatThuocDTO> chiTietList =
+                            clientManager.getChiTietPDT(selected.getMaPhieu());
+                    if (chiTietList != null) {
+                        // 3. Trừ kho lại
+                        for (ChiTietPhieuDatThuocDTO ct : chiTietList) {
+                            LoThuocDTO lo = clientManager.getLoThuocByLoThuocId(
+                                    ct.getMaThuoc().getMaLoThuoc());
+                            if (lo != null) {
+                                if (lo.getSoLuong() < ct.getSoLuong()) {
+                                    throw new RuntimeException(
+                                            "Không đủ tồn kho để khôi phục thuốc "
+                                                    + lo.getMaThuocDTO().getTenThuoc());
+                                }
+                                clientManager.capNhatSoLuongChiTietThuoc(lo.getMaLoThuoc(), -ct.getSoLuong());
+                            }
+                        }
+                    }
+                    // 4. Khôi phục trạng thái chi tiết
+                    clientManager.khoiPhucChiTietPhieu(selected.getMaPhieu());
+                    return null;
                 }
+            };
 
-                ChiTietPhieuDat_Service chiTietPhieuDatService = new ChiTietPhieuDat_Service();
-                // 2. Lấy chi tiết phiếu
-                List<ChiTietPhieuDatThuocDTO> chiTietList =
-                        chiTietPhieuDatService.getChiTietTheoPhieu(selected.getMaPhieu());
-
-                // 3. Trừ kho lại & khôi phục chi tiết
-                for (ChiTietPhieuDatThuocDTO ct : chiTietList) {
-
-                    LoThuocDTO ctt =
-                            ctThuoc_dao.getChiTietThuoc(
-                                    ct.getMaThuoc().getMaLoThuoc()
-                            );
-
-                    if (ctt.getSoLuong() < ct.getSoLuong()) {
-                        throw new RuntimeException(
-                                "Không đủ tồn kho để khôi phục thuốc "
-                                        + ctt.getMaThuocDTO().getTenThuoc()
-                        );
-                    }
-
-                    int soMoi = ctt.getSoLuong() - ct.getSoLuong();
-                    ctThuoc_dao.CapNhatSoLuongChiTietThuoc(
-                            ctt.getMaLoThuoc(), soMoi
-                    );
-                }
-
-                // 4. Khôi phục trạng thái chi tiết
-//                I_ChiTietPhieuDat_Service.khoiPhucChiTietPhieu(
-//                        selected.getMaPhieu();
-//                );
-                Task<Boolean> khoiPhucChiTietTask = new Task<>() {
-                    @Override
-                    protected Boolean call() throws Exception {
-                        return clientManager.khoiPhucChiTietPhieu(selected.getMaPhieu());
-                    }
-                };
-
-                khoiPhucChiTietTask.setOnSucceeded(ev -> {
-                    boolean kqChiTiet = khoiPhucChiTietTask.getValue();
-                    if (!kqChiTiet) {
-                        showMess("Lỗi",
-                                "Khôi phục chi tiết phiếu đặt thất bại. Dữ liệu đã được hoàn tác.");
-                        return;
-                    }
-                });
-                khoiPhucChiTietTask.setOnFailed(ev -> {
-                    showMess("Lỗi",
-                            "Khôi phục chi tiết phiếu đặt thất bại. Dữ liệu đã được hoàn tác.");
-                });
-                Thread khoiPhucThread = new Thread(khoiPhucChiTietTask);
-                khoiPhucThread.start();
-
-                con.commit();
-
-                showMess("Khôi phục thành công",
-                        "Phiếu đặt đã được khôi phục thành công");
+            khoiPhucTask.setOnSucceeded(ev -> {
+                showMess("Khôi phục thành công", "Phiếu đặt đã được khôi phục thành công");
                 loadDataVaoBang();
-
-            } catch (Exception ex) {
-                ex.printStackTrace();
-                try {
-                    ConnectDB.getConnection().rollback();
-                } catch (Exception ignore) {}
-                showMess("Lỗi",
-                        "Khôi phục phiếu đặt thất bại. Dữ liệu đã được hoàn tác.");
-            }
+            });
+            khoiPhucTask.setOnFailed(ev -> {
+                Throwable ex = khoiPhucTask.getException();
+                showMess("Lỗi", ex != null ? ex.getMessage() : "Khôi phục phiếu đặt thất bại.");
+            });
+            new Thread(khoiPhucTask).start();
         });
 
     }

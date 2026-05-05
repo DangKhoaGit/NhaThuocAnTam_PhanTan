@@ -5,9 +5,7 @@
 
 package com.antam.app.controller.phieunhap;
 
-import com.antam.app.connect.ConnectDB;
-import com.antam.app.service.impl.ChiTietPhieuNhap_Service;
-import com.antam.app.service.impl.PhieuNhap_Service;
+import com.antam.app.network.ClientManager;
 import com.antam.app.dto.ChiTietPhieuNhapDTO;
 import com.antam.app.dto.PhieuNhapDTO;
 import javafx.beans.property.ReadOnlyObjectWrapper;
@@ -20,8 +18,6 @@ import javafx.scene.control.*;
 import javafx.scene.control.ButtonBar.ButtonData;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.text.Text;
-import java.sql.Connection;
-import java.sql.SQLException;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import javafx.scene.control.TableView;
@@ -40,8 +36,8 @@ public class XemChiTietPhieuNhapFormController extends DialogPane{
     private Text txtMaPhieuNhap, txtDiaChi, txtLyDo, txtNgayNhap, txtTongTien, txtNhanVien, txtNhaCungCap, txtTrangThai;
     private TableView<ChiTietPhieuNhapDTO> tbChiTietPhieuNhap;
 
-    private PhieuNhap_Service phieuNhap_DAO = new PhieuNhap_Service();
-    private ChiTietPhieuNhap_Service chiTietPhieuNhap_DAO = new ChiTietPhieuNhap_Service();
+    private ClientManager phieuNhap_DAO = ClientManager.getInstance();
+    private ClientManager chiTietPhieuNhap_DAO = ClientManager.getInstance();
 
     public XemChiTietPhieuNhapFormController() {
         this.setPrefSize(800, 600);
@@ -145,12 +141,6 @@ public class XemChiTietPhieuNhapFormController extends DialogPane{
         this.getStylesheets().add(getClass().getResource("/com/antam/app/styles/dashboard_style.css").toExternalForm());
         this.setContent(mainVBox);
         /** Sự kiện **/
-        //Kết nối
-        try {
-            Connection con = ConnectDB.getInstance().connect();
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
 
         ButtonType applyButton = new ButtonType("Đóng", ButtonData.CANCEL_CLOSE);
         this.getButtonTypes().add(applyButton);
