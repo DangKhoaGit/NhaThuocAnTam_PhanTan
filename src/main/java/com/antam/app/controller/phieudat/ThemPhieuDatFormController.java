@@ -25,6 +25,7 @@ import javafx.scene.text.Text;
 import java.text.DecimalFormat;
 import java.time.LocalDate;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 import javafx.geometry.Insets;
@@ -659,59 +660,80 @@ public class ThemPhieuDatFormController extends DialogPane {
         final String sdt = txtSoDienThoai.getText().trim();
         final boolean isKhachMoi = isKhachHangMoi();
 
-        // For existing customer, resolve now on FX thread
-        final KhachHangDTO khachCu = isKhachMoi ? null : dsKhach.stream()
-                .filter(k -> k.getSoDienThoai().equals(sdt))
-                .findFirst().orElse(null);
+        if (ten.isEmpty() || sdt.isEmpty()) {
+            showMess("Lỗi", "Tên và SĐT không được để trống.");
+            return;
+        }
+
+        final List<ChiTietPhieuDatThuocDTO> chiTietList = new ArrayList<>(tbChonThuoc.getItems());
+
+        System.out.println("DEBUG: Số lượng chi tiết thuốc trong bảng = " + chiTietList);
+
+        if (chiTietList.isEmpty()) {
+            showMess("Lỗi", "Chưa chọn thuốc.");
+            return;
+        }
+
+        // Khách cũ
+        final KhachHangDTO khachCu = isKhachMoi ? null :
+                dsKhach.stream()
+                        .filter(k -> k.getSoDienThoai().equals(sdt))
+                        .findFirst().orElse(null);
 
         if (!isKhachMoi && khachCu == null) {
             showMess("Lỗi", "Không tìm thấy khách hàng.");
             return;
         }
 
-        KhuyenMaiDTO km = cbKhuyenMai.getSelectionModel().getSelectedItem();
+        KhuyenMaiDTO km = cbKhuyenMai.getValue();
         if (km != null && "Không áp dụng".equals(km.getTenKM())) km = null;
 
         final KhuyenMaiDTO kmFinal = km;
         final String maPhieu = txtMa.getText();
-        final List<ChiTietPhieuDatThuocDTO> chiTietList = new ArrayList<>(tbChonThuoc.getItems());
         final double tongTien = tinhTongTien();
 
-        // Use AtomicReference to pass newly created KhachHangDTO from Task to setOnSucceeded
-        final java.util.concurrent.atomic.AtomicReference<KhachHangDTO> khachRef = new java.util.concurrent.atomic.AtomicReference<>(khachCu);
-
-        Task<Boolean> saveTask = new Task<>() {
+        // Task trả về KhachHangDTO (nếu tạo mới)
+        Task<KhachHangDTO> task = new Task<>() {
             @Override
-            protected Boolean call() throws Exception {
+            protected KhachHangDTO call() throws Exception {
+
                 KhachHangDTO khach;
+
+                // 1. Xử lý khách hàng
                 if (isKhachMoi) {
                     Integer maxHash = clientManager.getMaxHashKhachHang();
                     String maKhach = String.format("KH%09d", (maxHash != null ? maxHash : 0) + 1);
+
                     khach = new KhachHangDTO(maKhach, ten, sdt, false);
+
                     if (!clientManager.insertKhachHang(khach)) {
-                        throw new RuntimeException("Không thể thêm khách hàng mới.");
+                        throw new RuntimeException("Không thể thêm khách hàng.");
                     }
-                    khachRef.set(khach);
                 } else {
                     khach = khachCu;
                 }
-                // Tạo phiếu
+
+                // 2. Tạo phiếu (FIX đúng constructor)
                 PhieuDatThuocDTO phieu = new PhieuDatThuocDTO(
-                        maPhieu, LocalDate.now(), false, nguoiDat, khach, kmFinal, tongTien);
+                        maPhieu,
+                        LocalDate.now(),
+                        false,
+                        tongTien,
+                        nguoiDat,
+                        khach,
+                        kmFinal
+                );
+
                 if (!clientManager.createPhieuDat(phieu)) {
                     throw new RuntimeException("Không thể tạo phiếu đặt.");
                 }
-                // Thêm chi tiết + trừ kho
+
+                // 3. Thêm chi tiết + trừ kho
                 for (ChiTietPhieuDatThuocDTO ct : chiTietList) {
-                    LoThuocDTO lo = ct.getMaThuoc();
 
-// Tạo object sạch (chỉ giữ ID)
-
-// clean LoThuoc
                     LoThuocDTO loClean = new LoThuocDTO();
-                    loClean.setMaLoThuoc(lo.getMaLoThuoc());
+                    loClean.setMaLoThuoc(ct.getMaThuoc().getMaLoThuoc());
 
-// clean DonViTinh (PHẢI dùng ID)
                     DonViTinhDTO dvtClean = new DonViTinhDTO(ct.getDonViTinhDTO().getMaDVT());
 
                     ChiTietPhieuDatThuocDTO ctNew = new ChiTietPhieuDatThuocDTO(
@@ -720,49 +742,48 @@ public class ThemPhieuDatFormController extends DialogPane {
                             ct.getSoLuong(),
                             dvtClean
                     );
-                    int soLuongDat = ct.getSoLuong();
 
-                    System.out.println("Đang gửi: " + ctNew);
-
-                    // Kiểm tra lại số lượng lô hiện tại trước khi tạo chi tiết (chống race condition)
-                    LoThuocDTO currentLo = clientManager.getLoThuocByLoThuocId(lo.getMaLoThuoc());
-                    if (currentLo == null || currentLo.getSoLuong() < soLuongDat) {
-                        int soHienTai = currentLo != null ? currentLo.getSoLuong() : 0;
-                        throw new RuntimeException("Không đủ số lượng cho lô thuốc ID " + lo.getMaLoThuoc() +
-                                ". Yêu cầu: " + soLuongDat + ", Hiện có: " + soHienTai);
-                    }
                     if (!clientManager.createChiTietPhieuDat(ctNew)) {
-                        throw new RuntimeException(
-                                "Không thể thêm chi tiết phiếu - Lô: " + lo.getMaLoThuoc()
-                        );
+                        throw new RuntimeException("Không thể thêm chi tiết phiếu.");
                     }
-                    if (!clientManager.updateSoLuongLoThuoc(lo.getMaLoThuoc(), -soLuongDat)) {
-                        throw new RuntimeException("Không thể cập nhật số lượng lô thuốc ID " + lo.getMaLoThuoc());
+
+                    if (!clientManager.updateSoLuongLoThuoc(
+                            loClean.getMaLoThuoc(),
+                            -ct.getSoLuong()
+                    )) {
+                        throw new RuntimeException("Không thể cập nhật số lượng lô thuốc.");
                     }
                 }
-                return true;
+
+                // 🔥 return khách mới (hoặc null nếu khách cũ)
+                return isKhachMoi ? khach : null;
             }
         };
 
-        saveTask.setOnSucceeded(e -> {
-            if (isKhachMoi) {
-                KhachHangDTO newKhach = khachRef.get();
-                if (newKhach != null) {
-                    dsKhach.add(newKhach);
-                    autoKhach.add(newKhach);
-                }
+        // Thành công
+        task.setOnSucceeded(e -> {
+            KhachHangDTO newKhach = task.getValue();
+
+            if (newKhach != null) {
+                dsKhach.add(newKhach);
+                autoKhach.add(newKhach);
             }
+
             showMess("Thành công", "Tạo phiếu đặt thuốc thành công.");
-            javafx.stage.Window window = this.getScene() != null ? this.getScene().getWindow() : null;
-            if (window != null) window.hide();
+
+            javafx.stage.Window w = getScene() != null ? getScene().getWindow() : null;
+            if (w != null) w.hide();
         });
 
-        saveTask.setOnFailed(e -> {
-            Throwable ex = saveTask.getException();
+        // Thất bại
+        task.setOnFailed(e -> {
+            Throwable ex = task.getException();
             showMess("Lỗi", ex != null ? ex.getMessage() : "Không thể tạo phiếu đặt.");
         });
 
-        new Thread(saveTask).start();
+        Thread t = new Thread(task);
+        t.setDaemon(true);
+        t.start();
     }
 
 
@@ -810,7 +831,7 @@ public class ThemPhieuDatFormController extends DialogPane {
         for (ChiTietPhieuDatThuocDTO e : tbChonThuoc.getItems()) {
             tongTien += e.getSoLuong()
                     * e.getMaThuoc().getMaThuocDTO().getGiaBan()
-                    * (1 - e.getMaThuoc().getMaThuocDTO().getThue());
+                    * (1 + e.getMaThuoc().getMaThuocDTO().getThue());
         }
         // Áp dụng khuyến mãi nếu hợp lệ (txtCanhBaoKM rỗng = không có lỗi)
         KhuyenMaiDTO km = cbKhuyenMai.getSelectionModel().getSelectedItem();

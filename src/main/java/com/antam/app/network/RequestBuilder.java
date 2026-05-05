@@ -116,7 +116,7 @@ public class RequestBuilder {
     }
 
     public static Command updateNhanVien(NhanVienDTO dto) {
-        return build(CommandType.UPDATE_NHANVIEN, map("nv", dto));
+        return build(CommandType.UPDATE_NHANVIEN, map("nhanVien", dto));
     }
 
     public static Command deleteNhanVien(String id) {

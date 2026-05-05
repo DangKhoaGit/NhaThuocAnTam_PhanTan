@@ -586,14 +586,47 @@ public class CommandRouter {
     private Response handleUpdateNhanVien(Command command) {
         try {
             if (command.getPayload() == null || !command.getPayload().containsKey("nhanVien")) {
-                return Response.builder().success(false).message("Invalid payload for update NhanVien").errorCode("INVALID_PAYLOAD").build();
+                return Response.builder()
+                        .success(false)
+                        .message("Invalid payload for update NhanVien")
+                        .errorCode("INVALID_PAYLOAD")
+                        .build();
             }
-            NhanVienDTO dto = (NhanVienDTO) command.getPayload().get("nhanVien");
+
+            Object obj = command.getPayload().get("nhanVien");
+            if (!(obj instanceof NhanVienDTO)) {
+                return Response.builder()
+                        .success(false)
+                        .message("Payload nhanVien is not valid type")
+                        .errorCode("INVALID_TYPE")
+                        .build();
+            }
+
+            NhanVienDTO dto = (NhanVienDTO) obj;
+
+            if (dto.getMaNV() == null || dto.getMaNV().isBlank()) {
+                return Response.builder()
+                        .success(false)
+                        .message("MaNV is required")
+                        .errorCode("INVALID_DATA")
+                        .build();
+            }
+
             boolean success = serviceLocator.getNhanVienService().updateNhanVienTrongDBS(dto);
-            return Response.builder().success(success).message(success ? "NhanVien updated successfully" : "Failed to update NhanVien").errorCode(success ? null : "UPDATE_NHANVIEN_FAILED").build();
+
+            return Response.builder()
+                    .success(success)
+                    .message(success ? "NhanVien updated successfully" : "NhanVien not found or update failed")
+                    .errorCode(success ? null : "UPDATE_NHANVIEN_FAILED")
+                    .build();
+
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "Error updating NhanVien", e);
-            return Response.builder().success(false).message("Error updating NhanVien: " + e.getMessage()).errorCode("UPDATE_NHANVIEN_ERROR").build();
+            return Response.builder()
+                    .success(false)
+                    .message("Error updating NhanVien: " + e.getMessage())
+                    .errorCode("UPDATE_NHANVIEN_ERROR")
+                    .build();
         }
     }
 

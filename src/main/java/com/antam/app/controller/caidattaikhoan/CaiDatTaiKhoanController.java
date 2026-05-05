@@ -1,5 +1,6 @@
 package com.antam.app.controller.caidattaikhoan;
 
+import com.antam.app.dto.NhanVienDTO;
 import com.antam.app.dto.PhienNguoiDungDTO;
 import com.antam.app.helper.MaKhoaMatKhau;
 import com.antam.app.network.ClientManager;
@@ -285,29 +286,32 @@ public class CaiDatTaiKhoanController extends ScrollPane{
 
         // Mã hóa và cập nhật
         String hashCode = MaKhoaMatKhau.hashPassword(mkNew, 10);
-        PhienNguoiDungDTO.getMaNV().setMatKhau(hashCode);
 
-        // Vô hiệu hóa nút khi đang xử lý
-        btnDoiMK.setDisable(true);
+// clone object để tránh corrupt session
+        NhanVienDTO updatedNV = new NhanVienDTO(PhienNguoiDungDTO.getMaNV());
+        updatedNV.setMatKhau(hashCode);
 
         Task<Boolean> task = new Task<>() {
             @Override
             protected Boolean call() throws Exception {
-                return ClientManager.getInstance().updateNhanVien(PhienNguoiDungDTO.getMaNV());
+                return ClientManager.getInstance().updateNhanVien(updatedNV);
             }
         };
-        
+
         task.setOnSucceeded(evt -> {
             btnDoiMK.setDisable(false);
             boolean result = task.getValue();
+
             if (result) {
-                showAlert("Thành công", "Đổi mật khẩu thành công!\n\nVui lòng đăng nhập lại khi lần tới.");
+                // update session ONLY when success
+                PhienNguoiDungDTO.getMaNV().setMatKhau(hashCode);
                 txtMKnow.clear();
                 txtMKnew.clear();
                 txtMKnewConfirm.clear();
                 txtThongBaoMK.setText("");
+                showAlert("Thành công", "Đổi mật khẩu thành công!");
             } else {
-                showAlert("Thất bại", "Đổi mật khẩu thất bại! Vui lòng thử lại.");
+                showAlert("Thất bại", "Đổi mật khẩu thất bại!");
             }
         });
         

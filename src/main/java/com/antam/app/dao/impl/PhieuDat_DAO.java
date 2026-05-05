@@ -10,9 +10,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import com.antam.app.dao.I_PhieuDat_DAO;
-import com.antam.app.entity.ChiTietPhieuDatThuoc;
-import com.antam.app.entity.KhachHang;
-import com.antam.app.entity.PhieuDatThuoc;
+import com.antam.app.entity.*;
 
 public class PhieuDat_DAO extends AbstractGenericDao<PhieuDatThuoc,String> implements I_PhieuDat_DAO {
     public PhieuDat_DAO() {
@@ -36,17 +34,29 @@ public class PhieuDat_DAO extends AbstractGenericDao<PhieuDatThuoc,String> imple
     @Override
     public boolean themPhieuDatThuocVaoDBS(PhieuDatThuoc i) {
         return doInTransaction(em -> {
-            // Merge associated entities
+
+            //  2. Set reference thay vì merge
             if (i.getNhanVien() != null) {
-                i.setNhanVien(em.merge(i.getNhanVien()));
+                i.setNhanVien(
+                        em.getReference(NhanVien.class, i.getNhanVien().getMaNV())
+                );
             }
+
             if (i.getKhachHang() != null) {
-                i.setKhachHang(em.merge(i.getKhachHang()));
+                i.setKhachHang(
+                        em.getReference(KhachHang.class, i.getKhachHang().getMaKH())
+                );
             }
+
             if (i.getKhuyenMai() != null) {
-                i.setKhuyenMai(em.merge(i.getKhuyenMai()));
+                i.setKhuyenMai(
+                        em.getReference(KhuyenMai.class, i.getKhuyenMai().getMaKM())
+                );
             }
+
+            //  3. Persist
             em.persist(i);
+
             return true;
         });
     }

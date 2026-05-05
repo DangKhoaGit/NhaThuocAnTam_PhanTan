@@ -111,4 +111,17 @@ public class NhanVienDTO implements Serializable {
         this.deleteAt = deleteAt;
         this.quanLi = isQL;
     }
+
+    public NhanVienDTO(NhanVienDTO maNV) {
+        this.MaNV = maNV.getMaNV();
+        setHoTen(maNV.getHoTen());
+        setSoDienThoai(maNV.getSoDienThoai());
+        setEmail(maNV.getEmail());
+        setDiaChi(maNV.getDiaChi());
+        setLuongCoBan(maNV.getLuongCoBan());
+        setTaiKhoan(maNV.getTaiKhoan());
+        setMatKhau(maNV.getMatKhau());
+        setDeleteAt(maNV.isDeleteAt());
+        setQuanLi(maNV.isQuanLi());
+    }
 }

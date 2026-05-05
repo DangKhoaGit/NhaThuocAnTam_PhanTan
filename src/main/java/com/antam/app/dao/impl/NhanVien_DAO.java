@@ -49,7 +49,31 @@ public class NhanVien_DAO extends AbstractGenericDao<NhanVien,String> implements
      */
     @Override
     public boolean updateNhanVienTrongDBS(NhanVien nv) {
-        return super.update(nv) != null;
+        String query   = "update NhanVien nv " +
+                "set nv.hoTen = :hoTen, " +
+                "nv.soDienThoai = :soDienThoai, " +
+                "nv.email = :email, " +
+                "nv.diaChi = :diaChi, " +
+                "nv.luongCoBan = :luongCoBan, " +
+                "nv.taiKhoan = :taiKhoan, " +
+                "nv.matKhau = :matKhau, " +
+                "nv.deleteAt = :deleteAt, " +
+                "nv.quanLi = :quanLi " +
+                "where nv.id = :id";
+        return doInTransaction(em ->
+                em.createQuery(query)
+                        .setParameter("hoTen", nv.getHoTen())
+                        .setParameter("soDienThoai", nv.getSoDienThoai())
+                        .setParameter("email", nv.getEmail())
+                        .setParameter("diaChi", nv.getDiaChi())
+                        .setParameter("luongCoBan", nv.getLuongCoBan())
+                        .setParameter("taiKhoan", nv.getTaiKhoan())
+                        .setParameter("matKhau", nv.getMatKhau())
+                        .setParameter("deleteAt", nv.isDeleteAt())
+                        .setParameter("quanLi", nv.isQuanLi())
+                        .setParameter("id", nv.getMaNV())
+                        .executeUpdate() > 0
+        );
     }
 
     /**

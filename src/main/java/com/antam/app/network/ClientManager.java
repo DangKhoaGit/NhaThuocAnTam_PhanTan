@@ -209,8 +209,8 @@ public class ClientManager {
         return sendForSuccess(RequestBuilder.createNhanVien((NhanVienDTO) dto));
     }
 
-    public boolean updateNhanVien(Object dto) {
-        return sendForSuccess(RequestBuilder.updateNhanVien((NhanVienDTO) dto));
+    public boolean updateNhanVien(NhanVienDTO dto) {
+        return sendForSuccess(RequestBuilder.updateNhanVien(dto));
     }
 
     public boolean deleteNhanVien(String id) {
