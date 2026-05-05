@@ -28,15 +28,13 @@ public class ChiTietPhieuDat_DAO extends AbstractGenericDao<ChiTietPhieuDatThuoc
 
     @Override
     public boolean themChiTietPhieuDatVaoDBS(ChiTietPhieuDatThuoc ct) {
-        doInTransaction(em -> {
-            // Merge the associated entities to avoid detached entity issues
+        return doInTransaction(em -> {
             ct.setMaPhieu(em.merge(ct.getMaPhieu()));
             ct.setMaThuoc(em.merge(ct.getMaThuoc()));
             ct.setDonViTinh(em.merge(ct.getDonViTinh()));
             em.persist(ct);
             return true;
         });
-        return false;
     }
 
     @Override
