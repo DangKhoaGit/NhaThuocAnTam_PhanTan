@@ -5,10 +5,7 @@
 
 package com.antam.app.controller.phieunhap;
 
-import com.antam.app.connect.ConnectDB;
-import com.antam.app.service.I_NhanVien_Service;
-import com.antam.app.service.impl.NhanVien_Service;
-import com.antam.app.service.impl.PhieuNhap_Service;
+import com.antam.app.network.ClientManager;
 import com.antam.app.dto.NhanVienDTO;
 import com.antam.app.dto.PhieuNhapDTO;
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcon;
@@ -25,8 +22,6 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 
-import java.sql.Connection;
-import java.sql.SQLException;
 import java.text.NumberFormat;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -44,8 +39,8 @@ public class KhoiPhucPhieuNhapController extends ScrollPane{
     private ComboBox<String> cbKhoangGia;
     private TextField tfTimPhieuNhap;
 
-    private PhieuNhap_Service phieuNhap_DAO = new PhieuNhap_Service();
-    private NhanVien_Service nhanVien_DAO = new NhanVien_Service();
+    private ClientManager phieuNhap_DAO = ClientManager.getInstance();
+    private ClientManager nhanVien_DAO = ClientManager.getInstance();
 
     /* Lấy dữ liệu từ DAO */
     private ArrayList<PhieuNhapDTO> dsPhieuNhap = new ArrayList<>();
@@ -197,11 +192,6 @@ public class KhoiPhucPhieuNhapController extends ScrollPane{
         this.getStylesheets().add(getClass().getResource("/com/antam/app/styles/dashboard_style.css").toExternalForm());
         this.setContent(root);
         /** Sự kiện **/
-        try {
-            Connection con = ConnectDB.getInstance().connect();
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
 
         this.btnKhoiPhuc.setOnAction((e) -> {
             if (phieuNhapDTODuocChon == null){
@@ -305,7 +295,7 @@ public class KhoiPhucPhieuNhapController extends ScrollPane{
     }
 
     public void loadDanhSachNhanVien(){
-        List<NhanVienDTO> dsNhanVienRaw = nhanVien_DAO.getAllNhanVien();
+        List<NhanVienDTO> dsNhanVienRaw = nhanVien_DAO.getNhanVienList();
 
         ObservableList<NhanVienDTO> dsNhanVien = FXCollections.observableArrayList(dsNhanVienRaw);
 

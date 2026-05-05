@@ -23,9 +23,6 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
 
 import javafx.geometry.Pos;
 import javafx.scene.layout.VBox;
@@ -219,10 +216,11 @@ public class CapNhatPhieuDatFormController extends DialogPane{
         loadTien();
 
         Button btnThanhToan = (Button) this.lookupButton(applyButton);
-        btnThanhToan.setOnAction(event -> {
+        btnThanhToan.addEventFilter(javafx.event.ActionEvent.ACTION, event -> {
+            event.consume(); // prevent auto-close; dialog closes manually on success
             if (select.isThanhToan()) {
                 showMess("Cảnh báo","Phiếu đặt thuốc đã được thanh toán");
-            }else{
+            } else {
                 thanhToanPhieuDat();
             }
         });
@@ -241,36 +239,62 @@ public class CapNhatPhieuDatFormController extends DialogPane{
     }
 
     private void thanhToanPhieuDat() {
-        // 1. Khóa nút thanh toán để tránh click trùng lặp
-        Button applyButton = (Button) this.lookupButton(this.getButtonTypes().stream()
+        if (listChiTiet == null || listChiTiet.isEmpty()) {
+            showMess("Cảnh báo", "Danh sách thuốc chưa tải xong, vui lòng thử lại.");
+            return;
+        }
+
+        Button btnTT = (Button) this.lookupButton(this.getButtonTypes().stream()
                 .filter(b -> b.getButtonData() == ButtonBar.ButtonData.APPLY)
                 .findFirst().orElse(null));
-        if (applyButton != null) applyButton.setDisable(true);
+        if (btnTT != null) btnTT.setDisable(true);
 
-        // 2. Chạy logic thanh toán bất đồng bộ
-        CompletableFuture.runAsync(() -> {
-            // Lấy mã hóa đơn mới bằng hàm bạn đã viết
-            String newMaHD = generateNewMaHoaDon();
+        // Snapshot table items on FX thread before going async
+        final List<ChiTietPhieuDatThuocDTO> snapshot = new ArrayList<>(tbThuoc.getItems());
 
-            HoaDonDTO hoaDonDTO = new HoaDonDTO(
-                    newMaHD,
-                    LocalDate.now(),
-                    PhienNguoiDungDTO.getMaNV(),
-                    select.getKhachHang(),
-                    select.getKhuyenMaiDTO(),
-                    select.getTongTien(),
-                    false
-            );
+        Task<HoaDonDTO> task = new Task<>() {
+            @Override
+            protected HoaDonDTO call() throws Exception {
+                Integer maxHash = clientManager.getMaxHashHoaDon();
+                String newMaHD = String.format("HD%03d", (maxHash != null ? maxHash : 0) + 1);
 
-            // 3. Thực hiện lưu Hóa đơn chính
-            boolean isHdCreated = clientManager.createHoaDon(hoaDonDTO);
-            if (!isHdCreated) {
-                throw new RuntimeException("Lỗi: Không thể tạo hóa đơn trên Server.");
+                HoaDonDTO hoaDonDTO = new HoaDonDTO(
+                        newMaHD, LocalDate.now(),
+                        PhienNguoiDungDTO.getMaNV(),
+                        select.getKhachHang(),
+                        select.getKhuyenMaiDTO(),
+                        select.getTongTien(),
+                        false
+                );
+
+                if (!clientManager.createHoaDon(hoaDonDTO)) {
+                    throw new RuntimeException("Không thể tạo hóa đơn trên Server.");
+                }
+
+                for (ChiTietPhieuDatThuocDTO item : snapshot) {
+                    ChiTietHoaDonDTO cthd = new ChiTietHoaDonDTO();
+                    cthd.setMaHD(hoaDonDTO);
+                    cthd.setMaLoThuocDTO(item.getMaThuoc());
+                    cthd.setThanhTien(item.getThanhTien());
+                    cthd.setMaDVT(item.getDonViTinhDTO());
+                    cthd.setSoLuong(item.getSoLuong());
+                    cthd.setTinhTrang("Bán");
+                    clientManager.createChiTietHoaDon(cthd);
+                }
+
+                clientManager.updateTrangThaiPhieuDat(select.getMaPhieu(), true);
+                return hoaDonDTO;
             }
+        };
 
-            // 4. Lưu danh sách Chi tiết hóa đơn
+        task.setOnSucceeded(e -> {
+            if (btnTT != null) btnTT.setDisable(false);
+            select.setThanhToan(true);
+            loadContent();
+            HoaDonDTO hoaDonDTO = task.getValue();
+            // Build listCTHD for PDF from snapshot
             ArrayList<ChiTietHoaDonDTO> listCTHD = new ArrayList<>();
-            for (ChiTietPhieuDatThuocDTO item : tbThuoc.getItems()) {
+            for (ChiTietPhieuDatThuocDTO item : snapshot) {
                 ChiTietHoaDonDTO cthd = new ChiTietHoaDonDTO();
                 cthd.setMaHD(hoaDonDTO);
                 cthd.setMaLoThuocDTO(item.getMaThuoc());
@@ -278,71 +302,23 @@ public class CapNhatPhieuDatFormController extends DialogPane{
                 cthd.setMaDVT(item.getDonViTinhDTO());
                 cthd.setSoLuong(item.getSoLuong());
                 cthd.setTinhTrang("Bán");
-
-                // Lưu từng chi tiết lên server
-                boolean isDetailCreated = clientManager.createChiTietHoaDon(cthd);
-                if (!isDetailCreated) {
-                    System.err.println("Cảnh báo: Lỗi lưu chi tiết cho thuốc " + item.getMaThuoc().getMaThuocDTO().getTenThuoc());
-                }
                 listCTHD.add(cthd);
             }
-
-            // 5. Cập nhật trạng thái phiếu đặt (Ví dụ gọi API update trạng thái)
-             clientManager.updateTrangThaiPhieuDat(select.getMaPhieu(), true);
-
-            // 6. Quay lại UI Thread để thông báo và in PDF
-            Platform.runLater(() -> {
-                if (applyButton != null) applyButton.setDisable(false);
-                select.setThanhToan(true);
-                loadContent(); // Cập nhật lại giao diện hiển thị "Đã thanh toán"
-                thongBaoVaXuatHoaDon(hoaDonDTO, listCTHD);
-            });
-
-        }).exceptionally(ex -> {
-            // Xử lý lỗi tập trung
-            Platform.runLater(() -> {
-                if (applyButton != null) applyButton.setDisable(false);
-                showMess("Lỗi Hệ Thống", "Quá trình thanh toán gặp sự cố: " + ex.getMessage());
-            });
-            ex.printStackTrace();
-            return null;
+            // Close dialog so parent's showAndWait() returns and reloads table
+            Window window = this.getScene() != null ? this.getScene().getWindow() : null;
+            if (window != null) window.hide();
+            thongBaoVaXuatHoaDon(hoaDonDTO, listCTHD);
         });
+
+        task.setOnFailed(e -> {
+            if (btnTT != null) btnTT.setDisable(false);
+            Throwable ex = task.getException();
+            showMess("Lỗi Hệ Thống", "Quá trình thanh toán gặp sự cố: " + (ex != null ? ex.getMessage() : ""));
+        });
+
+        new Thread(task).start();
     }
 
-    private String generateNewMaHoaDon() {
-        List<?> allHD = ClientManager.getInstance().getHoaDonList();
-        List<String> allMaHD = ((List<HoaDonDTO>) allHD).stream().map(hd -> hd.getMaHD()).collect(Collectors.toList());
-        int max = 0;
-        for (String ma : allMaHD) {
-            if (ma != null && ma.matches("HD\\d+")) {
-                int num = Integer.parseInt(ma.substring(2));
-                if (num > max) max = num;
-            }
-        }
-        return String.format("HD%03d", max + 1);
-    }
-
-    private String getMaxHashHoaDon(){
-        Task<Integer> getMaxHashTask = new Task<>() {
-            @Override
-            protected Integer call() {
-                return clientManager.getMaxHashHoaDon();
-            }
-        };
-        AtomicInteger max = new AtomicInteger();
-        getMaxHashTask.setOnSucceeded(event -> max.set(getMaxHashTask.getValue()));
-
-        Thread thread = new Thread(getMaxHashTask);
-        thread.start();
-
-        try {
-            thread.join();
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
-
-        return String.format("HD%03d", max.get() + 1);
-    }
 
     public void showMess(String tieuDe, String vanBan) {
         Platform.runLater(() -> {

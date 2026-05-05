@@ -5,7 +5,6 @@
 
 package com.antam.app.controller.dangdieuche;
 
-import com.antam.app.connect.ConnectDB;
 import com.antam.app.network.ClientManager;
 import com.antam.app.dto.DangDieuCheDTO;
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcon;
@@ -16,8 +15,6 @@ import javafx.concurrent.Task;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 
-import java.sql.Connection;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
@@ -139,11 +136,6 @@ public class ThemDangDieuCheController extends ScrollPane{
         this.getStylesheets().add(getClass().getResource("/com/antam/app/styles/dashboard_style.css").toExternalForm());
         this.setContent(root);
         /** Sự kiện **/
-        try {
-            Connection con = ConnectDB.getInstance().connect();
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
 
         Task<List<DangDieuCheDTO>> loadDataTask = new Task<List<DangDieuCheDTO>>() {
             @Override
@@ -285,34 +277,14 @@ public class ThemDangDieuCheController extends ScrollPane{
     public boolean kiemTraHopLe(){
         String tenDDC = tfTenDangDieuChe.getText();
 
-        if (tenDDC.isEmpty()){
+        if (tenDDC == null || tenDDC.isBlank()){
             showCanhBao("Lỗi nhập liệu","Vui lòng nhập tên dạng điều chế!");
             tfTenDangDieuChe.requestFocus();
             return false;
         }
 
-        Task<DangDieuCheDTO> taskGetDangDieuCheTheoName = new Task<>() {
-            @Override
-            protected DangDieuCheDTO call() throws Exception {
-                return clientManager.getDDCTheoName(tenDDC);
-            }
-        };
-        AtomicReference<DangDieuCheDTO> nameDDC  = new AtomicReference<>();
-        taskGetDangDieuCheTheoName.setOnSucceeded(event -> {
-            nameDDC.set(taskGetDangDieuCheTheoName.getValue());
-        });
-
-        Thread threadCheck = new Thread(taskGetDangDieuCheTheoName);
-        threadCheck.setDaemon(true);
-        threadCheck.start();
-        try {
-            threadCheck.join(); // Wait for the task to complete
-        } catch (InterruptedException e) {
-            showCanhBao("Lỗi", "Không thể kiểm tra tên dạng điều chế.");
-            return false;
-        }
-
-        if (nameDDC.get() != null){
+        DangDieuCheDTO existing = clientManager.getDDCTheoName(tenDDC);
+        if (existing != null){
             showCanhBao("Lỗi nhập liệu","Dạng điều chế đã tồn tại trong hệ thống!");
             tfTenDangDieuChe.requestFocus();
             return false;

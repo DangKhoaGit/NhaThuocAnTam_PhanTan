@@ -284,16 +284,15 @@ public class KhoiPhucNhanVienController extends ScrollPane{
         task.setOnSucceeded(e -> {
             try {
                 List<NhanVienDTO> list = task.getValue();
-                if (list != null && !list.isEmpty()) {
+                if (list != null) {
                     TVNhanVien = FXCollections.observableArrayList(
                             list.stream()
-                                    .filter(nv -> !nv.isDeleteAt())
+                                    .filter(nv -> nv.isDeleteAt())
                                     .toList()
                     );
                     tbNhanVien.setItems(TVNhanVien);
-                    LOGGER.info("Loaded " + TVNhanVien.size() + " nhân viên records");
+                    LOGGER.info("Loaded " + TVNhanVien.size() + " nhân viên đã xóa");
                 } else {
-                    showAlert("Thông báo", "Không có dữ liệu nhân viên");
                     TVNhanVien = FXCollections.observableArrayList();
                     tbNhanVien.setItems(TVNhanVien);
                 }

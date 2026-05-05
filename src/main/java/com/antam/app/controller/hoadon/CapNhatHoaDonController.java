@@ -1,13 +1,6 @@
-//
-// Source code recreated from a .class file by IntelliJ IDEA
-// (powered by FernFlower decompiler)
-//
-
 package com.antam.app.controller.hoadon;
 
-import com.antam.app.service.I_NhanVien_Service;
-import com.antam.app.service.impl.HoaDon_Service;
-import com.antam.app.service.impl.NhanVien_Service;
+import com.antam.app.network.ClientManager;
 import com.antam.app.dto.HoaDonDTO;
 import com.antam.app.dto.NhanVienDTO;
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcon;
@@ -16,6 +9,7 @@ import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.concurrent.Task;
 import javafx.geometry.Insets;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
@@ -31,14 +25,9 @@ import java.text.DecimalFormatSymbols;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.List;
 
-/**
- * Controller cho giao diện quản lý hóa đơn (invoice_view.fxml).
- * - Hiển thị danh sách hóa đơn ra TableView.
- * - Cho phép tạo, đổi, trả hóa đơn qua các nút chức năng.
- * - Khi double-click vào 1 dòng hóa đơn sẽ mở dialog chi tiết hóa đơn.
- */
-public class CapNhatHoaDonController extends ScrollPane{
+public class CapNhatHoaDonController extends ScrollPane {
     private Button btnReturnMedicine;
     private Button btnExchangeMedicine;
 
@@ -59,7 +48,8 @@ public class CapNhatHoaDonController extends ScrollPane{
     private DatePicker cbFirstDate;
     private DatePicker cbEndDate;
 
-    // Định dạng tiền tệ kiểu Việt Nam: 1.000đ, 10.000đ
+    private final ClientManager clientManager = ClientManager.getInstance();
+
     private static final DecimalFormat VND_FORMAT;
     static {
         DecimalFormatSymbols symbols = new DecimalFormatSymbols();
@@ -143,14 +133,15 @@ public class CapNhatHoaDonController extends ScrollPane{
         btnSearchInvoice = new Button();
         btnSearchInvoice.setPrefSize(50, 40);
         btnSearchInvoice.setStyle("-fx-background-color: #2563eb; -fx-background-radius: 5px;");
-        FontAwesomeIcon searchIcon = new FontAwesomeIcon(); searchIcon.setGlyphName("SEARCH"); searchIcon.setFill(Color.WHITE);
+        FontAwesomeIcon searchIcon = new FontAwesomeIcon();
+        searchIcon.setGlyphName("SEARCH");
+        searchIcon.setFill(Color.WHITE);
         btnSearchInvoice.setGraphic(searchIcon);
 
         searchBox.getChildren().addAll(txtSearchInvoice, btnSearchInvoice);
 
         VBox tableBox = new VBox(5);
         table_invoice = new TableView<>();
-
 
         colMaHD = new TableColumn<>("Mã hoá đơn");
         colNgayTao = new TableColumn<>("Ngày tạo");
@@ -168,7 +159,9 @@ public class CapNhatHoaDonController extends ScrollPane{
         guide.getStyleClass().add("pane-huongdan");
         guide.setMaxWidth(Double.MAX_VALUE);
         guide.setPadding(new Insets(10));
-        FontAwesomeIcon infoIcon = new FontAwesomeIcon(); infoIcon.setGlyphName("INFO"); infoIcon.setFill(Color.web("#2563eb"));
+        FontAwesomeIcon infoIcon = new FontAwesomeIcon();
+        infoIcon.setGlyphName("INFO");
+        infoIcon.setFill(Color.web("#2563eb"));
         guide.setGraphic(infoIcon);
 
         tableBox.getChildren().addAll(table_invoice, guide);
@@ -176,62 +169,10 @@ public class CapNhatHoaDonController extends ScrollPane{
         this.getStylesheets().addAll(getClass().getResource("/com/antam/app/styles/dashboard_style.css").toExternalForm());
         rootPane.getChildren().addAll(titleBox, filters, searchBox, tableBox);
         setContent(rootPane);
+
         /** Sự kiện **/
-        this.btnExchangeMedicine.setOnAction((e) -> {
-            HoaDonDTO selectedHoaDonDTO = table_invoice.getSelectionModel().getSelectedItem();
-            if (selectedHoaDonDTO == null) {
-                Alert alert = new Alert(Alert.AlertType.WARNING);
-                alert.setTitle("Cảnh báo");
-                alert.setHeaderText("Chưa chọn hóa đơn");
-                alert.setContentText("Vui lòng chọn ít nhất một hóa đơn.");
-                alert.showAndWait();
-                return;
-            }else{
-                DoiThuocFormController doiDialog = new DoiThuocFormController();
-                doiDialog.setHoaDon(selectedHoaDonDTO);
-                doiDialog.showData(selectedHoaDonDTO);
-
-                Dialog<Void> dialog = new Dialog<>();
-                dialog.setDialogPane(doiDialog);
-                dialog.setTitle("Đổi thuốc");
-                dialog.initModality(Modality.APPLICATION_MODAL);
-                dialog.showAndWait();
-
-                HoaDon_Service hoaDon_service = new HoaDon_Service();
-                ObservableList<HoaDonDTO> hoaDonList = FXCollections.observableArrayList(hoaDon_service.getAllHoaDon());
-                table_invoice.refresh();
-                table_invoice.setItems(hoaDonList);
-            }
-        });
-        // duong
-        this.btnReturnMedicine.setOnAction((e) -> {
-            HoaDonDTO selectedHoaDonDTO = table_invoice.getSelectionModel().getSelectedItem();
-            if (selectedHoaDonDTO == null) {
-                Alert alert = new Alert(Alert.AlertType.WARNING);
-                alert.setTitle("Cảnh báo");
-                alert.setHeaderText("Chưa chọn hóa đơn");
-                alert.setContentText("Vui lòng chọn ít nhất một hóa đơn.");
-                alert.showAndWait();
-                return;
-            }else{
-                TraThuocFormController traDialog = new TraThuocFormController();
-                traDialog.setHoaDon(selectedHoaDonDTO);
-                traDialog.showData(selectedHoaDonDTO);
-                Dialog<Void> dialog = new Dialog<>();
-                dialog.setDialogPane(traDialog);
-                dialog.setTitle("Trả thuốc");
-                dialog.initModality(Modality.APPLICATION_MODAL);
-                dialog.showAndWait();
-
-                HoaDon_Service hoaDon_service = new HoaDon_Service();
-                ObservableList<HoaDonDTO> hoaDonList = FXCollections.observableArrayList(hoaDon_service.getAllHoaDon());
-                table_invoice.refresh();
-                table_invoice.setItems(hoaDonList);
-            }
-        });
 
         // Thiết lập cách lấy dữ liệu cho từng cột TableView
-
         colMaHD.setCellValueFactory(new PropertyValueFactory<>("MaHD"));
         colNgayTao.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getNgayTao().format(DateTimeFormatter.ofPattern("dd-MM-yyyy"))));
         colKhachHang.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getMaKH().getTenKH()));
@@ -255,49 +196,18 @@ public class CapNhatHoaDonController extends ScrollPane{
         });
         colTrangThai.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().isDeleteAt() ? "Đã huỷ" : "Hoạt động"));
 
-        // Load dữ liệu hóa đơn từ DB lên bảng
-        HoaDon_Service hoaDon_service = new HoaDon_Service();
-        ObservableList<HoaDonDTO> hoaDonList = FXCollections.observableArrayList(hoaDon_service.getAllHoaDon());
-        table_invoice.setItems(hoaDonList);
+        // Load danh sách hóa đơn
+        loadHoaDonList();
 
-        // --- Khởi tạo ComboBox nhân viên ---
-        NhanVien_Service nhanVien_service = new NhanVien_Service();
-        ObservableList<NhanVienDTO> dsNhanVien = FXCollections.observableArrayList(nhanVien_service.getAllNhanVien());
-        // Thêm lựa chọn "Tất cả" vào đầu danh sách
-        NhanVienDTO tatCaNV = new NhanVienDTO("Tất cả");
-        dsNhanVien.add(0, tatCaNV);
-        cbEmployee.setItems(dsNhanVien);
-        cbEmployee.setPromptText("Chọn nhân viên");
-        // Hiển thị tên nhân viên trong ComboBox thay vì mã
-        cbEmployee.setCellFactory(lv -> new ListCell<NhanVienDTO>() {
-            @Override
-            protected void updateItem(NhanVienDTO item, boolean empty) {
-                super.updateItem(item, empty);
-                if (empty || item == null) {
-                    setText(null);
-                } else {
-                    // Hiển thị "Tất cả" cho lựa chọn đặc biệt, hoặc tên nhân viên
-                    setText("Tất cả".equals(item.getMaNV()) ? "Tất cả" : item.getHoTen());
-                }
-            }
-        });
-        cbEmployee.setButtonCell(new ListCell<NhanVienDTO>() {
-            @Override
-            protected void updateItem(NhanVienDTO item, boolean empty) {
-                super.updateItem(item, empty);
-                if (empty || item == null) {
-                    setText(null);
-                } else {
-                    // Hiển thị "Tất cả" cho lựa chọn đặc biệt, hoặc tên nhân viên
-                    setText("Tất cả".equals(item.getMaNV()) ? "Tất cả" : item.getHoTen());
-                }
-            }
-        });
-        // --- Khởi tạo ComboBox trạng thái ---
+        // Load danh sách nhân viên cho ComboBox
+        loadNhanVienComboBox();
+
+        // Khởi tạo ComboBox trạng thái
         ObservableList<String> dsTrangThai = FXCollections.observableArrayList("Tất cả", "Hoạt động", "Đã huỷ");
         cbStatus.setItems(dsTrangThai);
         cbStatus.setValue("Tất cả");
-        // --- Khởi tạo ComboBox khoảng giá ---
+
+        // Khởi tạo ComboBox khoảng giá
         ObservableList<String> dsKhoangGia = FXCollections.observableArrayList(
                 "Tất cả",
                 "Dưới 500.000",
@@ -308,125 +218,90 @@ public class CapNhatHoaDonController extends ScrollPane{
         cbPrice.setItems(dsKhoangGia);
         cbPrice.setValue("Tất cả");
 
-        // --- Hàm lọc hóa đơn theo nhân viên, trạng thái, khoảng giá, ngày ---
-        Runnable filterInvoices = () -> {
-            HoaDon_Service hoaDon_service1 = new HoaDon_Service();
-            NhanVienDTO selectedNV = cbEmployee.getValue();
-            String selectedStatus = cbStatus.getValue();
-            String selectedPrice = cbPrice.getValue();
-            LocalDate fromDate = cbFirstDate != null ? cbFirstDate.getValue() : null;
-            LocalDate toDate = cbEndDate != null ? cbEndDate.getValue() : null;
-            boolean allNV = (selectedNV == null || "Tất cả".equals(selectedNV.getMaNV()));
-            boolean allStatus = (selectedStatus == null || "Tất cả".equals(selectedStatus));
-            boolean allPrice = (selectedPrice == null || "Tất cả".equals(selectedPrice));
-            ObservableList<HoaDonDTO> filtered;
-            // Lọc theo nhân viên và trạng thái trước
-            ArrayList<HoaDonDTO> baseList;
-            if (allNV && allStatus) {
-                baseList = new ArrayList<>(hoaDon_service1.getAllHoaDon());
-            } else if (!allNV && allStatus) {
-                baseList = new ArrayList<>(hoaDon_service1.searchHoaDonByMaNV(selectedNV.getMaNV()));
-            } else if (allNV && !allStatus) {
-                baseList = new ArrayList<>(hoaDon_service1.searchHoaDonByStatus(selectedStatus));
-            } else {
-                ArrayList<HoaDonDTO> byStatus = hoaDon_service1.searchHoaDonByStatus(selectedStatus);
-                baseList = new ArrayList<>();
-                for (HoaDonDTO hd : byStatus) {
-                    if (hd.getMaNV() != null && selectedNV.getMaNV().equals(hd.getMaNV().getMaNV())) {
-                        baseList.add(hd);
-                    }
-                }
-            }
-            // Lọc tiếp theo khoảng giá
-            if (!allPrice) {
-                double min = 0, max = Double.MAX_VALUE;
-                switch (selectedPrice) {
-                    case "Dưới 500.000":
-                        max = 500000;
-                        break;
-                    case "500.000 - 1.000.000":
-                        min = 500000;
-                        max = 1000000;
-                        break;
-                    case "1.000.000 - 2.000.000":
-                        min = 1000000;
-                        max = 2000000;
-                        break;
-                    case "Trên 2.000.000":
-                        min = 2000000;
-                        max = Double.MAX_VALUE;
-                        break;
-                }
-                ArrayList<HoaDonDTO> priceFiltered = new ArrayList<>();
-                for (HoaDonDTO hd : baseList) {
-                    double tongTien = hd.getTongTien();
-                    if (tongTien >= min && tongTien < max) {
-                        priceFiltered.add(hd);
-                    }
-                }
-                baseList = priceFiltered;
-            }
-            // Lọc tiếp theo ngày (lấy hóa đơn có ngày tạo nằm trong khoảng [fromDate, toDate])
-            if (fromDate != null || toDate != null) {
-                ArrayList<HoaDonDTO> dateFiltered = new ArrayList<>();
-                for (HoaDonDTO hd : baseList) {
-                    LocalDate ngayTao = hd.getNgayTao();
-                    boolean afterFrom = (fromDate == null) || !ngayTao.isBefore(fromDate);
-                    boolean beforeTo = (toDate == null) || !ngayTao.isAfter(toDate);
-                    if (afterFrom && beforeTo) {
-                        dateFiltered.add(hd);
-                    }
-                }
-                baseList = dateFiltered;
-            }
-            filtered = FXCollections.observableArrayList(baseList);
-            table_invoice.setItems(filtered);
-        };
-        // Lắng nghe thay đổi trên cbEmployee, cbStatus, cbPrice, cbFirstDate, cbEndDate
-        cbEmployee.valueProperty().addListener((obs, oldNV, newNV) -> filterInvoices.run());
-        cbStatus.valueProperty().addListener((obs, oldSt, newSt) -> filterInvoices.run());
-        cbPrice.valueProperty().addListener((obs, oldPr, newPr) -> filterInvoices.run());
-        if (cbFirstDate != null) cbFirstDate.valueProperty().addListener((obs, oldDate, newDate) -> filterInvoices.run());
-        if (cbEndDate != null) cbEndDate.valueProperty().addListener((obs, oldDate, newDate) -> filterInvoices.run());
+        // Lắng nghe thay đổi để lọc hóa đơn
+        cbEmployee.valueProperty().addListener((obs, oldNV, newNV) -> filterHoaDon());
+        cbStatus.valueProperty().addListener((obs, oldSt, newSt) -> filterHoaDon());
+        cbPrice.valueProperty().addListener((obs, oldPr, newPr) -> filterHoaDon());
+        cbFirstDate.valueProperty().addListener((obs, oldDate, newDate) -> filterHoaDon());
+        cbEndDate.valueProperty().addListener((obs, oldDate, newDate) -> filterHoaDon());
 
-        // Lắng nghe thay đổi nội dung ô tìm kiếm để search realtime
-        txtSearchInvoice.textProperty().addListener((observable, oldValue, newValue) -> {
-            if (newValue == null || newValue.trim().isEmpty()) {
-                // Nếu ô tìm kiếm rỗng, load lại toàn bộ hóa đơn
-                ObservableList<HoaDonDTO> allHoaDon = FXCollections.observableArrayList(hoaDon_service.getAllHoaDon());
-                table_invoice.setItems(allHoaDon);
-            } else {
-                // Nếu có nội dung, search theo mã
-                ObservableList<HoaDonDTO> searchResult = FXCollections.observableArrayList(hoaDon_service.searchHoaDonByMaHd(newValue));
-                table_invoice.setItems(searchResult);
-            }
+        // Tìm kiếm realtime theo mã hóa đơn
+        txtSearchInvoice.textProperty().addListener((observable, oldValue, newValue) -> searchHoaDon(newValue));
+        btnSearchInvoice.setOnAction(e -> searchHoaDon(txtSearchInvoice.getText()));
+
+        btnResetInvoice.setOnAction(e -> {
+            cbEmployee.setValue(null);
+            cbStatus.setValue("Tất cả");
+            cbPrice.setValue("Tất cả");
+            cbFirstDate.setValue(null);
+            cbEndDate.setValue(null);
+            txtSearchInvoice.clear();
+            loadHoaDonList();
         });
-        // Sự kiện cho nút tìm kiếm vẫn giữ lại để người dùng có thể bấm nút
-        btnSearchInvoice.setOnAction(e -> {
-            String maHd = txtSearchInvoice.getText();
-            if (maHd == null || maHd.trim().isEmpty()) {
-                ObservableList<HoaDonDTO> allHoaDon = FXCollections.observableArrayList(hoaDon_service.getAllHoaDon());
-                table_invoice.setItems(allHoaDon);
-            } else {
-                ObservableList<HoaDonDTO> searchResult = FXCollections.observableArrayList(hoaDon_service.searchHoaDonByMaHd(maHd));
-                table_invoice.setItems(searchResult);
+
+        // Đổi thuốc
+        this.btnExchangeMedicine.setOnAction((e) -> {
+            HoaDonDTO selectedHoaDonDTO = table_invoice.getSelectionModel().getSelectedItem();
+            if (selectedHoaDonDTO == null) {
+                Alert alert = new Alert(Alert.AlertType.WARNING);
+                alert.setTitle("Cảnh báo");
+                alert.setHeaderText("Chưa chọn hóa đơn");
+                alert.setContentText("Vui lòng chọn ít nhất một hóa đơn.");
+                alert.showAndWait();
+                return;
             }
+            DoiThuocFormController doiDialog = new DoiThuocFormController();
+            doiDialog.setHoaDon(selectedHoaDonDTO);
+            doiDialog.showData(selectedHoaDonDTO);
+
+            Dialog<Void> dialog = new Dialog<>();
+            dialog.setDialogPane(doiDialog);
+            dialog.setTitle("Đổi thuốc");
+            dialog.initModality(Modality.APPLICATION_MODAL);
+            dialog.showAndWait();
+
+            loadHoaDonList();
         });
-        // Đặt row factory để tô màu dòng được chọn
+
+        // Trả thuốc
+        this.btnReturnMedicine.setOnAction((e) -> {
+            HoaDonDTO selectedHoaDonDTO = table_invoice.getSelectionModel().getSelectedItem();
+            if (selectedHoaDonDTO == null) {
+                Alert alert = new Alert(Alert.AlertType.WARNING);
+                alert.setTitle("Cảnh báo");
+                alert.setHeaderText("Chưa chọn hóa đơn");
+                alert.setContentText("Vui lòng chọn ít nhất một hóa đơn.");
+                alert.showAndWait();
+                return;
+            }
+            TraThuocFormController traDialog = new TraThuocFormController();
+            traDialog.setHoaDon(selectedHoaDonDTO);
+            traDialog.showData(selectedHoaDonDTO);
+
+            Dialog<Void> dialog = new Dialog<>();
+            dialog.setDialogPane(traDialog);
+            dialog.setTitle("Trả thuốc");
+            dialog.initModality(Modality.APPLICATION_MODAL);
+            dialog.showAndWait();
+
+            loadHoaDonList();
+        });
+
+        // Tô màu dòng được chọn
         this.table_invoice.setRowFactory(tv -> new TableRow<>() {
             @Override
             protected void updateItem(HoaDonDTO item, boolean empty) {
                 super.updateItem(item, empty);
                 if (!empty && item != null && isSelected()) {
-                    setStyle("-fx-background-color: #d1fae5;"); // Màu xanh nhạt
+                    setStyle("-fx-background-color: #d1fae5;");
                 } else {
                     setStyle("");
                 }
             }
         });
-        // Chỉ gán duy nhất một handler cho sự kiện click
+
+        // Double click xem chi tiết hóa đơn
         this.table_invoice.setOnMouseClicked(event -> {
-            // Nếu double click và có dòng được chọn thì mở dialog chi tiết hóa đơn
             if (event.getClickCount() == 2 && table_invoice.getSelectionModel().getSelectedItem() != null) {
                 HoaDonDTO selectedHoaDonDTO = table_invoice.getSelectionModel().getSelectedItem();
 
@@ -437,15 +312,140 @@ public class CapNhatHoaDonController extends ScrollPane{
                 dialog.setDialogPane(xemDialog);
                 dialog.setTitle("Chi tiết hóa đơn");
                 dialog.initModality(Modality.APPLICATION_MODAL);
-
                 dialog.showAndWait();
             }
         });
     }
 
+    private void loadHoaDonList() {
+        Task<List<HoaDonDTO>> task = new Task<>() {
+            @Override
+            protected List<HoaDonDTO> call() {
+                return clientManager.getAllHoaDon();
+            }
+        };
+        task.setOnSucceeded(e -> table_invoice.setItems(FXCollections.observableArrayList(task.getValue())));
+        new Thread(task).start();
+    }
+
+    private void loadNhanVienComboBox() {
+        Task<List<NhanVienDTO>> task = new Task<>() {
+            @Override
+            protected List<NhanVienDTO> call() {
+                return clientManager.getNhanVienList();
+            }
+        };
+        task.setOnSucceeded(e -> {
+            ObservableList<NhanVienDTO> dsNhanVien = FXCollections.observableArrayList(task.getValue());
+            NhanVienDTO tatCaNV = new NhanVienDTO("Tất cả");
+            dsNhanVien.add(0, tatCaNV);
+            cbEmployee.setItems(dsNhanVien);
+            cbEmployee.setPromptText("Chọn nhân viên");
+            cbEmployee.setCellFactory(lv -> new ListCell<NhanVienDTO>() {
+                @Override
+                protected void updateItem(NhanVienDTO item, boolean empty) {
+                    super.updateItem(item, empty);
+                    if (empty || item == null) {
+                        setText(null);
+                    } else {
+                        setText("Tất cả".equals(item.getMaNV()) ? "Tất cả" : item.getHoTen());
+                    }
+                }
+            });
+            cbEmployee.setButtonCell(new ListCell<NhanVienDTO>() {
+                @Override
+                protected void updateItem(NhanVienDTO item, boolean empty) {
+                    super.updateItem(item, empty);
+                    if (empty || item == null) {
+                        setText(null);
+                    } else {
+                        setText("Tất cả".equals(item.getMaNV()) ? "Tất cả" : item.getHoTen());
+                    }
+                }
+            });
+        });
+        new Thread(task).start();
+    }
+
+    private void filterHoaDon() {
+        NhanVienDTO selectedNV = cbEmployee.getValue();
+        String selectedStatus = cbStatus.getValue();
+        String selectedPrice = cbPrice.getValue();
+        LocalDate fromDate = cbFirstDate.getValue();
+        LocalDate toDate = cbEndDate.getValue();
+        boolean allNV = (selectedNV == null || "Tất cả".equals(selectedNV.getMaNV()));
+        boolean allStatus = (selectedStatus == null || "Tất cả".equals(selectedStatus));
+        boolean allPrice = (selectedPrice == null || "Tất cả".equals(selectedPrice));
+
+        Task<List<HoaDonDTO>> task = new Task<>() {
+            @Override
+            protected List<HoaDonDTO> call() {
+                List<HoaDonDTO> baseList;
+                if (allNV && allStatus) {
+                    baseList = new ArrayList<>(clientManager.getAllHoaDon());
+                } else if (!allNV && allStatus) {
+                    baseList = new ArrayList<>(clientManager.searchHoaDonByMaNV(selectedNV.getMaNV()));
+                } else if (allNV && !allStatus) {
+                    baseList = new ArrayList<>(clientManager.searchHoaDonByStatus(selectedStatus));
+                } else {
+                    List<HoaDonDTO> byStatus = clientManager.searchHoaDonByStatus(selectedStatus);
+                    baseList = new ArrayList<>();
+                    for (HoaDonDTO hd : byStatus) {
+                        if (hd.getMaNV() != null && selectedNV.getMaNV().equals(hd.getMaNV().getMaNV())) {
+                            baseList.add(hd);
+                        }
+                    }
+                }
+                if (!allPrice) {
+                    double min = 0, max = Double.MAX_VALUE;
+                    switch (selectedPrice) {
+                        case "Dưới 500.000": max = 500000; break;
+                        case "500.000 - 1.000.000": min = 500000; max = 1000000; break;
+                        case "1.000.000 - 2.000.000": min = 1000000; max = 2000000; break;
+                        case "Trên 2.000.000": min = 2000000; break;
+                    }
+                    ArrayList<HoaDonDTO> priceFiltered = new ArrayList<>();
+                    for (HoaDonDTO hd : baseList) {
+                        double t = hd.getTongTien();
+                        if (t >= min && t < max) priceFiltered.add(hd);
+                    }
+                    baseList = priceFiltered;
+                }
+                if (fromDate != null || toDate != null) {
+                    ArrayList<HoaDonDTO> dateFiltered = new ArrayList<>();
+                    for (HoaDonDTO hd : baseList) {
+                        LocalDate ngayTao = hd.getNgayTao();
+                        boolean afterFrom = (fromDate == null) || !ngayTao.isBefore(fromDate);
+                        boolean beforeTo = (toDate == null) || !ngayTao.isAfter(toDate);
+                        if (afterFrom && beforeTo) dateFiltered.add(hd);
+                    }
+                    baseList = dateFiltered;
+                }
+                return baseList;
+            }
+        };
+        task.setOnSucceeded(e -> table_invoice.setItems(FXCollections.observableArrayList(task.getValue())));
+        new Thread(task).start();
+    }
+
+    private void searchHoaDon(String maHd) {
+        Task<List<HoaDonDTO>> task = new Task<>() {
+            @Override
+            protected List<HoaDonDTO> call() {
+                if (maHd == null || maHd.trim().isEmpty()) {
+                    return clientManager.getAllHoaDon();
+                } else {
+                    return clientManager.searchHoaDonByMaHd(maHd);
+                }
+            }
+        };
+        task.setOnSucceeded(e -> table_invoice.setItems(FXCollections.observableArrayList(task.getValue())));
+        new Thread(task).start();
+    }
+
     private VBox createVBox(String label, Control field) {
         VBox v = new VBox(5);
-        if (label != null) {
+        if (label != null && !label.isEmpty()) {
             Text t = new Text(label);
             t.setFill(Color.web("#374151"));
             t.setFont(Font.font(13));

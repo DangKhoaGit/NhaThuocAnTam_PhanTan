@@ -5,10 +5,7 @@
 
 package com.antam.app.controller.phieunhap;
 
-import com.antam.app.connect.ConnectDB;
-import com.antam.app.dao.impl.DonViTinh_DAO;
-import com.antam.app.service.impl.*;
-import com.antam.app.service.impl.Thuoc_Service;
+import com.antam.app.network.ClientManager;
 import com.antam.app.dto.*;
 import javafx.event.ActionEvent;
 import javafx.geometry.Pos;
@@ -20,8 +17,6 @@ import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
 import javafx.util.StringConverter;
 
-import java.sql.Connection;
-import java.sql.SQLException;
 import java.text.NumberFormat;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -38,11 +33,11 @@ public class ThemPhieuNhapFormController extends DialogPane{
     private VBox vbDanhSachThuocNhap;
     private Text txtTongTien;
 
-    private Thuoc_Service thuoc_DAO = new Thuoc_Service();
-    private DonViTinh_Service donViTinh_DAO = new DonViTinh_Service();
-    private PhieuNhap_Service phieuNhap_DAO = new PhieuNhap_Service();
-    private ChiTietPhieuNhap_Service chiTietPhieuNhap_DAO = new ChiTietPhieuNhap_Service();
-    private LoThuoc_Service chiTietThuoc_DAO = new LoThuoc_Service();
+    private ClientManager thuoc_DAO = ClientManager.getInstance();
+    private ClientManager donViTinh_DAO = ClientManager.getInstance();
+    private ClientManager phieuNhap_DAO = ClientManager.getInstance();
+    private ClientManager chiTietPhieuNhap_DAO = ClientManager.getInstance();
+    private ClientManager chiTietThuoc_DAO = ClientManager.getInstance();
 
     private ArrayList<ThuocDTO> dsThuoc;
     private ArrayList<DonViTinhDTO> dsDonViTinh;
@@ -199,15 +194,9 @@ public class ThemPhieuNhapFormController extends DialogPane{
 
         this.getStylesheets().add(getClass().getResource("/com/antam/app/styles/dashboard_style.css").toExternalForm());
         /** Su kiện **/
-        //Kết nối
-        try {
-            Connection con = ConnectDB.getInstance().connect();
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
 
-        dsThuoc = thuoc_DAO.getAllThuoc();
-        dsDonViTinh = donViTinh_DAO.getAllDonViTinh();
+        dsThuoc = thuoc_DAO.getThuocList();
+        dsDonViTinh = donViTinh_DAO.getDonViTinhList();
 
         //Tạo mã phiếu nhập tự động
         tfMaPhieuNhap.setText(phieuNhap_DAO.taoMaPhieuNhapTuDong());
@@ -317,7 +306,7 @@ public class ThemPhieuNhapFormController extends DialogPane{
         //Sự kiện chọn thuốc để load đơn vị tính tương ứng
         cbDanhSachThuocNhap.setOnAction(e -> {
             cbDonViTinh.getItems().clear();
-            cbDonViTinh.getItems().add(donViTinh_DAO.getDVTTheoMaDVT(cbDanhSachThuocNhap.getValue().getMaDVTCoSo().getMaDVT()));
+            cbDonViTinh.getItems().add(donViTinh_DAO.getDonViTinhById(cbDanhSachThuocNhap.getValue().getMaDVTCoSo().getMaDVT()));
             cbDonViTinh.getSelectionModel().selectFirst();
         });
         cbDonViTinh.setConverter(new StringConverter<DonViTinhDTO>() {

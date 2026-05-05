@@ -5,8 +5,7 @@
 
 package com.antam.app.controller.kethuoc;
 
-import com.antam.app.connect.ConnectDB;
-import com.antam.app.service.impl.Ke_Service;
+import com.antam.app.network.ClientManager;
 import com.antam.app.dto.KeDTO;
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcon;
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcons;
@@ -15,8 +14,6 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
-import java.sql.Connection;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Date;
 import javafx.geometry.Insets;
@@ -32,7 +29,7 @@ public class ThemKeThuocController extends ScrollPane{
     private TableView<KeDTO> tbKeThuoc;
     private TextField tfMaKe, tfTenKe, tfLoaiKe;
     private Button btnThemKe;
-    private Ke_Service ke_DAO = new Ke_Service();
+    private ClientManager ke_DAO = ClientManager.getInstance();
 
     /* Lấy dữ liệu từ DAO */
     private ArrayList<KeDTO> dsKeThuoc = new ArrayList<>();
@@ -155,11 +152,6 @@ public class ThemKeThuocController extends ScrollPane{
         this.getStylesheets().add(getClass().getResource("/com/antam/app/styles/dashboard_style.css").toExternalForm());
         this.setContent(root);
         /** Sự kiện **/
-        try {
-            Connection con = ConnectDB.getInstance().connect();
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
 
         dsKeThuoc =  ke_DAO.getTatCaKeThuoc();
         data.setAll(dsKeThuoc);

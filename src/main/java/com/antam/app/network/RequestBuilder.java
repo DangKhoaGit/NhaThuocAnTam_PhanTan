@@ -183,7 +183,7 @@ public class RequestBuilder {
     }
 
     public static Command createPhieuDat(PhieuDatThuocDTO dto) {
-        return build(CommandType.CREATE_PHIEUDAT, map("pdt", dto));
+        return build(CommandType.CREATE_PHIEUDAT, map("phieuDat", dto));
     }
 
     // =========================================================
@@ -360,6 +360,14 @@ public class RequestBuilder {
         return build(CommandType.RESTORE_DONVITINH, map("maDVT", donViTinhDTO.getMaDVT()));
     }
 
+    public static Command createDonViTinh(DonViTinhDTO donViTinhDTO) {
+        return build(CommandType.CREATE_DONVITINH, map("donViTinh", donViTinhDTO));
+    }
+
+    public static Command getMaxHashDonViTinh() {
+        return build(CommandType.GET_MAX_HASH_DONVITINH);
+    }
+
     public static Command getDangDieuCheList() {
         return build(CommandType.GET_DANGDIEUCHE_LIST);
     }
@@ -446,14 +454,84 @@ public class RequestBuilder {
         return build(CommandType.GET_KE_LIST);
     }
 
+    public static Command createKe(KeDTO ke) {
+        return build(CommandType.CREATE_KE, map("ke", ke));
+    }
+
+    public static Command updateKe(KeDTO ke) {
+        return build(CommandType.UPDATE_KE, map("ke", ke));
+    }
+
+    public static Command deleteKe(String maKe) {
+        return build(CommandType.DELETE_KE, map("maKe", maKe));
+    }
+
+    public static Command restoreKe(String maKe) {
+        return build(CommandType.RESTORE_KE, map("maKe", maKe));
+    }
+
+    public static Command generateKeCode() {
+        return build(CommandType.GENERATE_KE_CODE);
+    }
+
+    public static Command getKeByName(String tenKe) {
+        return build(CommandType.GET_KE_BY_NAME, map("tenKe", tenKe));
+    }
+
+    // PhieuNhap helpers
+    public static Command updatePhieuNhap(PhieuNhapDTO dto) {
+        return build(CommandType.UPDATE_PHIEUNHAP, map("phieuNhap", dto));
+    }
+
+    public static Command deletePhieuNhap(String maPN) {
+        return build(CommandType.DELETE_PHIEUNHAP, map("maPN", maPN));
+    }
+
+    public static Command getPhieuNhapByStatus(boolean isDeleted) {
+        return build(CommandType.GET_PHIEUNHAP_BY_STATUS, map("status", String.valueOf(isDeleted)));
+    }
+
+    public static Command generatePhieuNhapCode() {
+        return build(CommandType.GENERATE_PHIEUNHAP_CODE);
+    }
+
+    public static Command checkPhieuNhapExists(String maPN) {
+        return build(CommandType.CHECK_TEN_KE_EXISTS, map("maPN", maPN));
+    }
+
+    public static Command themPhieuNhap(PhieuNhapDTO dto) {
+        return build(CommandType.CREATE_PHIEUNHAP, map("phieuNhap", dto));
+    }
+
+    // ChiTietPhieuNhap helpers
+    public static Command getChiTietPhieuNhapByMaPN(String maPN) {
+        return build(CommandType.GET_CHITIETPHIEUNHAP_BY_PHIEUNHAP_ID, map("maPN", maPN));
+    }
+
+    public static Command createChiTietPhieuNhap(ChiTietPhieuNhapDTO dto) {
+        return build(CommandType.CREATE_CHITIETPHIEUNHAP, map("chiTietPhieuNhap", dto));
+    }
+
     public static Command getLoThuocByMaThuoc(String maThuoc) {
         return build(CommandType.GET_LOTHUOC_FEFO_BY_THUOC_ID, map("maThuoc", maThuoc));
     }
 
     public static Command updateTrangThaiPhieuDat(String maPhieu, boolean b) {
-        return  build(CommandType.UPDATE_PHIEUNHAP_STATUS, map(
+        return  build(CommandType.UPDATE_PHIEUDAT_PAYMENT_STATUS, map(
                 "maPD", maPhieu,
                 "status", b
         ));
+    }
+
+    public static Command getMaxHashPhieuDat() {
+        return build(CommandType.GET_MAX_HASH_PHIEUDAT);
+    }
+
+    public static Command khoiPhucPhieuDat(String maPD) {
+        return build(CommandType.RESTORE_PHIEUDAT, map("maPD", maPD));
+    }
+
+    public static Command createChiTietPhieuDat(ChiTietPhieuDatThuocDTO dto) {
+        return build(CommandType.CREATE_CHITIETPHIEUDAT, map("chiTietPhieuDat", dto));
     }
 }

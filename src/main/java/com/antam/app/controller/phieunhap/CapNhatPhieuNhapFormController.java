@@ -5,8 +5,7 @@
 
 package com.antam.app.controller.phieunhap;
 
-import com.antam.app.connect.ConnectDB;
-import com.antam.app.service.impl.PhieuNhap_Service;
+import com.antam.app.network.ClientManager;
 import com.antam.app.dto.*;
 import javafx.event.ActionEvent;
 import javafx.geometry.Insets;
@@ -20,15 +19,13 @@ import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
-import java.sql.Connection;
-import java.sql.SQLException;
 import java.time.LocalDate;
 
 public class CapNhatPhieuNhapFormController extends DialogPane{
 
     private TextField tfMaPhieuNhap, tfNhaCungCap, tfDiaChi, tfLyDo;
 
-    private PhieuNhap_Service phieuNhap_DAO = new PhieuNhap_Service();
+    private ClientManager phieuNhap_DAO = ClientManager.getInstance();
 
     public CapNhatPhieuNhapFormController() {
         this.setPrefSize(800, 600);
@@ -127,12 +124,6 @@ public class CapNhatPhieuNhapFormController extends DialogPane{
         this.setContent(root);
         /** Sự kiện **/
         this.getStylesheets().add(getClass().getResource("/com/antam/app/styles/dashboard_style.css").toExternalForm());
-        //Kết nối
-        try {
-            Connection con = ConnectDB.getInstance().connect();
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
 
         ButtonType cancelButton = new ButtonType("Huỷ", ButtonData.CANCEL_CLOSE);
         ButtonType deleteButton = new ButtonType("Huỷ Phiếu Nhập", ButtonData.YES);
