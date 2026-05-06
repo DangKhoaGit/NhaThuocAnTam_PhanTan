@@ -35,7 +35,7 @@ public class ConnectDB {
 //        String password = "Duong2008";
         String url = "jdbc:mariadb://localhost:3306/QuanLyTimThuoc";
         String user = "root";
-        String password = "sapassword";
+        String password = "admin";
         con = DriverManager.getConnection(url, user, password);
         return con;
     }

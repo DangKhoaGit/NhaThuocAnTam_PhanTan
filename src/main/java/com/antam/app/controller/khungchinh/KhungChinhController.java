@@ -138,6 +138,7 @@ public class KhungChinhController extends BorderPane {
         btnTrangChinh = createMainButton(FontAwesomeIcons.valueOf("HOME"), "Trang chính");
         btnHoaDon = createMainButton(FontAwesomeIcons.valueOf("FILE"), "Hoá đơn");
         btnPhieuDat = createMainButton(FontAwesomeIcons.valueOf("FILE"), "Phiếu đặt");
+        btnPhieuDat.setVisible(false);
         btnThuoc = createMainButton(FontAwesomeIcons.valueOf("MEDKIT"),"Thuốc");
         btnKeThuoc = createMainButton(FontAwesomeIcons.valueOf("ARCHIVE"),"Kệ thuốc");
         btnDangDieuChe = createMainButton(FontAwesomeIcons.valueOf("TINT"),"Dạng điều chế");
@@ -245,7 +246,8 @@ public class KhungChinhController extends BorderPane {
         btnCaiDat.setVisible(true);
         btnTrangChinh.setVisible(true);
         btnHoaDon.setVisible(true);
-        btnPhieuDat.setVisible(true);
+        btnPhieuDat.setVisible(false);
+        btnPhieuDat.setManaged(false);
         btnThuoc.setVisible(true);
         btnKeThuoc.setVisible(true);
         btnDangDieuChe.setVisible(true);
